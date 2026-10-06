@@ -1,0 +1,281 @@
+{
+  "info": {
+    "name": "FairSpot meetups",
+    "description": "Test requests for /api/meetups (FairSpot, IS216 G9T6). Start the server first: cd server && pnpm dev.\n\nRun \"Create meetup\" first: its test script saves the new meetup code in the collection variable \"code\", which the Get, Join and Set start requests use. You can also type a code into the variable by hand.\n\nTest inputs written with AI assistance (allowed: test cases and sample inputs).",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8000/api",
+      "type": "string"
+    },
+    {
+      "key": "code",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "1. Create meetup",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('status is 201', function () {",
+              "  pm.response.to.have.status(201);",
+              "});",
+              "",
+              "pm.test('response has a meetup code', function () {",
+              "  const meetup = pm.response.json();",
+              "  pm.expect(meetup.code).to.be.a('string');",
+              "  pm.collectionVariables.set('code', meetup.code);",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"hostName\": \"Alex\",\n  \"occasion\": \"Friday dinner\",\n  \"date\": \"2026-11-06\",\n  \"time\": \"18:00\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{baseUrl}}/meetups",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "meetups"
+          ]
+        },
+        "description": "Expect 201 and the saved meetup. Saves its code in the \"code\" variable."
+      },
+      "response": []
+    },
+    {
+      "name": "2. Create meetup, missing field (expect 400)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('status is 400', function () {",
+              "  pm.response.to.have.status(400);",
+              "});",
+              "",
+              "pm.test('response has an error message', function () {",
+              "  pm.expect(pm.response.json().error).to.be.a('string');",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"hostName\": \"Alex\",\n  \"occasion\": \"Friday dinner\",\n  \"date\": \"2026-11-06\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{baseUrl}}/meetups",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "meetups"
+          ]
+        },
+        "description": "The body has no \"time\". Expect 400 and { error: \"...\" }."
+      },
+      "response": []
+    },
+    {
+      "name": "3. Get meetup",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('status is 200', function () {",
+              "  pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test('meetup has the requested code', function () {",
+              "  pm.expect(pm.response.json().code).to.eql(pm.collectionVariables.get('code'));",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/meetups/{{code}}",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "meetups",
+            "{{code}}"
+          ]
+        },
+        "description": "Expect 200 and the meetup with its members."
+      },
+      "response": []
+    },
+    {
+      "name": "4. Get unknown meetup (expect 404)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('status is 404', function () {",
+              "  pm.response.to.have.status(404);",
+              "});",
+              "",
+              "pm.test('response has an error message', function () {",
+              "  pm.expect(pm.response.json().error).to.be.a('string');",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/meetups/NOPE00",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "meetups",
+            "NOPE00"
+          ]
+        },
+        "description": "NOPE00 is a made-up code. Expect 404 and { error: \"...\" }."
+      },
+      "response": []
+    },
+    {
+      "name": "5. Join meetup",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('status is 201', function () {",
+              "  pm.response.to.have.status(201);",
+              "});",
+              "",
+              "pm.test('response is the new member with an _id', function () {",
+              "  const member = pm.response.json();",
+              "  pm.expect(member._id).to.be.a('string');",
+              "  pm.expect(member.name).to.eql('Bea');",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"name\": \"Bea\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{baseUrl}}/meetups/{{code}}/members",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "meetups",
+            "{{code}}",
+            "members"
+          ]
+        },
+        "description": "Expect 201 and the new member { _id, name, start: null }."
+      },
+      "response": []
+    },
+    {
+      "name": "6. Set start (later)",
+      "request": {
+        "method": "PUT",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"start\": {\n    \"label\": \"Tampines MRT\",\n    \"postal\": \"\",\n    \"lat\": 1.3562,\n    \"lng\": 103.9546\n  }\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{baseUrl}}/meetups/{{code}}/members/<memberId>",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "meetups",
+            "{{code}}",
+            "members",
+            "<memberId>"
+          ]
+        },
+        "description": "For later (built with AddressSearch). Replace <memberId> in the URL with a member _id from the Create or Join response. Expect the updated member."
+      },
+      "response": []
+    }
+  ]
+}

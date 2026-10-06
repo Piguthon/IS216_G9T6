@@ -1,0 +1,97 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Junction 8",
+        "country": "Singapore",
+        "country_code": "sg",
+        "city": "Singapore",
+        "postcode": "579837",
+        "district": "Central Region",
+        "neighbourhood": "Bishan East",
+        "suburb": "Bishan",
+        "street": "Bishan Place",
+        "housenumber": "9",
+        "lon": 103.8487447,
+        "lat": 1.3505893,
+        "formatted": "Junction 8, 9 Bishan Place, Singapore 579837, Singapore",
+        "address_line1": "Junction 8",
+        "address_line2": "9 Bishan Place, Singapore 579837, Singapore",
+        "categories": [
+          "building",
+          "building.commercial",
+          "commercial",
+          "commercial.shopping_mall",
+          "wheelchair",
+          "wheelchair.yes"
+        ],
+        "details": [
+          "details",
+          "details.building",
+          "details.facilities",
+          "details.wiki_and_media"
+        ],
+        "datasource": {
+          "sourcename": "openstreetmap",
+          "attribution": "© OpenStreetMap contributors",
+          "license": "Open Database License",
+          "url": "https://www.openstreetmap.org/copyright",
+          "raw": {
+            "lat": 1.3505917485919845,
+            "lon": 103.8486924107421,
+            "city": "Singapore",
+            "name": "Junction 8",
+            "shop": "mall",
+            "height": 0,
+            "osm_id": 620515713,
+            "street": "Bishan Place",
+            "country": "SG",
+            "name:en": "Junction 8",
+            "name:zh": "碧山第8站",
+            "building": "retail",
+            "operator": "CapitaLand Ltd",
+            "osm_type": "w",
+            "postcode": 579837,
+            "wikidata": "Q6311694",
+            "wikipedia": "en:Junction 8",
+            "wheelchair": "yes",
+            "housenumber": 9,
+            "opening_hours": "Mo-Su 10:00-22:00",
+            "wikimedia_commons": "Category:Junction 8 Shopping Centre"
+          }
+        },
+        "opening_hours": "Mo-Su 10:00-22:00",
+        "operator": "CapitaLand Ltd",
+        "name_international": {
+          "en": "Junction 8",
+          "zh": "碧山第8站"
+        },
+        "facilities": {
+          "wheelchair": true
+        },
+        "wiki_and_media": {
+          "wikidata": "Q6311694",
+          "wikipedia": "en:Junction 8",
+          "wikimedia_commons": "Category:Junction 8 Shopping Centre"
+        },
+        "building": {
+          "type": "retail",
+          "height": 0
+        },
+        "commercial": {
+          "type": "mall"
+        },
+        "place_id": "510c20f9f950f65940595033e717069cf53ff00102f9018151fc240000000092030a4a756e6374696f6e2038"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          103.8486924107421,
+          1.3505917485919845
+        ]
+      }
+    }
+  ]
+}

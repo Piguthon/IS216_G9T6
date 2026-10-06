@@ -1,0 +1,711 @@
+{
+  "178902": {
+    "found": 1,
+    "totalNumPages": 1,
+    "pageNum": 1,
+    "results": [
+      {
+        "SEARCHVAL": "SMU SCHOOL OF COMPUTING & INFORMATION SYSTEMS 1",
+        "BLK_NO": "80",
+        "ROAD_NAME": "STAMFORD ROAD",
+        "BUILDING": "SMU SCHOOL OF COMPUTING & INFORMATION SYSTEMS 1",
+        "ADDRESS": "80 STAMFORD ROAD SMU SCHOOL OF COMPUTING & INFORMATION SYSTEMS 1 SINGAPORE 178902",
+        "POSTAL": "178902",
+        "X": "29806.58486924414",
+        "Y": "31082.91733695939",
+        "LATITUDE": "1.297377324218019",
+        "LONGITUDE": "103.8495515405472"
+      }
+    ]
+  },
+  "Jurong West": {
+    "found": 101,
+    "totalNumPages": 11,
+    "pageNum": 1,
+    "results": [
+      {
+        "SEARCHVAL": "CALTEX JURONG WEST",
+        "BLK_NO": "21",
+        "ROAD_NAME": "JURONG WEST STREET 93",
+        "BUILDING": "CALTEX JURONG WEST",
+        "ADDRESS": "21 JURONG WEST STREET 93 CALTEX JURONG WEST SINGAPORE 648964",
+        "POSTAL": "648964",
+        "X": "12358.13392888755",
+        "Y": "35650.51096116938",
+        "LATITUDE": "1.338681025269147",
+        "LONGITUDE": "103.6927673424752"
+      },
+      {
+        "SEARCHVAL": "JURONG WEST AVENUE 2",
+        "BLK_NO": "",
+        "ROAD_NAME": "JURONG WEST AVENUE 2",
+        "BUILDING": "NIL",
+        "ADDRESS": "JURONG WEST AVENUE 2",
+        "POSTAL": "NIL",
+        "X": "14433.21899341165",
+        "Y": "37048.79761558857",
+        "LATITUDE": "1.351328501322194",
+        "LONGITUDE": "103.7114138564055"
+      },
+      {
+        "SEARCHVAL": "JURONG WEST BLOSSOM",
+        "BLK_NO": "697A",
+        "ROAD_NAME": "JURONG WEST CENTRAL 3",
+        "BUILDING": "JURONG WEST BLOSSOM",
+        "ADDRESS": "697A JURONG WEST CENTRAL 3 JURONG WEST BLOSSOM SINGAPORE 641697",
+        "POSTAL": "641697",
+        "X": "14091.33297730237",
+        "Y": "35910.64602962695",
+        "LATITUDE": "1.341034437496366",
+        "LONGITUDE": "103.7083409952449"
+      },
+      {
+        "SEARCHVAL": "JURONG WEST BLOSSOM",
+        "BLK_NO": "698A",
+        "ROAD_NAME": "JURONG WEST CENTRAL 3",
+        "BUILDING": "JURONG WEST BLOSSOM",
+        "ADDRESS": "698A JURONG WEST CENTRAL 3 JURONG WEST BLOSSOM SINGAPORE 641698",
+        "POSTAL": "641698",
+        "X": "14056.01717167255",
+        "Y": "35916.96943517588",
+        "LATITUDE": "1.341091607667013",
+        "LONGITUDE": "103.7080236594844"
+      },
+      {
+        "SEARCHVAL": "JURONG WEST HAWKER CENTRE",
+        "BLK_NO": "50",
+        "ROAD_NAME": "JURONG WEST STREET 61",
+        "BUILDING": "JURONG WEST HAWKER CENTRE",
+        "ADDRESS": "50 JURONG WEST STREET 61 JURONG WEST HAWKER CENTRE SINGAPORE 648202",
+        "POSTAL": "648202",
+        "X": "12856.11635706108",
+        "Y": "35936.10730618984",
+        "LATITUDE": "1.34126410393953",
+        "LONGITUDE": "103.6972418521889"
+      },
+      {
+        "SEARCHVAL": "JURONG WEST JEWEL",
+        "BLK_NO": "991A",
+        "ROAD_NAME": "UPPER JURONG ROAD",
+        "BUILDING": "JURONG WEST JEWEL",
+        "ADDRESS": "991A UPPER JURONG ROAD JURONG WEST JEWEL SINGAPORE 631991",
+        "POSTAL": "631991",
+        "X": "12359.31568177603",
+        "Y": "35282.74896594509",
+        "LATITUDE": "1.335355126906594",
+        "LONGITUDE": "103.6927781503413"
+      },
+      {
+        "SEARCHVAL": "JURONG WEST JEWEL",
+        "BLK_NO": "992A",
+        "ROAD_NAME": "UPPER JURONG ROAD",
+        "BUILDING": "JURONG WEST JEWEL",
+        "ADDRESS": "992A UPPER JURONG ROAD JURONG WEST JEWEL SINGAPORE 631992",
+        "POSTAL": "631992",
+        "X": "12388.38435717393",
+        "Y": "35336.59156226367",
+        "LATITUDE": "1.33584207380229",
+        "LONGITUDE": "103.6930393207551"
+      },
+      {
+        "SEARCHVAL": "JURONG WEST STREET 42",
+        "BLK_NO": "",
+        "ROAD_NAME": "JURONG WEST STREET 42",
+        "BUILDING": "NIL",
+        "ADDRESS": "JURONG WEST STREET 42",
+        "POSTAL": "NIL",
+        "X": "15564.53685065829",
+        "Y": "37248.78263518108",
+        "LATITUDE": "1.353136674357195",
+        "LONGITUDE": "103.7215786102373"
+      },
+      {
+        "SEARCHVAL": "JURONG WEST STREET 91",
+        "BLK_NO": "",
+        "ROAD_NAME": "JURONG WEST STREET 91",
+        "BUILDING": "NIL",
+        "ADDRESS": "JURONG WEST STREET 91",
+        "POSTAL": "NIL",
+        "X": "12028.3029987675",
+        "Y": "36001.47500071686",
+        "LATITUDE": "1.34185464303354",
+        "LONGITUDE": "103.689804986058"
+      },
+      {
+        "SEARCHVAL": "JURONG WEST STREET 93",
+        "BLK_NO": "",
+        "ROAD_NAME": "JURONG WEST STREET 93",
+        "BUILDING": "NIL",
+        "ADDRESS": "JURONG WEST STREET 93",
+        "POSTAL": "NIL",
+        "X": "12396.87649402581",
+        "Y": "35588.14650483988",
+        "LATITUDE": "1.338117045008679",
+        "LONGITUDE": "103.693115498219"
+      }
+    ]
+  },
+  "Tampines MRT": {
+    "found": 17,
+    "totalNumPages": 2,
+    "pageNum": 1,
+    "results": [
+      {
+        "SEARCHVAL": "TAMPINES EAST MRT STATION (DT33)",
+        "BLK_NO": "20",
+        "ROAD_NAME": "TAMPINES AVENUE 7",
+        "BUILDING": "TAMPINES EAST MRT STATION (DT33)",
+        "ADDRESS": "20 TAMPINES AVENUE 7 TAMPINES EAST MRT STATION (DT33) SINGAPORE 529623",
+        "POSTAL": "529623",
+        "X": "41501.07485219371",
+        "Y": "37586.6177644413",
+        "LATITUDE": "1.356191482715451",
+        "LONGITUDE": "103.9546344624998"
+      },
+      {
+        "SEARCHVAL": "TAMPINES EAST MRT STATION EXIT A",
+        "BLK_NO": "",
+        "ROAD_NAME": "NIL",
+        "BUILDING": "TAMPINES EAST MRT STATION EXIT A",
+        "ADDRESS": "TAMPINES EAST MRT STATION EXIT A",
+        "POSTAL": "NIL",
+        "X": "41490.57273961511",
+        "Y": "37616.62816761807",
+        "LATITUDE": "1.356462890260603",
+        "LONGITUDE": "103.9545401078753"
+      },
+      {
+        "SEARCHVAL": "TAMPINES EAST MRT STATION EXIT C",
+        "BLK_NO": "",
+        "ROAD_NAME": "NIL",
+        "BUILDING": "TAMPINES EAST MRT STATION EXIT C",
+        "ADDRESS": "TAMPINES EAST MRT STATION EXIT C",
+        "POSTAL": "NIL",
+        "X": "41620.24822778348",
+        "Y": "37516.94519424625",
+        "LATITUDE": "1.3555613360042",
+        "LONGITUDE": "103.9557052790317"
+      },
+      {
+        "SEARCHVAL": "TAMPINES EAST MRT STATION EXIT D",
+        "BLK_NO": "",
+        "ROAD_NAME": "NIL",
+        "BUILDING": "TAMPINES EAST MRT STATION EXIT D",
+        "ADDRESS": "TAMPINES EAST MRT STATION EXIT D",
+        "POSTAL": "NIL",
+        "X": "41620.2113008434",
+        "Y": "37673.9145945888",
+        "LATITUDE": "1.356980908120533",
+        "LONGITUDE": "103.9557050185225"
+      },
+      {
+        "SEARCHVAL": "TAMPINES MRT STATION (DT32)",
+        "BLK_NO": "15",
+        "ROAD_NAME": "TAMPINES CENTRAL 1",
+        "BUILDING": "TAMPINES MRT STATION (DT32)",
+        "ADDRESS": "15 TAMPINES CENTRAL 1 TAMPINES MRT STATION (DT32) SINGAPORE 529544",
+        "POSTAL": "529544",
+        "X": "40207.3952279184",
+        "Y": "37471.43946002237",
+        "LATITUDE": "1.355150411204733",
+        "LONGITUDE": "103.9430098831302"
+      },
+      {
+        "SEARCHVAL": "TAMPINES MRT STATION (EW2)",
+        "BLK_NO": "20",
+        "ROAD_NAME": "TAMPINES CENTRAL 1",
+        "BUILDING": "TAMPINES MRT STATION (EW2)",
+        "ADDRESS": "20 TAMPINES CENTRAL 1 TAMPINES MRT STATION (EW2) SINGAPORE 529538",
+        "POSTAL": "529538",
+        "X": "40444.97320258059",
+        "Y": "37267.02626645938",
+        "LATITUDE": "1.353301676373764",
+        "LONGITUDE": "103.9451445867489"
+      },
+      {
+        "SEARCHVAL": "TAMPINES MRT STATION EXIT A",
+        "BLK_NO": "",
+        "ROAD_NAME": "NIL",
+        "BUILDING": "TAMPINES MRT STATION EXIT A",
+        "ADDRESS": "TAMPINES MRT STATION EXIT A",
+        "POSTAL": "NIL",
+        "X": "40402.87310081255",
+        "Y": "37318.14722621813",
+        "LATITUDE": "1.353764012777638",
+        "LONGITUDE": "103.9447663121141"
+      },
+      {
+        "SEARCHVAL": "TAMPINES WEST MRT STATION (DT31)",
+        "BLK_NO": "2",
+        "ROAD_NAME": "TAMPINES AVENUE 4",
+        "BUILDING": "TAMPINES WEST MRT STATION (DT31)",
+        "ADDRESS": "2 TAMPINES AVENUE 4 TAMPINES WEST MRT STATION (DT31) SINGAPORE 529683",
+        "POSTAL": "529683",
+        "X": "39698.52758529689",
+        "Y": "36406.01433311775",
+        "LATITUDE": "1.345515305601201",
+        "LONGITUDE": "103.9384369712212"
+      },
+      {
+        "SEARCHVAL": "TAMPINES WEST MRT STATION EXIT A",
+        "BLK_NO": "",
+        "ROAD_NAME": "NIL",
+        "BUILDING": "TAMPINES WEST MRT STATION EXIT A",
+        "ADDRESS": "TAMPINES WEST MRT STATION EXIT A",
+        "POSTAL": "NIL",
+        "X": "39670.02431583405",
+        "Y": "36420.20638532378",
+        "LATITUDE": "1.345643664352429",
+        "LONGITUDE": "103.938180857761"
+      },
+      {
+        "SEARCHVAL": "TAMPINES WEST MRT STATION EXIT B",
+        "BLK_NO": "",
+        "ROAD_NAME": "NIL",
+        "BUILDING": "TAMPINES WEST MRT STATION EXIT B",
+        "ADDRESS": "TAMPINES WEST MRT STATION EXIT B",
+        "POSTAL": "NIL",
+        "X": "39756.37739024777",
+        "Y": "36349.94970357791",
+        "LATITUDE": "1.345008255286621",
+        "LONGITUDE": "103.9389567645421"
+      }
+    ]
+  },
+  "Woodlands MRT": {
+    "found": 21,
+    "totalNumPages": 3,
+    "pageNum": 1,
+    "results": [
+      {
+        "SEARCHVAL": "WOODLANDS MRT STATION (NS9)",
+        "BLK_NO": "30",
+        "ROAD_NAME": "WOODLANDS AVENUE 2",
+        "BUILDING": "WOODLANDS MRT STATION (NS9)",
+        "ADDRESS": "30 WOODLANDS AVENUE 2 WOODLANDS MRT STATION (NS9) SINGAPORE 738343",
+        "POSTAL": "738343",
+        "X": "22741.59819038119",
+        "Y": "46501.78610091656",
+        "LATITUDE": "1.436819629615197",
+        "LONGITUDE": "103.7860667992523"
+      },
+      {
+        "SEARCHVAL": "WOODLANDS MRT STATION (TE2)",
+        "BLK_NO": "11",
+        "ROAD_NAME": "WOODLANDS SQUARE",
+        "BUILDING": "WOODLANDS MRT STATION (TE2)",
+        "ADDRESS": "11 WOODLANDS SQUARE WOODLANDS MRT STATION (TE2) SINGAPORE 737736",
+        "POSTAL": "737736",
+        "X": "22949.91913198307",
+        "Y": "46417.52233461477",
+        "LATITUDE": "1.436057617081278",
+        "LONGITUDE": "103.7879387771725"
+      },
+      {
+        "SEARCHVAL": "WOODLANDS MRT STATION EXIT 2",
+        "BLK_NO": "",
+        "ROAD_NAME": "NIL",
+        "BUILDING": "WOODLANDS MRT STATION EXIT 2",
+        "ADDRESS": "WOODLANDS MRT STATION EXIT 2",
+        "POSTAL": "NIL",
+        "X": "22777.97649304383",
+        "Y": "46494.39462902397",
+        "LATITUDE": "1.436752790625914",
+        "LONGITUDE": "103.7863936944518"
+      },
+      {
+        "SEARCHVAL": "WOODLANDS MRT STATION EXIT 5",
+        "BLK_NO": "",
+        "ROAD_NAME": "NIL",
+        "BUILDING": "WOODLANDS MRT STATION EXIT 5",
+        "ADDRESS": "WOODLANDS MRT STATION EXIT 5",
+        "POSTAL": "NIL",
+        "X": "23066.69576755073",
+        "Y": "46409.69267312251",
+        "LATITUDE": "1.435986829207431",
+        "LONGITUDE": "103.7889881279574"
+      },
+      {
+        "SEARCHVAL": "WOODLANDS MRT STATION EXIT 7",
+        "BLK_NO": "",
+        "ROAD_NAME": "NIL",
+        "BUILDING": "WOODLANDS MRT STATION EXIT 7",
+        "ADDRESS": "WOODLANDS MRT STATION EXIT 7",
+        "POSTAL": "NIL",
+        "X": "22956.37078297976",
+        "Y": "46239.35569018312",
+        "LATITUDE": "1.434446344146983",
+        "LONGITUDE": "103.7879967831386"
+      },
+      {
+        "SEARCHVAL": "WOODLANDS NORTH MRT STATION (TE1)",
+        "BLK_NO": "20",
+        "ROAD_NAME": "WOODLANDS NORTH COAST ROAD",
+        "BUILDING": "WOODLANDS NORTH MRT STATION (TE1)",
+        "ADDRESS": "20 WOODLANDS NORTH COAST ROAD WOODLANDS NORTH MRT STATION (TE1) SINGAPORE 737668",
+        "POSTAL": "737668",
+        "X": "22699.9912448721",
+        "Y": "47770.39457266964",
+        "LATITUDE": "1.44829245259622",
+        "LONGITUDE": "103.785692682441"
+      },
+      {
+        "SEARCHVAL": "WOODLANDS SOUTH MRT STATION (TE3)",
+        "BLK_NO": "30",
+        "ROAD_NAME": "WOODLANDS DRIVE 17",
+        "BUILDING": "WOODLANDS SOUTH MRT STATION (TE3)",
+        "ADDRESS": "30 WOODLANDS DRIVE 17 WOODLANDS SOUTH MRT STATION (TE3) SINGAPORE 737741",
+        "POSTAL": "737741",
+        "X": "23542.55456972588",
+        "Y": "45459.75882158801",
+        "LATITUDE": "1.427396052814427",
+        "LONGITUDE": "103.7932643222093"
+      },
+      {
+        "SEARCHVAL": "WOODLANDS SOUTH MRT STATION EXIT 1",
+        "BLK_NO": "",
+        "ROAD_NAME": "NIL",
+        "BUILDING": "WOODLANDS SOUTH MRT STATION EXIT 1",
+        "ADDRESS": "WOODLANDS SOUTH MRT STATION EXIT 1",
+        "POSTAL": "NIL",
+        "X": "23483.08606327325",
+        "Y": "45469.93948817998",
+        "LATITUDE": "1.427488113627172",
+        "LONGITUDE": "103.7927299413329"
+      },
+      {
+        "SEARCHVAL": "WOODLANDS SOUTH MRT STATION EXIT 2",
+        "BLK_NO": "",
+        "ROAD_NAME": "NIL",
+        "BUILDING": "WOODLANDS SOUTH MRT STATION EXIT 2",
+        "ADDRESS": "WOODLANDS SOUTH MRT STATION EXIT 2",
+        "POSTAL": "NIL",
+        "X": "23525.2565986393",
+        "Y": "45492.5325706061",
+        "LATITUDE": "1.427692443945779",
+        "LONGITUDE": "103.7931088788679"
+      },
+      {
+        "SEARCHVAL": "WOODLANDS SOUTH MRT STATION EXIT 3",
+        "BLK_NO": "",
+        "ROAD_NAME": "NIL",
+        "BUILDING": "WOODLANDS SOUTH MRT STATION EXIT 3",
+        "ADDRESS": "WOODLANDS SOUTH MRT STATION EXIT 3",
+        "POSTAL": "NIL",
+        "X": "23716.78577091359",
+        "Y": "45466.14197613858",
+        "LATITUDE": "1.427453806656101",
+        "LONGITUDE": "103.7948299489627"
+      }
+    ]
+  },
+  "Bishan MRT": {
+    "found": 8,
+    "totalNumPages": 1,
+    "pageNum": 1,
+    "results": [
+      {
+        "SEARCHVAL": "BISHAN MRT STATION",
+        "BLK_NO": "17",
+        "ROAD_NAME": "BISHAN PLACE",
+        "BUILDING": "BISHAN MRT STATION",
+        "ADDRESS": "17 BISHAN PLACE BISHAN MRT STATION",
+        "POSTAL": "NIL",
+        "X": "29862.82123932336",
+        "Y": "37014.32792052999",
+        "LATITUDE": "1.35101889777846",
+        "LONGITUDE": "103.8500572086081"
+      },
+      {
+        "SEARCHVAL": "BISHAN MRT STATION (CC15)",
+        "BLK_NO": "17",
+        "ROAD_NAME": "BISHAN PLACE",
+        "BUILDING": "BISHAN MRT STATION (CC15)",
+        "ADDRESS": "17 BISHAN PLACE BISHAN MRT STATION (CC15) SINGAPORE 579842",
+        "POSTAL": "579842",
+        "X": "29760.77554714307",
+        "Y": "37047.15733237006",
+        "LATITUDE": "1.351315801466592",
+        "LONGITUDE": "103.8491402653198"
+      },
+      {
+        "SEARCHVAL": "BISHAN MRT STATION (NS17)",
+        "BLK_NO": "200",
+        "ROAD_NAME": "BISHAN ROAD",
+        "BUILDING": "BISHAN MRT STATION (NS17)",
+        "ADDRESS": "200 BISHAN ROAD BISHAN MRT STATION (NS17) SINGAPORE 579827",
+        "POSTAL": "579827",
+        "X": "29649.8988074977",
+        "Y": "36994.43301697634",
+        "LATITUDE": "1.350838987847369",
+        "LONGITUDE": "103.8481439645419"
+      },
+      {
+        "SEARCHVAL": "BISHAN MRT STATION EXIT A",
+        "BLK_NO": "",
+        "ROAD_NAME": "NIL",
+        "BUILDING": "BISHAN MRT STATION EXIT A",
+        "ADDRESS": "BISHAN MRT STATION EXIT A",
+        "POSTAL": "NIL",
+        "X": "29667.81951208133",
+        "Y": "36965.75122694671",
+        "LATITUDE": "1.35057959895607",
+        "LONGITUDE": "103.8483049918301"
+      },
+      {
+        "SEARCHVAL": "BISHAN MRT STATION EXIT B",
+        "BLK_NO": "",
+        "ROAD_NAME": "NIL",
+        "BUILDING": "BISHAN MRT STATION EXIT B",
+        "ADDRESS": "BISHAN MRT STATION EXIT B",
+        "POSTAL": "NIL",
+        "X": "29668.62760671042",
+        "Y": "37019.36242453009",
+        "LATITUDE": "1.351064439495935",
+        "LONGITUDE": "103.8483122560401"
+      },
+      {
+        "SEARCHVAL": "BISHAN MRT STATION EXIT C",
+        "BLK_NO": "",
+        "ROAD_NAME": "NIL",
+        "BUILDING": "BISHAN MRT STATION EXIT C",
+        "ADDRESS": "BISHAN MRT STATION EXIT C",
+        "POSTAL": "NIL",
+        "X": "29657.16796646733",
+        "Y": "36966.33863770589",
+        "LATITUDE": "1.350584911881252",
+        "LONGITUDE": "103.8482092809921"
+      },
+      {
+        "SEARCHVAL": "BISHAN MRT STATION EXIT D",
+        "BLK_NO": "",
+        "ROAD_NAME": "NIL",
+        "BUILDING": "BISHAN MRT STATION EXIT D",
+        "ADDRESS": "BISHAN MRT STATION EXIT D",
+        "POSTAL": "NIL",
+        "X": "29878.83273029793",
+        "Y": "37018.12316247262",
+        "LATITUDE": "1.351053219594261",
+        "LONGITUDE": "103.8502010822368"
+      },
+      {
+        "SEARCHVAL": "BISHAN MRT STATION EXIT E",
+        "BLK_NO": "",
+        "ROAD_NAME": "NIL",
+        "BUILDING": "BISHAN MRT STATION EXIT E",
+        "ADDRESS": "BISHAN MRT STATION EXIT E",
+        "POSTAL": "NIL",
+        "X": "29682.05654251017",
+        "Y": "37016.08930530772",
+        "LATITUDE": "1.351034837819393",
+        "LONGITUDE": "103.848432923358"
+      }
+    ]
+  },
+  "Dhoby Ghaut MRT": {
+    "found": 10,
+    "totalNumPages": 1,
+    "pageNum": 1,
+    "results": [
+      {
+        "SEARCHVAL": "DHOBY GHAUT MRT STATION (CC1)",
+        "BLK_NO": "13",
+        "ROAD_NAME": "ORCHARD ROAD",
+        "BUILDING": "DHOBY GHAUT MRT STATION (CC1)",
+        "ADDRESS": "13 ORCHARD ROAD DHOBY GHAUT MRT STATION (CC1) SINGAPORE 238893",
+        "POSTAL": "238893",
+        "X": "29443.88240964059",
+        "Y": "31252.57238222472",
+        "LATITUDE": "1.298911643626761",
+        "LONGITUDE": "103.8462925069598"
+      },
+      {
+        "SEARCHVAL": "DHOBY GHAUT MRT STATION (NE6)",
+        "BLK_NO": "60",
+        "ROAD_NAME": "ORCHARD ROAD",
+        "BUILDING": "DHOBY GHAUT MRT STATION (NE6)",
+        "ADDRESS": "60 ORCHARD ROAD DHOBY GHAUT MRT STATION (NE6) SINGAPORE 238889",
+        "POSTAL": "238889",
+        "X": "29354.40791913774",
+        "Y": "31340.25089164637",
+        "LATITUDE": "1.299704581212027",
+        "LONGITUDE": "103.8454885425404"
+      },
+      {
+        "SEARCHVAL": "DHOBY GHAUT MRT STATION (NS24)",
+        "BLK_NO": "11",
+        "ROAD_NAME": "ORCHARD ROAD",
+        "BUILDING": "DHOBY GHAUT MRT STATION (NS24)",
+        "ADDRESS": "11 ORCHARD ROAD DHOBY GHAUT MRT STATION (NS24) SINGAPORE 238826",
+        "POSTAL": "238826",
+        "X": "29423.98045364674",
+        "Y": "31229.31637042016",
+        "LATITUDE": "1.29870132536119",
+        "LONGITUDE": "103.8461136779511"
+      },
+      {
+        "SEARCHVAL": "DHOBY GHAUT MRT STATION EXIT A",
+        "BLK_NO": "",
+        "ROAD_NAME": "NIL",
+        "BUILDING": "DHOBY GHAUT MRT STATION EXIT A",
+        "ADDRESS": "DHOBY GHAUT MRT STATION EXIT A",
+        "POSTAL": "NIL",
+        "X": "29498.05323197506",
+        "Y": "31201.76384859346",
+        "LATITUDE": "1.298452146580756",
+        "LONGITUDE": "103.8467792535331"
+      },
+      {
+        "SEARCHVAL": "DHOBY GHAUT MRT STATION EXIT B",
+        "BLK_NO": "",
+        "ROAD_NAME": "NIL",
+        "BUILDING": "DHOBY GHAUT MRT STATION EXIT B",
+        "ADDRESS": "DHOBY GHAUT MRT STATION EXIT B",
+        "POSTAL": "NIL",
+        "X": "29325.14788954612",
+        "Y": "31269.4661546573",
+        "LATITUDE": "1.299064430235275",
+        "LONGITUDE": "103.8452256250463"
+      },
+      {
+        "SEARCHVAL": "DHOBY GHAUT MRT STATION EXIT C",
+        "BLK_NO": "",
+        "ROAD_NAME": "NIL",
+        "BUILDING": "DHOBY GHAUT MRT STATION EXIT C",
+        "ADDRESS": "DHOBY GHAUT MRT STATION EXIT C",
+        "POSTAL": "NIL",
+        "X": "29271.97633442562",
+        "Y": "31334.13143176958",
+        "LATITUDE": "1.299649242449701",
+        "LONGITUDE": "103.8447478574997"
+      },
+      {
+        "SEARCHVAL": "DHOBY GHAUT MRT STATION EXIT D",
+        "BLK_NO": "",
+        "ROAD_NAME": "NIL",
+        "BUILDING": "DHOBY GHAUT MRT STATION EXIT D",
+        "ADDRESS": "DHOBY GHAUT MRT STATION EXIT D",
+        "POSTAL": "NIL",
+        "X": "29303.39080883004",
+        "Y": "31365.24991556071",
+        "LATITUDE": "1.299930665759226",
+        "LONGITUDE": "103.8450301319431"
+      },
+      {
+        "SEARCHVAL": "DHOBY GHAUT MRT STATION EXIT E",
+        "BLK_NO": "",
+        "ROAD_NAME": "NIL",
+        "BUILDING": "DHOBY GHAUT MRT STATION EXIT E",
+        "ADDRESS": "DHOBY GHAUT MRT STATION EXIT E",
+        "POSTAL": "NIL",
+        "X": "29341.47047485691",
+        "Y": "31345.10390881449",
+        "LATITUDE": "1.299748470750606",
+        "LONGITUDE": "103.8453722940039"
+      },
+      {
+        "SEARCHVAL": "DHOBY GHAUT MRT STATION EXIT F",
+        "BLK_NO": "",
+        "ROAD_NAME": "NIL",
+        "BUILDING": "DHOBY GHAUT MRT STATION EXIT F",
+        "ADDRESS": "DHOBY GHAUT MRT STATION EXIT F",
+        "POSTAL": "NIL",
+        "X": "29393.77996753342",
+        "Y": "31332.54517754726",
+        "LATITUDE": "1.299634891709077",
+        "LONGITUDE": "103.8458423177257"
+      },
+      {
+        "SEARCHVAL": "DHOBY GHAUT MRT STATION EXIT G",
+        "BLK_NO": "",
+        "ROAD_NAME": "NIL",
+        "BUILDING": "DHOBY GHAUT MRT STATION EXIT G",
+        "ADDRESS": "DHOBY GHAUT MRT STATION EXIT G",
+        "POSTAL": "NIL",
+        "X": "29399.07165859081",
+        "Y": "31365.88275856525",
+        "LATITUDE": "1.299936384813703",
+        "LONGITUDE": "103.845889867433"
+      }
+    ]
+  },
+  "Jurong East MRT": {
+    "found": 6,
+    "totalNumPages": 1,
+    "pageNum": 1,
+    "results": [
+      {
+        "SEARCHVAL": "JURONG EAST MRT STATION (EW24 / NS1)",
+        "BLK_NO": "10",
+        "ROAD_NAME": "JURONG EAST STREET 12",
+        "BUILDING": "JURONG EAST MRT STATION (EW24 / NS1)",
+        "ADDRESS": "10 JURONG EAST STREET 12 JURONG EAST MRT STATION (EW24 / NS1) SINGAPORE 609690",
+        "POSTAL": "609690",
+        "X": "17878.42214742769",
+        "Y": "35025.11342758313",
+        "LATITUDE": "1.333027515439408",
+        "LONGITUDE": "103.7423704876066"
+      },
+      {
+        "SEARCHVAL": "JURONG EAST MRT STATION (JE5)",
+        "BLK_NO": "",
+        "ROAD_NAME": "JURONG EAST STREET 12",
+        "BUILDING": "JURONG EAST MRT STATION (JE5)",
+        "ADDRESS": "JURONG EAST STREET 12 JURONG EAST MRT STATION (JE5) SINGAPORE 609690",
+        "POSTAL": "609690",
+        "X": "17797.01555771567",
+        "Y": "35105.25923470035",
+        "LATITUDE": "1.333752297480463",
+        "LONGITUDE": "103.7416389772453"
+      },
+      {
+        "SEARCHVAL": "JURONG EAST MRT STATION EXIT A",
+        "BLK_NO": "",
+        "ROAD_NAME": "NIL",
+        "BUILDING": "JURONG EAST MRT STATION EXIT A",
+        "ADDRESS": "JURONG EAST MRT STATION EXIT A",
+        "POSTAL": "NIL",
+        "X": "17807.71616773121",
+        "Y": "35133.60063098744",
+        "LATITUDE": "1.33400861029636",
+        "LONGITUDE": "103.7417351187352"
+      },
+      {
+        "SEARCHVAL": "JURONG EAST MRT STATION EXIT B",
+        "BLK_NO": "",
+        "ROAD_NAME": "NIL",
+        "BUILDING": "JURONG EAST MRT STATION EXIT B",
+        "ADDRESS": "JURONG EAST MRT STATION EXIT B",
+        "POSTAL": "NIL",
+        "X": "17908.76026206277",
+        "Y": "34970.1171973329",
+        "LATITUDE": "1.332530159766772",
+        "LONGITUDE": "103.7426431106586"
+      },
+      {
+        "SEARCHVAL": "JURONG EAST MRT STATION EXIT C",
+        "BLK_NO": "",
+        "ROAD_NAME": "NIL",
+        "BUILDING": "JURONG EAST MRT STATION EXIT C",
+        "ADDRESS": "JURONG EAST MRT STATION EXIT C",
+        "POSTAL": "NIL",
+        "X": "17921.05778063089",
+        "Y": "34994.80340163782",
+        "LATITUDE": "1.332753416861304",
+        "LONGITUDE": "103.7427536025355"
+      },
+      {
+        "SEARCHVAL": "JURONG EAST MRT STATION EXIT D",
+        "BLK_NO": "",
+        "ROAD_NAME": "NIL",
+        "BUILDING": "JURONG EAST MRT STATION EXIT D",
+        "ADDRESS": "JURONG EAST MRT STATION EXIT D",
+        "POSTAL": "NIL",
+        "X": "17869.72851660755",
+        "Y": "35085.82025778666",
+        "LATITUDE": "1.333576522894671",
+        "LONGITUDE": "103.7422923503236"
+      }
+    ]
+  }
+}

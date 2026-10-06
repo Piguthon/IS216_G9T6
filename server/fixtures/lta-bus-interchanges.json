@@ -1,0 +1,370 @@
+{
+  "note": "Stops whose Description contains \"Int\" as a word",
+  "count": 52,
+  "value": [
+    {
+      "BusStopCode": "10009",
+      "RoadName": "Bt Merah Ctrl",
+      "Description": "Bt Merah Int",
+      "Latitude": 1.28210155945393,
+      "Longitude": 103.81722480263163
+    },
+    {
+      "BusStopCode": "14009",
+      "RoadName": "Seah Im Rd",
+      "Description": "HarbourFront Int",
+      "Latitude": 1.26703502614245,
+      "Longitude": 103.81901469907409
+    },
+    {
+      "BusStopCode": "14121",
+      "RoadName": "Telok Blangah Rd",
+      "Description": "Opp HarbourFront Int",
+      "Latitude": 1.26591350024271,
+      "Longitude": 103.81925660621779
+    },
+    {
+      "BusStopCode": "17009",
+      "RoadName": "Clementi Ave 3",
+      "Description": "Clementi Int",
+      "Latitude": 1.31491572870629,
+      "Longitude": 103.76412225438476
+    },
+    {
+      "BusStopCode": "22009",
+      "RoadName": "Jurong West Ctrl 3",
+      "Description": "Boon Lay Int",
+      "Latitude": 1.33932334709184,
+      "Longitude": 103.70545701843297
+    },
+    {
+      "BusStopCode": "23371",
+      "RoadName": "Benoi Rd",
+      "Description": "Bef Joo Koon Int",
+      "Latitude": 1.32595445317751,
+      "Longitude": 103.6790814673288
+    },
+    {
+      "BusStopCode": "23379",
+      "RoadName": "Benoi Rd",
+      "Description": "Opp Joo Koon Int",
+      "Latitude": 1.3265431228454,
+      "Longitude": 103.67939439835483
+    },
+    {
+      "BusStopCode": "24009",
+      "RoadName": "Joo Koon Circle",
+      "Description": "Joo Koon Int",
+      "Latitude": 1.32697254709069,
+      "Longitude": 103.67839791240787
+    },
+    {
+      "BusStopCode": "28009",
+      "RoadName": "Jurong Gateway Rd",
+      "Description": "Jurong East Int",
+      "Latitude": 1.33235,
+      "Longitude": 103.740664
+    },
+    {
+      "BusStopCode": "28239",
+      "RoadName": "Jurong Town Hall Rd",
+      "Description": "Jurong Town Hall Int",
+      "Latitude": 1.329722,
+      "Longitude": 103.7431495
+    },
+    {
+      "BusStopCode": "29009",
+      "RoadName": "Venture Dr",
+      "Description": "Jurong Town Hall Int",
+      "Latitude": 1.330212,
+      "Longitude": 103.7433
+    },
+    {
+      "BusStopCode": "41009",
+      "RoadName": "Tengah Blvd",
+      "Description": "Tengah Int",
+      "Latitude": 1.3627,
+      "Longitude": 103.735967
+    },
+    {
+      "BusStopCode": "43009",
+      "RoadName": "Bt Batok Ctrl",
+      "Description": "Bt Batok Int",
+      "Latitude": 1.34999354306126,
+      "Longitude": 103.75106190953444
+    },
+    {
+      "BusStopCode": "44009",
+      "RoadName": "Choa Chu Kang Loop",
+      "Description": "Choa Chu Kang Int",
+      "Latitude": 1.38586897797184,
+      "Longitude": 103.74578895932125
+    },
+    {
+      "BusStopCode": "45009",
+      "RoadName": "Petir Rd",
+      "Description": "Bt Panjang Int",
+      "Latitude": 1.37812611932206,
+      "Longitude": 103.763286611367
+    },
+    {
+      "BusStopCode": "46008",
+      "RoadName": "Woodlands Sq",
+      "Description": "Woodlands Int",
+      "Latitude": 1.43684944,
+      "Longitude": 103.7857369
+    },
+    {
+      "BusStopCode": "46009",
+      "RoadName": "Woodlands Sq",
+      "Description": "Woodlands Int",
+      "Latitude": 1.436946,
+      "Longitude": 103.785936
+    },
+    {
+      "BusStopCode": "47009",
+      "RoadName": "Woodlands Sq",
+      "Description": "Woodlands Temp Int",
+      "Latitude": 1.437553,
+      "Longitude": 103.786282
+    },
+    {
+      "BusStopCode": "52009",
+      "RoadName": "Lor 6 Toa Payoh",
+      "Description": "Toa Payoh Int",
+      "Latitude": 1.33202083385749,
+      "Longitude": 103.84692763524869
+    },
+    {
+      "BusStopCode": "53009",
+      "RoadName": "Bishan St 13",
+      "Description": "Bishan Int",
+      "Latitude": 1.35045541249544,
+      "Longitude": 103.84988083722291
+    },
+    {
+      "BusStopCode": "54009",
+      "RoadName": "Ang Mo Kio Ave 8",
+      "Description": "Ang Mo Kio Int",
+      "Latitude": 1.36968769913339,
+      "Longitude": 103.84856716193268
+    },
+    {
+      "BusStopCode": "54391",
+      "RoadName": "Ang Mo Kio Ave 8",
+      "Description": "Aft Ang Mo Kio Int",
+      "Latitude": 1.371548,
+      "Longitude": 103.848298
+    },
+    {
+      "BusStopCode": "55509",
+      "RoadName": "Ang Mo Kio Ave 8",
+      "Description": "Yio Chu Kang Int",
+      "Latitude": 1.38113241525166,
+      "Longitude": 103.8455558816965
+    },
+    {
+      "BusStopCode": "58009",
+      "RoadName": "Sembawang Vista",
+      "Description": "Sembawang Int",
+      "Latitude": 1.44748179252514,
+      "Longitude": 103.81941391689068
+    },
+    {
+      "BusStopCode": "58241",
+      "RoadName": "Sembawang Vista",
+      "Description": "Sembawang Int/Opp Blk 315",
+      "Latitude": 1.44722064601498,
+      "Longitude": 103.82018490260376
+    },
+    {
+      "BusStopCode": "59009",
+      "RoadName": "Yishun Ave 2",
+      "Description": "Yishun Int",
+      "Latitude": 1.4284,
+      "Longitude": 103.8360975
+    },
+    {
+      "BusStopCode": "63009",
+      "RoadName": "Sengkang Ctrl",
+      "Description": "Buangkok Int",
+      "Latitude": 1.383707,
+      "Longitude": 103.892257
+    },
+    {
+      "BusStopCode": "64009",
+      "RoadName": "Hougang Ctrl",
+      "Description": "Hougang Ctrl Int",
+      "Latitude": 1.37060695394614,
+      "Longitude": 103.89266808874676
+    },
+    {
+      "BusStopCode": "64541",
+      "RoadName": "Hougang Ctrl",
+      "Description": "Hougang Ctrl Int",
+      "Latitude": 1.371235,
+      "Longitude": 103.8928055
+    },
+    {
+      "BusStopCode": "64549",
+      "RoadName": "Hougang Ctrl",
+      "Description": "Opp Hougang Ctrl Int",
+      "Latitude": 1.3714805,
+      "Longitude": 103.8922875
+    },
+    {
+      "BusStopCode": "65009",
+      "RoadName": "Punggol Pl",
+      "Description": "Punggol Int",
+      "Latitude": 1.40370629859822,
+      "Longitude": 103.90224337575333
+    },
+    {
+      "BusStopCode": "65211",
+      "RoadName": "Punggol Pl",
+      "Description": "Bef Punggol Int",
+      "Latitude": 1.402691,
+      "Longitude": 103.902709
+    },
+    {
+      "BusStopCode": "65219",
+      "RoadName": "Punggol Pl",
+      "Description": "Opp Punggol Int",
+      "Latitude": 1.403538,
+      "Longitude": 103.903422
+    },
+    {
+      "BusStopCode": "65259",
+      "RoadName": "Punggol Ctrl",
+      "Description": "Punggol Stn/Int",
+      "Latitude": 1.4053405,
+      "Longitude": 103.9014515
+    },
+    {
+      "BusStopCode": "66009",
+      "RoadName": "S'goon Ave 2",
+      "Description": "Serangoon Int",
+      "Latitude": 1.35046610176969,
+      "Longitude": 103.87168992264617
+    },
+    {
+      "BusStopCode": "67009",
+      "RoadName": "Sengkang Sq",
+      "Description": "Sengkang Int",
+      "Latitude": 1.39178060381601,
+      "Longitude": 103.89588499436073
+    },
+    {
+      "BusStopCode": "67759",
+      "RoadName": "Compassvale Rd",
+      "Description": "Compassvale Int",
+      "Latitude": 1.3912175,
+      "Longitude": 103.8971153
+    },
+    {
+      "BusStopCode": "68009",
+      "RoadName": "Bidadari Pk Dr",
+      "Description": "Woodleigh Int",
+      "Latitude": 1.340141,
+      "Longitude": 103.871449
+    },
+    {
+      "BusStopCode": "69009",
+      "RoadName": "Sentul Wk",
+      "Description": "Punggol Coast Int",
+      "Latitude": 1.414795,
+      "Longitude": 103.908557
+    },
+    {
+      "BusStopCode": "74009",
+      "RoadName": "Tampines St 62",
+      "Description": "Tampines Nth Int",
+      "Latitude": 1.368916,
+      "Longitude": 103.939651
+    },
+    {
+      "BusStopCode": "75009",
+      "RoadName": "Tampines Ctrl 1",
+      "Description": "Tampines Int",
+      "Latitude": 1.35407552367477,
+      "Longitude": 103.94339098473914
+    },
+    {
+      "BusStopCode": "75019",
+      "RoadName": "Tampines Concourse",
+      "Description": "Tampines Concourse Int",
+      "Latitude": 1.35737133106172,
+      "Longitude": 103.9416488042812
+    },
+    {
+      "BusStopCode": "76141",
+      "RoadName": "Tampines Ave 4",
+      "Description": "Tampines Stn/Int",
+      "Latitude": 1.35366689109025,
+      "Longitude": 103.94609060451609
+    },
+    {
+      "BusStopCode": "76149",
+      "RoadName": "Tampines Ave 4",
+      "Description": "Opp Tampines Stn/Int",
+      "Latitude": 1.35370728527221,
+      "Longitude": 103.94636710560508
+    },
+    {
+      "BusStopCode": "77009",
+      "RoadName": "Pasir Ris Dr 3",
+      "Description": "Pasir Ris Int",
+      "Latitude": 1.373696,
+      "Longitude": 103.94845
+    },
+    {
+      "BusStopCode": "77031",
+      "RoadName": "Pasir Ris Ctrl",
+      "Description": "Opp Pasir Ris Int/Mall",
+      "Latitude": 1.372262,
+      "Longitude": 103.948468
+    },
+    {
+      "BusStopCode": "77039",
+      "RoadName": "Pasir Ris Ctrl",
+      "Description": "Pasir Ris Int/Mall",
+      "Latitude": 1.37241,
+      "Longitude": 103.948657
+    },
+    {
+      "BusStopCode": "77321",
+      "RoadName": "Pasir Ris Dr 8",
+      "Description": "Pasir Ris Int/Polyclinic",
+      "Latitude": 1.37313477197799,
+      "Longitude": 103.94802646457005
+    },
+    {
+      "BusStopCode": "77329",
+      "RoadName": "Pasir Ris Dr 8",
+      "Description": "Opp Pasir Ris Int/Polyclinic",
+      "Latitude": 1.37283117687855,
+      "Longitude": 103.94765867700548
+    },
+    {
+      "BusStopCode": "82009",
+      "RoadName": "Eunos Rd 2",
+      "Description": "Eunos Int",
+      "Latitude": 1.31933717157385,
+      "Longitude": 103.90180834139497
+    },
+    {
+      "BusStopCode": "82061",
+      "RoadName": "Sims Ave",
+      "Description": "Eunos Stn/Int",
+      "Latitude": 1.31876162629115,
+      "Longitude": 103.9022689641617
+    },
+    {
+      "BusStopCode": "84009",
+      "RoadName": "Bedok Nth Dr",
+      "Description": "Bedok Int",
+      "Latitude": 1.32453874317344,
+      "Longitude": 103.92903818515839
+    }
+  ]
+}

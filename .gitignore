@@ -1,0 +1,21 @@
+# Secrets (never commit - public repo)
+.env
+.env.*
+!.env.example
+
+# Local caches (the OneMap token lives here)
+.cache/
+
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+client/dist/
+
+# Misc
+.DS_Store
+*.log
+
+# Team rule: Markdown files are never committed (README.txt is the repo readme)
+*.md
