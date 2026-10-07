@@ -22,10 +22,13 @@
 
 // TODO 1: Require the meetup model.
 //         Example: Week 5/server/blog-with-mongodb/controllers/blogs-controller.js
+const Meetup = require('../models/meetup-model');
+const {getUniqueCode} = require('../utils/generate-code');
 
 // TODO 2: Write every handler as exports.name = async (req, res) => { ... } with try/catch.
 //         In catch, log the error and reply 500 with JSON { error: "Server error" }.
 //         Always reply with JSON, never res.send text.
+
 
 // TODO 3: createMeetup
 //           - reads hostName, occasion, date, time from req.body
@@ -34,17 +37,75 @@
 //             and makes sure it isn't already used
 //           - saves the meetup with the host as its first member (suggested)
 //           - replies 201 with the saved meetup
+exports.createMeetup = async (req,res) => {
+    try {
+        const hostName = req.body.hostName;
+        const occasion = req.body.occasion;
+        const date = req.body.date;
+        const time = req.body.time;
+        if (!hostName || !occasion || !date || !time) {
+            return res.status(400).json({ error: "Field cannot be empty" });
+        }
+        const code = await getUniqueCode();
+        
+        const meetup = {
+            code : code,
+            hostName : hostName,
+            occasion : occasion,
+            date : date,
+            time : time,
+            members : [{name : hostName}]
+        }
+        let result = await Meetup.createMeetup(meetup);
+        res.status(201).json(result);
 
+    }catch(error) {
+        console.error("Error creating meetup:",error)
+        res.status(500).json({ error: "Server error" });
+    }
+};
 // TODO 4: getMeetup
 //           - code from req.params → 404 { error } if not found, otherwise the meetup
-
+exports.getMeetup = async (req,res) => {
+    try {
+        const code = req.params.code;
+        let result = await Meetup.findByCode(code);
+        if (!result) {
+            return res.status(404).json({ error: "Unknown code" });
+        }
+        res.json(result);
+    }catch(error) {
+        console.error('Error retrieving meetup: ',error)
+        res.status(500).json({ error: "Server error" });
+    }
+};
 // TODO 5: joinMeetup
 //           - name from the body (required → 400)
 //           - unknown code → 404
 //           - adds the member, replies 201 with the new member (including its _id)
+exports.joinMeetup = async (req,res) => {
+    try {
+        const name = req.body.name;
+        const code = req.params.code;
+        if (!name) {
+            return res.status(400).json({ error: "Field cannot be empty" });
+        }
+        let check = await Meetup.findByCode(code);
+        if (!check) {
+            return res.status(404).json({ error: "Unknown code" });
+        }
+        let result = await Meetup.addMember(code,name);
+        res.status(201).json(result);
+    }catch(error) {
+        console.error('Error joining meetup: ',error);
+        res.status(500).json({ error: "Server error" });
+    }
+};
 
 // TODO 6 (later, with AddressSearch): setStart
 //           - body { start: { label, postal, lat, lng } } → replies with the updated member
+exports.setStart = async (req,res) => {
 
+};
 // TIP: test each handler with the Postman collection in server/postman/ before touching
 //      the frontend.

@@ -14,21 +14,70 @@
 
 // TODO 1: Require Mongoose.
 //         Example: Week 5/server/blog-with-mongodb/models/blog-model.js
+const mongoose = require('mongoose');
 
 // TODO 2: Define a member sub-schema with:
 //           - name  (String, required, trimmed)
 //           - start (an object { label, postal, lat, lng }, default null)
 //         Tip: Mongoose gives every sub-document its own _id; that's the member id the
 //         frontend stores.
+const memberSchema = new mongoose.Schema(
+    {
+        name : {
+            type : String,
+            trim : true,
+            required : true
+        },
+        start : {
+            type : {
+                label : String,
+                postal : String,
+                lat : Number,
+                lng : Number
+            },
+            default : null
+
+        }
+    }
+)
 
 // TODO 3: Define the meetup schema:
 //           - code (String, required, unique)
 //           - hostName, occasion, date ("YYYY-MM-DD"), time ("HH:MM"): all Strings, required
 //           - members (an array of the member sub-schema)
 //           - createdAt (Date, defaults to now)
+const meetupSchema = new mongoose.Schema({
+    code : {
+        type : String,
+        required : true,
+        unique : true
+    },
+    hostName : {
+        type : String,
+        required : true
+    },
+    occasion : {
+        type : String,
+        required : true
+    },
+    date : {
+        type : String,
+        required : true
+    },
+    time : {
+        type : String,
+        required : true
+    },
+    members : [memberSchema],
+    createdAt : {
+        type : Date,
+        default : mongoose.now
+    }
+})
 
 // TODO 4: Create the model on the meetups collection, the same way blog-model.js creates
 //         Blog on blogs.
+const Meetup = mongoose.model('Meetup', meetupSchema,'meetups');
 
 // TODO 5: Export these CRUD functions in the course style (exports.name = function ...),
 //         each returning the Mongoose result:
@@ -36,5 +85,38 @@
 //           - findByCode(code)
 //           - addMember(code, name)
 //           - setMemberStart(code, memberId, start)   (this one later)
+exports.createMeetup = async function(data) {
+    const newMeetup = {
+        code : data.code,
+        hostName : data.hostName,
+        occasion : data.occasion,
+        date : data.date,
+        time : data.time,
+        members : data.members
+    };
+    return await Meetup.create(newMeetup);
+};
+
+exports.findByCode = async function(code) {
+    return await Meetup.findOne({code : code});
+}
+
+exports.addMember = async function(code, name) {
+    try {
+        const meetup = await Meetup.findOne({code : code});
+
+        if (!meetup) {
+            throw new Error('Meetup not found');
+        }
+        meetup.members.push({name : name});
+
+        const updatedMeetup = await meetup.save();
+        
+        return updatedMeetup.members[updatedMeetup.members.length-1];
+    } catch(error) {
+        console.error('Error adding members',error);
+        throw error;
+    }
+}
 
 // TIP: blog-model.js's addBlog uses Blog.find() without await. Don't copy that part.
