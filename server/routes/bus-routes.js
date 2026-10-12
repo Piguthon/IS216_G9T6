@@ -9,6 +9,8 @@
 const express = require('express');
 const router = express.Router();
 
-// TODO (P4): register the routes listed above
+const { getBusArrival } = require('../controllers/bus-controller');
+
+router.get('/:stopCode', getBusArrival);
 
 module.exports = router;
