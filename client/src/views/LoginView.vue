@@ -13,12 +13,84 @@
     - [ ] responsive
 -->
 <script setup>
-// TODO (P1)
+import { ref } from 'vue'
+import axios from 'axios'
+import { BASE_URL } from '../config'
+
+const email = ref('')
+const password = ref('')
+const message = ref('')
+const isLoggingIn = ref(false)
+
+async function submitLogin() {
+  if (isLoggingIn.value) return
+
+  message.value = ''
+  isLoggingIn.value = true
+
+  try {
+    const response = await axios.post(`${BASE_URL}/users/login`, {
+      email: email.value,
+      password: password.value,
+    })
+
+    localStorage.setItem('fairspot-token', response.data.token)
+    message.value = `Welcome back, ${response.data.user.name}!`
+    password.value = ''
+  } catch (error) {
+    message.value =
+      error.response?.data?.error ||
+      'Unable to log in. Check that the server is running.'
+  } finally {
+    isLoggingIn.value = false
+  }
+}
 </script>
 
 <template>
   <section data-testid="login-page">
     <h1 class="h3">Log in</h1>
-    <!-- TODO (P1): build this screen -->
+    <p class="text-muted">Welcome back to FairSpot.</p>
+
+    <form @submit.prevent="submitLogin">
+      <div class="mb-3">
+        <label for="email" class="form-label">Email</label>
+        <input
+          id="email"
+          v-model.trim="email"
+          type="email"
+          class="form-control"
+          placeholder="Enter your email"
+          autocomplete="username"
+          required
+        />
+      </div>
+
+      <div class="mb-3">
+        <label for="password" class="form-label">Password</label>
+        <input
+          id="password"
+          v-model="password"
+          type="password"
+          class="form-control"
+          placeholder="Enter your password"
+          autocomplete="current-password"
+          required
+        />
+      </div>
+
+      <p v-if="message" class="alert alert-info" role="status">
+        {{ message }}
+      </p>
+
+      <button
+        type="submit"
+        class="btn btn-primary w-100"
+        :disabled="isLoggingIn"
+      >
+        {{ isLoggingIn ? 'Logging in…' : 'Log in' }}
+      </button>
+    </form>
   </section>
 </template>
+
