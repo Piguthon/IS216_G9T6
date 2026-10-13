@@ -119,4 +119,51 @@ exports.addMember = async function(code, name) {
     }
 }
 
-// TIP: blog-model.js's addBlog uses Blog.find() without await. Don't copy that part.
+// setMemberStart(code, memberId, start)
+exports.setMemberStart = async function(code, memberId, start) {
+    const meetup = await Meetup.findOne({ code: code });
+    if (!meetup) {
+        throw new Error('Meetup not found');
+    }
+
+    const member = meetup.members.id(memberId);
+    if (!member) {
+        throw new Error('Member not found');
+    }
+
+    member.start = start;
+    await meetup.save();
+    
+    return member;
+};
+
+// updateDetails(code, fields)
+exports.updateDetails = async function(code, fields) {
+    return await Meetup.findOneAndUpdate(
+        { code: code },
+        { 
+            occasion: fields.occasion, 
+            date: fields.date, 
+            time: fields.time 
+        },
+        { new: true } // Returns the updated document
+    );
+};
+
+// deleteByCode(code)
+exports.deleteByCode = async function(code) {
+    return await Meetup.findOneAndDelete({ code: code });
+};
+
+// removeMember(code, memberId)
+exports.removeMember = async function(code, memberId) {
+    const meetup = await Meetup.findOne({ code: code });
+    if (!meetup) {
+        throw new Error('Meetup not found');
+    }
+
+    meetup.members.pull(memberId);
+    await meetup.save();
+    
+    return meetup;
+};

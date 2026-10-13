@@ -102,10 +102,111 @@ exports.joinMeetup = async (req,res) => {
     }
 };
 
-// TODO 6 (later, with AddressSearch): setStart
-//           - body { start: { label, postal, lat, lng } } → replies with the updated member
-exports.setStart = async (req,res) => {
+// setStart (PUT /:code/members/:memberId)
+exports.setStart = async (req, res) => {
+    try {
+        const code = req.params.code;
+        const memberId = req.params.memberId;
+        const { start } = req.body;
 
+        // Validation
+        if (!start || !start.label || typeof start.lat !== 'number' || typeof start.lng !== 'number') {
+            return res.status(400).json({ error: "Invalid start point. Label, lat (number), and lng (number) are required." });
+        }
+
+        try {
+            const updatedMember = await Meetup.setMemberStart(code, memberId, start);
+            res.status(200).json(updatedMember);
+        } catch (error) {
+            // Check if the error was thrown by our model for missing data
+            if (error.message === 'Meetup not found' || error.message === 'Member not found') {
+                return res.status(404).json({ error: error.message });
+            }
+            throw error; // Let the outer catch handle unexpected errors
+        }
+    } catch (error) {
+        console.error("Error setting start point:", error);
+        res.status(500).json({ error: "Server error" });
+    }
 };
-// TIP: test each handler with the Postman collection in server/postman/ before touching
-//      the frontend.
+
+// updateMeetup (PUT /:code)
+exports.updateMeetup = async (req, res) => {
+    try {
+        const code = req.params.code;
+        const { memberId, occasion, date, time } = req.body;
+
+        // Validation for required fields
+        if (!occasion || !date || !time) {
+            return res.status(400).json({ error: "Fields cannot be empty" });
+        }
+
+        // Find the meetup first to check the host
+        const meetup = await Meetup.findByCode(code);
+        if (!meetup) {
+            return res.status(404).json({ error: "Unknown code" });
+        }
+
+        // Check if the requester is the host (first member)
+        if (!meetup.members || meetup.members.length === 0 || meetup.members[0]._id.toString() !== memberId) {
+            return res.status(403).json({ error: "Only the host can edit the meetup" });
+        }
+
+        const updatedMeetup = await Meetup.updateDetails(code, { occasion, date, time });
+        res.status(200).json(updatedMeetup);
+
+    } catch (error) {
+        console.error("Error updating meetup:", error);
+        res.status(500).json({ error: "Server error" });
+    }
+};
+
+// deleteMeetup (DELETE /:code)
+exports.deleteMeetup = async (req, res) => {
+    try {
+        const code = req.params.code;
+        const { memberId } = req.body;
+
+        const meetup = await Meetup.findByCode(code);
+        if (!meetup) {
+            return res.status(404).json({ error: "Unknown code" });
+        }
+
+        // Check if the requester is the host (first member)
+        if (!meetup.members || meetup.members.length === 0 || meetup.members[0]._id.toString() !== memberId) {
+            return res.status(403).json({ error: "Only the host can delete the meetup" });
+        }
+
+        await Meetup.deleteByCode(code);
+        res.status(200).json({ message: "Meetup deleted successfully" });
+
+    } catch (error) {
+        console.error("Error deleting meetup:", error);
+        res.status(500).json({ error: "Server error" });
+    }
+};
+
+// leaveMeetup (DELETE /:code/members/:memberId)
+exports.leaveMeetup = async (req, res) => {
+    try {
+        const code = req.params.code;
+        const memberId = req.params.memberId;
+
+        const meetup = await Meetup.findByCode(code);
+        if (!meetup) {
+            return res.status(404).json({ error: "Unknown code" });
+        }
+
+        // Check if the requester is the host (first member)
+        if (meetup.members && meetup.members.length > 0 && meetup.members[0]._id.toString() === memberId) {
+            return res.status(400).json({ error: "The host must delete the meetup instead" });
+        }
+
+        await Meetup.removeMember(code, memberId);
+        res.status(200).json({ message: "Left meetup successfully" });
+
+    } catch (error) {
+        console.error("Error leaving meetup:", error);
+        res.status(500).json({ error: "Server error" });
+    }
+};
