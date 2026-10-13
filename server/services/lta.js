@@ -7,7 +7,7 @@
   FUNCTIONS:       getBusArrival(stopCode),
                    plus later getBusStops(skip) for P3's interchange seed (500 per page)
   REVISE:          Wk 5 Axios GET with headers config + try/catch
-  SAMPLE RESPONSE: fixtures/lta-bus-arrival.json
+  SAMPLE RESPONSE: sample-data/lta-bus-arrival.json
 */
 
 const axios = require('axios');

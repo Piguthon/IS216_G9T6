@@ -21,7 +21,7 @@
   },
   "nodemonConfig": {
     "ignore": [
-      "fixtures/*",
+      "sample-data/*",
       ".cache/*"
     ]
   }

@@ -7,7 +7,7 @@
                    there are no ratings (decision D6)
                    coverage is sparse, so try wider radii
   REVISE:          Wk 5 Axios GET with params + try/catch
-  SAMPLE RESPONSE: fixtures/geoapify-malls-bishan.json
+  SAMPLE RESPONSE: sample-data/geoapify-malls-bishan.json
 */
 
 const axios = require('axios');

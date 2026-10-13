@@ -34,7 +34,7 @@ REPO LAYOUT
       utils/                        pure helper functions (fairness ranking)
       data/                         static seed data (stations.json)
       scripts/                      seed scripts
-      fixtures/                     sample API responses (example data)
+      sample-data/                  sample API responses (example data)
     README.txt                      this file
 
 
