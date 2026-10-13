@@ -16,6 +16,9 @@
 import { ref } from 'vue'
 import axios from 'axios'
 import { BASE_URL } from '../config'
+import { useRouter } from 'vue-router'
+
+const router = useRouter()
 
 const email = ref('')
 const password = ref('')
@@ -37,6 +40,8 @@ async function submitLogin() {
     localStorage.setItem('fairspot-token', response.data.token)
     message.value = `Welcome back, ${response.data.user.name}!`
     password.value = ''
+    window.dispatchEvent(new Event('auth-change'));
+    router.push('/');
   } catch (error) {
     message.value =
       error.response?.data?.error ||

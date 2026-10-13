@@ -12,7 +12,38 @@
     - [ ] collapses on phones
 -->
 <script setup>
-// TODO (P4)
+import { ref, onMounted, onUnmounted } from 'vue'
+import { useRouter } from 'vue-router'
+
+const router = useRouter()
+const isLoggedIn = ref(false)
+
+// Re-evaluates whether the user is logged in
+const checkAuth = () => {
+  isLoggedIn.value = !!localStorage.getItem('fairspot-token')
+}
+
+onMounted(() => {
+  // Check the initial state when the app loads
+  checkAuth()
+  // Listen for the custom event fired by LoginView.vue
+  window.addEventListener('auth-change', checkAuth)
+})
+
+onUnmounted(() => {
+  window.removeEventListener('auth-change', checkAuth)
+})
+
+const handleLogout = async () => {
+  localStorage.removeItem('fairspot-token')
+  checkAuth() // Instantly updates the navbar UI
+  
+  try {
+    await router.push('/login')
+  } catch (err) {
+    console.error("Routing error on logout:", err)
+  }
+}
 </script>
 
 <!-- Responsive Bootstrap 5 navbar (https://getbootstrap.com/docs/5.3/components/navbar/) -->
@@ -53,11 +84,31 @@
               Join Meetup
             </RouterLink>
           </li>
-          <li class="nav-item">
-            <RouterLink class="nav-link" :to="{ name: 'login' }" data-testid="nav-login">
-              Log in
-            </RouterLink>
-          </li>
+          <template v-if="!isLoggedIn">
+            <li class="nav-item">
+              <RouterLink class="nav-link" to="/login" data-testid="nav-login">
+                Log in
+              </RouterLink>
+            </li>
+            <li class="nav-item">
+              <RouterLink class="nav-link" to="/signup" data-testid="nav-signup">
+                Sign up
+              </RouterLink>
+            </li>
+          </template>
+          
+          <template v-else>
+            <li class="nav-item">
+              <RouterLink class="nav-link" to="/profile" data-testid="nav-profile">
+                Profile
+              </RouterLink>
+            </li>
+            <li class="nav-item">
+              <a href="#" class="nav-link" @click.prevent="handleLogout" data-testid="nav-logout">
+                Log out
+              </a>
+            </li>
+          </template>
         </ul>
       </div>
     </div>
