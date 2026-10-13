@@ -1,0 +1,112 @@
+[
+  {
+    "stationId": "newton",
+    "name": "Newton",
+    "lat": 1.312318922409707,
+    "lng": 103.8379845940209,
+    "times": [
+      {
+        "memberId": "placeholder-a",
+        "name": "Member A",
+        "minutes": 24,
+        "firstBusStopCode": null
+      },
+      {
+        "memberId": "placeholder-b",
+        "name": "Member B",
+        "minutes": 27,
+        "firstBusStopCode": null
+      }
+    ],
+    "longestMinutes": 27,
+    "totalMinutes": 51
+  },
+  {
+    "stationId": "dhoby-ghaut",
+    "name": "Dhoby Ghaut",
+    "lat": 1.29870132536119,
+    "lng": 103.8461136779511,
+    "times": [
+      {
+        "memberId": "placeholder-a",
+        "name": "Member A",
+        "minutes": 29,
+        "firstBusStopCode": null
+      },
+      {
+        "memberId": "placeholder-b",
+        "name": "Member B",
+        "minutes": 26,
+        "firstBusStopCode": null
+      }
+    ],
+    "longestMinutes": 29,
+    "totalMinutes": 55
+  },
+  {
+    "stationId": "novena",
+    "name": "Novena",
+    "lat": 1.320440791201562,
+    "lng": 103.8438256187479,
+    "times": [
+      {
+        "memberId": "placeholder-a",
+        "name": "Member A",
+        "minutes": 22,
+        "firstBusStopCode": null
+      },
+      {
+        "memberId": "placeholder-b",
+        "name": "Member B",
+        "minutes": 31,
+        "firstBusStopCode": null
+      }
+    ],
+    "longestMinutes": 31,
+    "totalMinutes": 53
+  },
+  {
+    "stationId": "orchard",
+    "name": "Orchard",
+    "lat": 1.303980136817154,
+    "lng": 103.8322452443746,
+    "times": [
+      {
+        "memberId": "placeholder-a",
+        "name": "Member A",
+        "minutes": 33,
+        "firstBusStopCode": null
+      },
+      {
+        "memberId": "placeholder-b",
+        "name": "Member B",
+        "minutes": 25,
+        "firstBusStopCode": null
+      }
+    ],
+    "longestMinutes": 33,
+    "totalMinutes": 58
+  },
+  {
+    "stationId": "little-india",
+    "name": "Little India",
+    "lat": 1.30680019696175,
+    "lng": 103.8496470597377,
+    "times": [
+      {
+        "memberId": "placeholder-a",
+        "name": "Member A",
+        "minutes": 27,
+        "firstBusStopCode": null
+      },
+      {
+        "memberId": "placeholder-b",
+        "name": "Member B",
+        "minutes": 33,
+        "firstBusStopCode": null
+      }
+    ],
+    "longestMinutes": 33,
+    "totalMinutes": 60
+  }
+]
