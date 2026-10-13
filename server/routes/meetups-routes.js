@@ -25,5 +25,8 @@ router.post("/", meetupsController.createMeetup);
 router.get("/:code", meetupsController.getMeetup);
 router.post("/:code/members",meetupsController.joinMeetup);
 router.put("/:code/members/:memberId",meetupsController.setStart);
+router.put("/:code",meetupsController.updateMeetup);
+router.delete("/:code",meetupsController.deleteMeetup);
+router.delete("/:code/members/:memberId",meetupsController.leaveMeetup);
 
 module.exports = router;
