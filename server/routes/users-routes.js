@@ -11,6 +11,14 @@
 const express = require('express');
 const router = express.Router();
 
-// TODO (P1): register the routes listed above
+const {
+  signup,
+  login,
+  getProfile,
+} = require('../controllers/users-controller');
+
+router.post('/signup', signup);
+router.post('/login', login);
+router.get('/profile', getProfile);
 
 module.exports = router;

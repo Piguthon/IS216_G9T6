@@ -1,0 +1,72 @@
+[
+  {
+    "stationId": "bishan",
+    "name": "Bishan",
+    "type": "mrt",
+    "lat": 1.350838987847369,
+    "lng": 103.8481439645419
+  },
+  {
+    "stationId": "toa-payoh",
+    "name": "Toa Payoh",
+    "type": "mrt",
+    "lat": 1.332629280968894,
+    "lng": 103.8475021980474
+  },
+  {
+    "stationId": "novena",
+    "name": "Novena",
+    "type": "mrt",
+    "lat": 1.320440791201562,
+    "lng": 103.8438256187479
+  },
+  {
+    "stationId": "newton",
+    "name": "Newton",
+    "type": "mrt",
+    "lat": 1.312318922409707,
+    "lng": 103.8379845940209
+  },
+  {
+    "stationId": "orchard",
+    "name": "Orchard",
+    "type": "mrt",
+    "lat": 1.303980136817154,
+    "lng": 103.8322452443746
+  },
+  {
+    "stationId": "dhoby-ghaut",
+    "name": "Dhoby Ghaut",
+    "type": "mrt",
+    "lat": 1.29870132536119,
+    "lng": 103.8461136779511
+  },
+  {
+    "stationId": "city-hall",
+    "name": "City Hall",
+    "type": "mrt",
+    "lat": 1.292936722277808,
+    "lng": 103.8525855803662
+  },
+  {
+    "stationId": "raffles-place",
+    "name": "Raffles Place",
+    "type": "mrt",
+    "lat": 1.284125610436589,
+    "lng": 103.8514617123419
+  },
+  {
+    "stationId": "bugis",
+    "name": "Bugis",
+    "type": "mrt",
+    "lat": 1.30046508509718,
+    "lng": 103.8557067309327
+  },
+  {
+    "stationId": "little-india",
+    "name": "Little India",
+    "type": "mrt",
+    "lat": 1.30680019696175,
+    "lng": 103.8496470597377
+  }
+]

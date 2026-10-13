@@ -10,4 +10,25 @@
   SAMPLE RESPONSE: fixtures/lta-bus-arrival.json
 */
 
-// TODO (P4)
+const axios = require('axios');
+async function getBusArrival(stopCode) {
+  try {
+    const response = await axios.get(
+      'https://datamall2.mytransport.sg/ltaodataservice/v3/BusArrival',
+      {
+        params: {
+          BusStopCode: stopCode,
+        },
+        headers: {
+          AccountKey: process.env.LTA_ACCOUNT_KEY,
+        },
+        timeout: 15000,
+      },
+    );
+
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+}
+module.exports = { getBusArrival };
