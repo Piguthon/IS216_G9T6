@@ -1,5 +1,5 @@
 <!--
-  PITCH PLACEHOLDER (branch local/pitch-demo only; never committed). JS replaces this.
+  PITCH PLACEHOLDER (demo/pitch branch only; never merge into integration or main). JS replaces this.
   One ranked meeting point. Props: point, rank, selected. Emits: select (stationId).
 -->
 <script setup>

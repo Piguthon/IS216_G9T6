@@ -1,5 +1,5 @@
 /*
-  PITCH PLACEHOLDER (branch local/pitch-demo only; never committed)
+  PITCH PLACEHOLDER (demo/pitch branch only; never merge into integration or main)
   Returns the sample ranking in sample-data/ranking-placeholder.json, with the sample minutes
   given to this meetup's real members. No OneMap calls, no fairness rule.
   JS replaces this with the real ranking.

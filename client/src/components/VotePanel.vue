@@ -1,5 +1,5 @@
 <!--
-  PITCH PLACEHOLDER (branch local/pitch-demo only; never committed). JS replaces this.
+  PITCH PLACEHOLDER (demo/pitch branch only; never merge into integration or main). JS replaces this.
   Static voting UI: votes stay in this page only (no backend). One sample vote from
   "another member" is shown on the first option so the tallies aren't empty.
   Props: options (top ranked points), isHost (unused for the demo: everyone can confirm).

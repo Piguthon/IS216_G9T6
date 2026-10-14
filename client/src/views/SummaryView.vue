@@ -1,5 +1,5 @@
 <!--
-  PITCH PLACEHOLDER (branch local/pitch-demo only; never committed). I replaces this.
+  PITCH PLACEHOLDER (demo/pitch branch only; never merge into integration or main). I replaces this.
   The confirmed point comes from ?station= (set by the vote panel). Travel times are the
   placeholder ranking's. The bus-arrival card uses one fixed sample stop.
   ROUTE: /meetup/:code/summary

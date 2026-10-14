@@ -1,5 +1,5 @@
 <!--
-  PITCH PLACEHOLDER (branch local/pitch-demo only; never committed). JS replaces this.
+  PITCH PLACEHOLDER (demo/pitch branch only; never merge into integration or main). JS replaces this.
   Shows the placeholder ranking from GET /api/ranking/:code with S's MapView and VenueList.
   ROUTE: /meetup/:code/results
 -->
