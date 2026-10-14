@@ -64,25 +64,33 @@ async function search() {
 
 function handleSelect(result) {
   emit('select', result);
-  query.value = result.label; // Fill input with selected label
-  results.value = [];         // Hide the dropdown list
+  query.value = result.label;
+  results.value = [];
   hasSearched.value = false;
 }
 </script>
 
 <template>
   <div data-testid="address-search" class="position-relative">
-    <!-- Input Field -->
-    <input
-      type="text"
-      class="form-control"
-      v-model="query"
-      @input="search"
-      :placeholder="placeholder"
-      data-testid="address-input"
-    />
+    <div class="input-group">
+      <input
+        type="text"
+        class="form-control"
+        v-model="query"
+        @keyup.enter="search"
+        :placeholder="placeholder"
+        data-testid="address-input"
+      />
+      <button 
+        class="btn btn-primary" 
+        type="button" 
+        @click="search"
+        data-testid="address-search-btn"
+      >
+        Search
+      </button>
+    </div>
 
-    <!-- Suggestions List Group -->
     <ul v-if="results.length > 0" class="list-group position-absolute w-100 mt-1 shadow-sm" style="z-index: 1050;">
       <li
         v-for="(result, index) in results"
@@ -99,7 +107,6 @@ function handleSelect(result) {
       </li>
     </ul>
 
-    <!-- No Results Message -->
     <ul v-else-if="hasSearched && query.trim() !== ''" class="list-group position-absolute w-100 mt-1 shadow-sm" style="z-index: 1050;">
       <li class="list-group-item text-muted" data-testid="address-no-results">
         No results found.
