@@ -12,37 +12,15 @@
     - [ ] collapses on phones
 -->
 <script setup>
-import { ref, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
+import { useAuthStore } from '../stores/auth'
 
 const router = useRouter()
-const isLoggedIn = ref(false)
+const auth = useAuthStore()
 
-// Re-evaluates whether the user is logged in
-const checkAuth = () => {
-  isLoggedIn.value = !!localStorage.getItem('fairspot-token')
-}
-
-onMounted(() => {
-  // Check the initial state when the app loads
-  checkAuth()
-  // Listen for the custom event fired by LoginView.vue
-  window.addEventListener('auth-change', checkAuth)
-})
-
-onUnmounted(() => {
-  window.removeEventListener('auth-change', checkAuth)
-})
-
-const handleLogout = async () => {
-  localStorage.removeItem('fairspot-token')
-  checkAuth() // Instantly updates the navbar UI
-  
-  try {
-    await router.push('/login')
-  } catch (err) {
-    console.error("Routing error on logout:", err)
-  }
+function handleLogout() {
+  auth.logout()
+  router.push('/login')
 }
 </script>
 
@@ -84,7 +62,7 @@ const handleLogout = async () => {
               Join Meetup
             </RouterLink>
           </li>
-          <template v-if="!isLoggedIn">
+          <template v-if="!auth.isLoggedIn">
             <li class="nav-item">
               <RouterLink class="nav-link" to="/login" data-testid="nav-login">
                 Log in

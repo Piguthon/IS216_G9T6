@@ -44,7 +44,11 @@ async function loadArrivals() {
     services.value = response.data.services
   } catch (error) {
     services.value = []
-    message.value = error.response?.data?.error || 'Unable to load bus arrivals.'
+    if (error.response && error.response.data && error.response.data.error) {
+      message.value = error.response.data.error
+    } else {
+      message.value = 'Unable to load bus arrivals.'
+    }
   } finally {
     isLoading.value = false
   }

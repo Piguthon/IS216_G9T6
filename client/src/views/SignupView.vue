@@ -34,9 +34,11 @@ async function submitSignup() {
     message.value = `Account created for ${response.data.user.name}!`
     password.value = ''
   } catch (error) {
-    message.value =
-      error.response?.data?.error ||
-      'Unable to create your account. Check that the server is running.'
+    if (error.response && error.response.data && error.response.data.error) {
+      message.value = error.response.data.error
+    } else {
+      message.value = 'Unable to create your account. Check that the server is running.'
+    }
   }
 }
 </script>

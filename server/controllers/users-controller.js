@@ -1,9 +1,9 @@
 /*
   FILE:      controllers/users-controller.js
-  OWNER:     P1 (after the pitch) (team-written)
+  OWNER:     JX (team-written)
   PURPOSE:   sign-up, login and account endpoints (decision D5: bcrypt password hashes, a session
              token stored in MongoDB and sent by the client in the Authorization header)
-  FUNCTIONS: to be defined by P1
+  FUNCTIONS: signup, login, profile and saved-location CRUD
   REVISE:    Wk 5 request headers (req.header('Authorization'))
 */
 
@@ -111,46 +111,61 @@ async function login(req, res) {
 }
 }
 
-async function getProfile(req, res) {
-  const authorization = req.get('Authorization') || '';
+function getProfile(req, res) {
+  res.json({ user: { _id: req.user._id, name: req.user.name, email: req.user.email } });
+}
 
-  if (!authorization.startsWith('Bearer ')) {
-    return res.status(401).json({
-      error: 'Please log in to view your profile.',
-    });
+function getLocations(req, res) {
+  res.json(req.user.savedLocations);
+}
+
+async function addLocation(req, res) {
+  const { label, address, postal, lat, lng } = req.body;
+  if (typeof label !== 'string' || !label.trim() || label.trim().length > 60 ||
+      typeof address !== 'string' || !address.trim() || address.trim().length > 300 ||
+      typeof lat !== 'number' || !Number.isFinite(lat) || lat < -90 || lat > 90 ||
+      typeof lng !== 'number' || !Number.isFinite(lng) || lng < -180 || lng > 180 ||
+      typeof postal !== 'string' || (postal !== '' && !/^\d{6}$/.test(postal))) {
+    return res.status(400).json({ error: 'Enter a nickname (up to 60 characters) and select a valid address.' });
   }
-
-  const token = authorization.slice(7).trim();
-
-  if (!token) {
-    return res.status(401).json({
-      error: 'Please log in to view your profile.',
-    });
-  }
-
   try {
-    const user = await User.findOne({ sessionToken: token })
-      .select('name email');
-
-    if (!user) {
-      return res.status(401).json({
-        error: 'Your session is invalid. Please log in again.',
-      });
-    }
-
-    return res.json({
-      user: {
-        _id: user._id,
-        name: user.name,
-        email: user.email,
-      },
-    });
+    req.user.savedLocations.push({ label: label.trim(), address: address.trim(), postal, lat, lng });
+    await req.user.save();
+    res.status(201).json(req.user.savedLocations);
   } catch (error) {
-    console.error('Profile lookup failed:', error.message);
-
-    return res.status(500).json({
-      error: 'Unable to load your profile. Please try again.',
-    });
+    console.error('Saving location failed:', error.message);
+    res.status(500).json({ error: 'Unable to save your location. Please try again.' });
   }
 }
-module.exports = { signup, login, getProfile };
+
+async function renameLocation(req, res) {
+  const { label } = req.body;
+  if (typeof label !== 'string' || !label.trim() || label.trim().length > 60) {
+    return res.status(400).json({ error: 'Enter a nickname between 1 and 60 characters.' });
+  }
+  const location = req.user.savedLocations.find(item => String(item._id) === req.params.id);
+  if (!location) return res.status(404).json({ error: 'Saved location not found.' });
+  try {
+    location.label = label.trim();
+    await req.user.save();
+    res.json(req.user.savedLocations);
+  } catch (error) {
+    console.error('Renaming location failed:', error.message);
+    res.status(500).json({ error: 'Unable to rename your location. Please try again.' });
+  }
+}
+
+async function deleteLocation(req, res) {
+  const index = req.user.savedLocations.findIndex(item => String(item._id) === req.params.id);
+  if (index === -1) return res.status(404).json({ error: 'Saved location not found.' });
+  try {
+    req.user.savedLocations.splice(index, 1);
+    await req.user.save();
+    res.json(req.user.savedLocations);
+  } catch (error) {
+    console.error('Deleting location failed:', error.message);
+    res.status(500).json({ error: 'Unable to delete your location. Please try again.' });
+  }
+}
+
+module.exports = { signup, login, getProfile, getLocations, addLocation, renameLocation, deleteLocation };

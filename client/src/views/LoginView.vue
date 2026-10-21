@@ -17,8 +17,10 @@ import { ref } from 'vue'
 import axios from 'axios'
 import { BASE_URL } from '../config'
 import { useRouter } from 'vue-router'
+import { useAuthStore } from '../stores/auth'
 
 const router = useRouter()
+const auth = useAuthStore()
 
 const email = ref('')
 const password = ref('')
@@ -37,15 +39,16 @@ async function submitLogin() {
       password: password.value,
     })
 
-    localStorage.setItem('fairspot-token', response.data.token)
+    auth.login(response.data.token)
     message.value = `Welcome back, ${response.data.user.name}!`
     password.value = ''
-    window.dispatchEvent(new Event('auth-change'));
     router.push('/');
   } catch (error) {
-    message.value =
-      error.response?.data?.error ||
-      'Unable to log in. Check that the server is running.'
+    if (error.response && error.response.data && error.response.data.error) {
+      message.value = error.response.data.error
+    } else {
+      message.value = 'Unable to log in. Check that the server is running.'
+    }
   } finally {
     isLoggingIn.value = false
   }

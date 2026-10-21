@@ -26,29 +26,43 @@ defineProps({
   }
 });
 
-const emit = defineEmits(['select']);
+const emit = defineEmits(['select', 'clear']);
 
 const query = ref('');
 const results = ref([]);
 const hasSearched = ref(false);
+const isLoading = ref(false);
+const message = ref('');
+let requestNumber = 0;
+
+function handleInput() {
+  emit('clear');
+  search();
+}
 
 async function search() {
-  if (!query.value.trim()) {
-    results.value = [];
-    hasSearched.value = false;
-    return;
-  }
+  const currentRequest = ++requestNumber;
+  const searchText = query.value.trim();
+  results.value = [];
+  hasSearched.value = false;
+  message.value = '';
+  isLoading.value = false;
+  if (searchText.length < 3) return;
+  isLoading.value = true;
 
   try {
     const response = await axios.get('https://www.onemap.gov.sg/api/common/elastic/search', {
       params: {
-        searchVal: query.value,
+        searchVal: searchText,
         returnGeom: 'Y',
         getAddrDetails: 'Y',
         pageNum: 1
-      }
+      },
+      timeout: 10000
     });
 
+    // Only the latest search may update suggestions when responses arrive out of order.
+    if (currentRequest !== requestNumber) return;
     results.value = response.data.results.map(r => ({
       label: r.SEARCHVAL,
       postal: r.POSTAL !== 'NIL' ? r.POSTAL : '',
@@ -57,12 +71,19 @@ async function search() {
     }));
     hasSearched.value = true;
   } catch (error) {
+    if (currentRequest !== requestNumber) return;
     console.error('Error fetching addresses:', error);
     results.value = [];
+    message.value = 'Unable to search addresses. Please try again.';
+  } finally {
+    if (currentRequest === requestNumber) isLoading.value = false;
   }
 }
 
 function handleSelect(result) {
+  requestNumber++;
+  isLoading.value = false;
+  message.value = '';
   emit('select', result);
   query.value = result.label;
   results.value = [];
@@ -77,6 +98,7 @@ function handleSelect(result) {
         type="text"
         class="form-control"
         v-model="query"
+        @input="handleInput"
         @keyup.enter="search"
         :placeholder="placeholder"
         data-testid="address-input"
@@ -85,25 +107,29 @@ function handleSelect(result) {
         class="btn btn-primary" 
         type="button" 
         @click="search"
+        :disabled="isLoading || query.trim().length < 3"
         data-testid="address-search-btn"
       >
-        Search
+        {{ isLoading ? 'Searching...' : 'Search' }}
       </button>
     </div>
+    <p v-if="isLoading" class="small text-muted mt-2 mb-0" role="status">Searching addresses...</p>
+    <p v-else-if="message" class="small text-danger mt-2 mb-0" role="alert">{{ message }}</p>
+    <p v-else-if="query.trim().length > 0 && query.trim().length < 3" class="small text-muted mt-2 mb-0">Type at least 3 characters to search.</p>
 
-    <ul v-if="results.length > 0" class="list-group position-absolute w-100 mt-1 shadow-sm" style="z-index: 1050;">
+    <ul v-if="results.length > 0" class="list-group position-absolute w-100 mt-1 shadow-sm" style="z-index: 1050; max-height: 320px; overflow-y: auto;">
       <li
         v-for="(result, index) in results"
         :key="index"
-        class="list-group-item list-group-item-action"
-        @click="handleSelect(result)"
-        style="cursor: pointer;"
-        data-testid="address-suggestion"
+        class="list-group-item p-0"
       >
+        <button type="button" class="list-group-item-action border-0 bg-transparent text-start w-100 p-3"
+          @click="handleSelect(result)" data-testid="address-suggestion">
         <span class="fw-medium">{{ result.label }}</span>
         <span v-if="result.postal" class="text-muted small ms-2">
           S({{ result.postal }})
         </span>
+        </button>
       </li>
     </ul>
 
