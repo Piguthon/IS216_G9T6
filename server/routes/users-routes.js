@@ -14,17 +14,21 @@ const router = express.Router();
 const {
   signup,
   login,
+  logout,
   getProfile,
   getLocations,
   addLocation,
   renameLocation,
   deleteLocation,
+  deleteAccount,
 } = require('../controllers/users-controller');
 
 router.post('/signup', signup);
 router.post('/login', login);
+router.post('/logout', logout);
 const { requireAuth } = require('../middleware/auth');
 router.get('/me', requireAuth, getProfile);
+router.delete('/me', requireAuth, deleteAccount);
 router.get('/profile', requireAuth, getProfile);
 router.get('/me/locations', requireAuth, getLocations);
 router.post('/me/locations', requireAuth, addLocation);

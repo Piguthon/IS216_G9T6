@@ -41,6 +41,7 @@ const userSchema = new mongoose.Schema(
       select: false,
     },
     savedLocations: [locationSchema],
+    sessionExpiresAt: { type: Date },
   },
   {
     timestamps: true,

@@ -26,6 +26,7 @@ const email = ref('')
 const password = ref('')
 const message = ref('')
 const isLoggingIn = ref(false)
+const rememberMe = ref(false)
 
 async function submitLogin() {
   if (isLoggingIn.value) return
@@ -37,9 +38,10 @@ async function submitLogin() {
     const response = await axios.post(`${BASE_URL}/users/login`, {
       email: email.value,
       password: password.value,
+      rememberMe: rememberMe.value,
     })
 
-    auth.login(response.data.token)
+    auth.login(response.data.token, rememberMe.value, response.data.expiresAt)
     message.value = `Welcome back, ${response.data.user.name}!`
     password.value = ''
     router.push('/');
@@ -87,6 +89,11 @@ async function submitLogin() {
         />
       </div>
 
+      <div class="form-check mb-3">
+        <input id="remember-me" v-model="rememberMe" type="checkbox" class="form-check-input" />
+        <label for="remember-me" class="form-check-label">Remember me on this device</label>
+        <p class="form-text mb-0">Stay signed in for 7 days.</p>
+      </div>
       <p v-if="message" class="alert alert-info" role="status">
         {{ message }}
       </p>

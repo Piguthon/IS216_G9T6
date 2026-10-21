@@ -27,6 +27,11 @@ async function signup(req, res) {
     });
   }
 
+  if (password.length < 8 || !/[A-Z]/.test(password) || !/[a-z]/.test(password) ||
+      !/[0-9]/.test(password) || !/[^A-Za-z0-9\s]/.test(password)) {
+    return res.status(400).json({ error: 'Use at least 8 characters with an uppercase letter, lowercase letter, digit and symbol.' });
+  }
+
   try {
   const passwordHash = await bcrypt.hash(password, 12);
   const token = crypto.randomBytes(32).toString('hex');
@@ -36,10 +41,12 @@ async function signup(req, res) {
     email: email.trim().toLowerCase(),
     passwordHash,
     sessionToken: token,
+    sessionExpiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000),
   });
 
   return res.status(201).json({
     token,
+    expiresAt: user.sessionExpiresAt,
     user: {
       _id: user._id,
       name: user.name,
@@ -92,10 +99,13 @@ async function login(req, res) {
   const token = crypto.randomBytes(32).toString('hex');
 
   user.sessionToken = token;
+  const sessionDays = req.body.rememberMe === true ? 7 : 1;
+  user.sessionExpiresAt = new Date(Date.now() + sessionDays * 24 * 60 * 60 * 1000);
   await user.save();
 
   return res.status(200).json({
     token,
+    expiresAt: user.sessionExpiresAt,
     user: {
       _id: user._id,
       name: user.name,
@@ -168,4 +178,38 @@ async function deleteLocation(req, res) {
   }
 }
 
-module.exports = { signup, login, getProfile, getLocations, addLocation, renameLocation, deleteLocation };
+async function deleteAccount(req, res) {
+  const { password } = req.body || {};
+  if (typeof password !== 'string' || !password) {
+    return res.status(400).json({ error: 'Enter your current password to delete your account.' });
+  }
+  try {
+    const user = await User.findOne({ _id: req.user._id }).select('+passwordHash');
+    if (!user || !(await bcrypt.compare(password, user.passwordHash))) {
+      return res.status(403).json({ error: 'Incorrect password. Your account has not been deleted.' });
+    }
+    await User.deleteOne({ _id: req.user._id });
+    res.json({ message: 'Your account and saved locations have been deleted.' });
+  } catch (error) {
+    console.error('Account deletion failed:', error.message);
+    res.status(500).json({ error: 'Unable to delete your account. Please try again.' });
+  }
+}
+
+async function logout(req, res) {
+  const authorization = req.get('Authorization') || '';
+  const token = authorization.startsWith('Bearer ') ? authorization.slice(7).trim() : '';
+  if (!token) return res.status(400).json({ error: 'A session token is required.' });
+  try {
+    // Match the submitted token so an old logout cannot revoke a newer login.
+    await User.updateOne({ sessionToken: token }, {
+      $unset: { sessionToken: '', sessionExpiresAt: '' },
+    });
+    res.json({ message: 'Logged out.' });
+  } catch (error) {
+    console.error('Logout failed:', error.message);
+    res.status(500).json({ error: 'Unable to log out. Please try again.' });
+  }
+}
+
+module.exports = { signup, login, logout, getProfile, getLocations, addLocation, renameLocation, deleteLocation, deleteAccount };

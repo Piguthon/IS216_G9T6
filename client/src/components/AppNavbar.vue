@@ -13,14 +13,27 @@
 -->
 <script setup>
 import { useRouter } from 'vue-router'
+import { ref } from 'vue'
 import { useAuthStore } from '../stores/auth'
 
 const router = useRouter()
 const auth = useAuthStore()
 
-function handleLogout() {
-  auth.logout()
-  router.push('/login')
+const logoutMessage = ref('')
+const isLoggingOut = ref(false)
+
+async function handleLogout() {
+  if (isLoggingOut.value) return
+  isLoggingOut.value = true
+  logoutMessage.value = ''
+  try {
+    await auth.logout()
+    router.push('/login')
+  } catch {
+    logoutMessage.value = 'Logout failed. Please try again.'
+  } finally {
+    isLoggingOut.value = false
+  }
 }
 </script>
 
@@ -91,4 +104,5 @@ function handleLogout() {
       </div>
     </div>
   </nav>
+  <p v-if="logoutMessage" class="alert alert-danger container mt-2" role="alert">{{ logoutMessage }}</p>
 </template>

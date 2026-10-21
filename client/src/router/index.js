@@ -11,6 +11,7 @@ import SummaryView from '../views/SummaryView.vue'
 import LoginView from '../views/LoginView.vue'
 import SignupView from '../views/SignupView.vue'
 import ProfileView from '../views/ProfileView.vue'
+import { useAuthStore } from '../stores/auth'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -60,6 +61,7 @@ const router = createRouter({
       path: '/profile',
       name: 'profile',
       component: ProfileView,
+      meta: { requiresAuth: true },
     },
     // Unknown URLs go home
     {
@@ -67,6 +69,14 @@ const router = createRouter({
       redirect: '/',
     },
   ],
+})
+
+// Week 11 navigation guard: also runs when using the browser Back button.
+router.beforeEach((to) => {
+  if (!to.meta.requiresAuth) return true
+  const auth = useAuthStore()
+  if (auth.isLoggedIn) return true
+  return { path: '/login' }
 })
 
 export default router

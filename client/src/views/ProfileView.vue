@@ -32,6 +32,36 @@ const isSaving = ref(false)
 const locationMessage = ref('')
 const locationError = ref(false)
 const searchKey = ref(0)
+const showDeleteAccount = ref(false)
+const deletionPassword = ref('')
+const deletionMessage = ref('')
+const isDeletingAccount = ref(false)
+
+async function deleteAccount() {
+  if (isDeletingAccount.value || isSaving.value || !deletionPassword.value) return
+  isDeletingAccount.value = true
+  deletionMessage.value = ''
+  try {
+    await axios.delete(`${BASE_URL}/users/me`, {
+      headers: { Authorization: `Bearer ${auth.token}` },
+      data: { password: deletionPassword.value },
+    })
+    auth.clearSession()
+    router.push('/signup')
+  } catch (error) {
+    if (error.response && error.response.status === 401) {
+      auth.clearSession()
+      router.push('/login')
+    }
+    deletionMessage.value = 'Unable to delete your account. Please try again.'
+    if (error.response && error.response.data && error.response.data.error) {
+      deletionMessage.value = error.response.data.error
+    }
+  } finally {
+    deletionPassword.value = ''
+    isDeletingAccount.value = false
+  }
+}
 const initials = computed(() => {
   if (!user.value) return ''
   return user.value.name.trim().split(/\s+/).slice(0, 2).map(part => part[0]).join('').toUpperCase()
@@ -40,7 +70,7 @@ const initials = computed(() => {
 function showLocationError(error) {
   locationError.value = true
   if (error.response && error.response.status === 401) {
-    auth.logout()
+    auth.clearSession()
     router.push('/login')
   }
   locationMessage.value = 'Unable to update saved locations. Please try again.'
@@ -112,7 +142,7 @@ async function loadProfile() {
   const token = auth.token
   if (!token) {
     isLoading.value = false
-    auth.logout()
+    auth.clearSession()
     router.push('/login')
     return
   }
@@ -131,7 +161,7 @@ async function loadProfile() {
     locations.value = locationsResponse.data
   } catch (error) {
     if (error.response && error.response.status === 401) {
-      auth.logout()
+      auth.clearSession()
       router.push('/login')
       return
     }
@@ -152,7 +182,6 @@ onMounted(loadProfile)
 <template>
   <section data-testid="profile-page">
     <h1 class="h3 mb-2">Your profile</h1>
-    <p class="text-muted mb-4">Your account and familiar starting points, all in one place.</p>
 
     <p v-if="isLoading" role="status">Loading your profile…</p>
 
@@ -163,7 +192,7 @@ onMounted(loadProfile)
       </button>
     </div>
 
-    <div v-else-if="user" class="row g-4">
+    <div v-else-if="user && auth.isLoggedIn" class="row g-4">
       <div class="col-lg-4">
         <div class="card shadow-sm border-0">
           <div class="card-body p-4">
@@ -199,6 +228,25 @@ onMounted(loadProfile)
                   {{ isSaving ? 'Saving...' : 'Save location' }}
                 </button>
               </fieldset>
+            </form>
+          </div>
+        </div>
+        <div class="card border-danger mt-4">
+          <div class="card-body p-4">
+            <h2 class="h5">Delete account</h2>
+            <p class="text-muted">Permanently delete your account and saved locations. This cannot be undone.</p>
+            <button v-if="!showDeleteAccount" type="button" class="btn btn-outline-danger"
+              @click="showDeleteAccount = true">Delete my account</button>
+            <form v-else @submit.prevent="deleteAccount">
+              <label for="deletion-password" class="form-label">Confirm your current password</label>
+              <input id="deletion-password" v-model="deletionPassword" type="password"
+                class="form-control mb-3" autocomplete="current-password" required :disabled="isDeletingAccount" />
+              <p v-if="deletionMessage" class="alert alert-danger" role="alert">{{ deletionMessage }}</p>
+              <button type="submit" class="btn btn-danger me-2" :disabled="isDeletingAccount || isSaving || !deletionPassword">
+                {{ isDeletingAccount ? 'Deleting...' : 'Permanently delete account' }}
+              </button>
+              <button type="button" class="btn btn-outline-secondary" :disabled="isDeletingAccount"
+                @click="showDeleteAccount = false; deletionPassword = ''; deletionMessage = ''">Cancel</button>
             </form>
           </div>
         </div>
