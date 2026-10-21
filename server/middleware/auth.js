@@ -8,8 +8,8 @@ exports.requireAuth = async (req, res, next) => {
 
   try {
     const user = await User.findOne({ sessionToken: token });
-    if (!user || !user.sessionExpiresAt || new Date(user.sessionExpiresAt).getTime() <= Date.now()) {
-      return res.status(401).json({ error: 'Your session has expired or is invalid. Please log in again.' });
+    if (!user) {
+      return res.status(401).json({ error: 'Your session is invalid. Please log in again.' });
     }
     req.user = user;
     next();

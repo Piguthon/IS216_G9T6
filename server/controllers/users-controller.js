@@ -41,12 +41,10 @@ async function signup(req, res) {
     email: email.trim().toLowerCase(),
     passwordHash,
     sessionToken: token,
-    sessionExpiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000),
   });
 
   return res.status(201).json({
     token,
-    expiresAt: user.sessionExpiresAt,
     user: {
       _id: user._id,
       name: user.name,
@@ -99,13 +97,10 @@ async function login(req, res) {
   const token = crypto.randomBytes(32).toString('hex');
 
   user.sessionToken = token;
-  const sessionDays = req.body.rememberMe === true ? 7 : 1;
-  user.sessionExpiresAt = new Date(Date.now() + sessionDays * 24 * 60 * 60 * 1000);
   await user.save();
 
   return res.status(200).json({
     token,
-    expiresAt: user.sessionExpiresAt,
     user: {
       _id: user._id,
       name: user.name,
@@ -203,7 +198,7 @@ async function logout(req, res) {
   try {
     // Match the submitted token so an old logout cannot revoke a newer login.
     await User.updateOne({ sessionToken: token }, {
-      $unset: { sessionToken: '', sessionExpiresAt: '' },
+      sessionToken: '',
     });
     res.json({ message: 'Logged out.' });
   } catch (error) {

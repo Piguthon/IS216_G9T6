@@ -59,7 +59,7 @@ async function submitSignup() {
       password: password.value,
     })
 
-    auth.login(response.data.token, false, response.data.expiresAt)
+    auth.login(response.data.token)
     password.value = ''
     confirmPassword.value = ''
     showPassword.value = false

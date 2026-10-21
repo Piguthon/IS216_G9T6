@@ -5,22 +5,16 @@ import axios from 'axios'
 import { BASE_URL } from '../config'
 
 export const useAuthStore = defineStore('auth', () => {
-  const token = ref('')
+  const token = ref(localStorage.getItem('fairspot-token') || '')
   const isLoggedIn = computed(() => token.value !== '')
 
   function clearSession() {
     localStorage.removeItem('fairspot-token')
-    localStorage.removeItem('fairspot-expires-at')
-    sessionStorage.removeItem('fairspot-token')
-    sessionStorage.removeItem('fairspot-expires-at')
     token.value = ''
   }
 
-  function login(sessionToken, remember = false, expiresAt) {
-    clearSession()
-    const storage = remember ? localStorage : sessionStorage
-    storage.setItem('fairspot-token', sessionToken)
-    storage.setItem('fairspot-expires-at', expiresAt)
+  function login(sessionToken) {
+    localStorage.setItem('fairspot-token', sessionToken)
     token.value = sessionToken
   }
 
@@ -31,14 +25,6 @@ export const useAuthStore = defineStore('auth', () => {
         timeout: 10000,
       })
     }
-    clearSession()
-  }
-
-  const savedToken = sessionStorage.getItem('fairspot-token') || localStorage.getItem('fairspot-token')
-  const savedExpiry = sessionStorage.getItem('fairspot-expires-at') || localStorage.getItem('fairspot-expires-at')
-  if (savedToken && new Date(savedExpiry).getTime() > Date.now()) {
-    token.value = savedToken
-  } else {
     clearSession()
   }
 
