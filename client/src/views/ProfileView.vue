@@ -19,6 +19,8 @@ import { BASE_URL } from '../config'
 import { useAuthStore } from '../stores/auth'
 import AddressSearch from '../components/AddressSearch.vue'
 import SavedLocationList from '../components/SavedLocationList.vue'
+import FavouriteVenueList from '../components/FavouriteVenueList.vue'
+import AccountSettings from '../components/AccountSettings.vue'
 
 const router = useRouter()
 const auth = useAuthStore()
@@ -30,15 +32,25 @@ const nickname = ref('')
 const selectedAddress = ref(null)
 const isSaving = ref(false)
 const locationMessage = ref('')
+const locationMessageTarget = ref('list')
 const locationError = ref(false)
 const searchKey = ref(0)
+const locationsListKey = ref(0)
 const showDeleteAccount = ref(false)
 const deletionPassword = ref('')
 const deletionMessage = ref('')
 const isDeletingAccount = ref(false)
+const showFinalDeleteConfirm = ref(false)
+
+function confirmAccountDeletion() {
+  if (!isDeletingAccount.value && !isSaving.value && deletionPassword.value) {
+    showFinalDeleteConfirm.value = true
+  }
+}
 
 async function deleteAccount() {
-  if (isDeletingAccount.value || isSaving.value || !deletionPassword.value) return
+  if (isDeletingAccount.value || isSaving.value || !deletionPassword.value || !showFinalDeleteConfirm.value) return
+  showFinalDeleteConfirm.value = false
   isDeletingAccount.value = true
   deletionMessage.value = ''
   try {
@@ -81,6 +93,7 @@ function showLocationError(error) {
 
 async function addLocation() {
   if (isSaving.value || !selectedAddress.value || !nickname.value.trim()) return
+  locationMessageTarget.value = 'add'
   isSaving.value = true
   locationMessage.value = ''
   try {
@@ -102,17 +115,45 @@ async function addLocation() {
   }
 }
 
-async function renameLocation(id, label) {
+async function renameLocation(id, label, replacementAddress) {
   if (isSaving.value) return
+  locationMessageTarget.value = 'list'
   isSaving.value = true
   locationMessage.value = ''
   try {
-    const response = await axios.put(`${BASE_URL}/users/me/locations/${id}`, { label }, {
+    const details = { label }
+    if (replacementAddress) {
+      details.address = replacementAddress.label
+      details.postal = replacementAddress.postal
+      details.lat = replacementAddress.lat
+      details.lng = replacementAddress.lng
+    }
+    const response = await axios.put(`${BASE_URL}/users/me/locations/${id}`, details, {
       headers: { Authorization: `Bearer ${auth.token}` },
     })
     locations.value = response.data
     locationError.value = false
-    locationMessage.value = 'Location renamed.'
+    locationMessage.value = 'Location updated.'
+    locationsListKey.value++
+  } catch (error) {
+    showLocationError(error)
+  } finally {
+    isSaving.value = false
+  }
+}
+
+async function setDefaultLocation(id) {
+  if (isSaving.value) return
+  locationMessageTarget.value = 'list'
+  isSaving.value = true
+  locationMessage.value = ''
+  try {
+    const response = await axios.put(`${BASE_URL}/users/me/locations/${id}/default`, {}, {
+      headers: { Authorization: `Bearer ${auth.token}` },
+    })
+    locations.value = response.data
+    locationError.value = false
+    locationMessage.value = 'Default location updated.'
   } catch (error) {
     showLocationError(error)
   } finally {
@@ -122,6 +163,7 @@ async function renameLocation(id, label) {
 
 async function deleteLocation(id) {
   if (isSaving.value) return
+  locationMessageTarget.value = 'list'
   isSaving.value = true
   locationMessage.value = ''
   try {
@@ -208,10 +250,9 @@ onMounted(loadProfile)
         <div class="card shadow-sm border-0 mb-4">
           <div class="card-body p-4">
             <h2 class="h5">Saved locations</h2>
-            <p class="text-muted small">Keep the places you usually travel from.</p>
-            <p v-if="locationMessage" :class="locationError ? 'alert alert-danger' : 'alert alert-success'" role="status">{{ locationMessage }}</p>
-            <SavedLocationList :locations="locations" :busy="isSaving"
-              @rename="renameLocation" @delete="deleteLocation" />
+            <p v-if="locationMessage && locationMessageTarget === 'list'" :class="locationError ? 'alert alert-danger' : 'alert alert-success'" :role="locationError ? 'alert' : 'status'">{{ locationMessage }}</p>
+            <SavedLocationList :key="locationsListKey" :locations="locations" :busy="isSaving"
+              @rename="renameLocation" @delete="deleteLocation" @default="setDefaultLocation" />
           </div>
         </div>
         <div class="card shadow-sm border-0">
@@ -219,7 +260,7 @@ onMounted(loadProfile)
             <h2 class="h5 mb-3">Add a location</h2>
             <form @submit.prevent="addLocation" @keydown.enter.prevent>
               <fieldset :disabled="isSaving">
-                <label for="location-nickname" class="form-label">Nickname</label>
+                <label for="location-nickname" class="form-label">Name</label>
                 <input id="location-nickname" v-model.trim="nickname" class="form-control mb-3"
                   placeholder="e.g. Home, School or Work" maxlength="60" required />
                 <p class="form-label mb-2">Search address or postal code</p>
@@ -228,25 +269,32 @@ onMounted(loadProfile)
                   {{ isSaving ? 'Saving...' : 'Save location' }}
                 </button>
               </fieldset>
+              <p v-if="locationMessage && locationMessageTarget === 'add'" class="alert mt-3 mb-0"
+                :class="locationError ? 'alert-danger' : 'alert-success'" :role="locationError ? 'alert' : 'status'">{{ locationMessage }}</p>
             </form>
           </div>
         </div>
-        <div class="card border-danger mt-4">
+        <FavouriteVenueList />
+        <AccountSettings :user="user" @updated="user = $event" />
+        <div class="card border-0 shadow-sm mt-4">
           <div class="card-body p-4">
-            <h2 class="h5">Delete account</h2>
-            <p class="text-muted">Permanently delete your account and saved locations. This cannot be undone.</p>
             <button v-if="!showDeleteAccount" type="button" class="btn btn-outline-danger"
               @click="showDeleteAccount = true">Delete my account</button>
-            <form v-else @submit.prevent="deleteAccount">
+            <form v-else @submit.prevent="confirmAccountDeletion">
               <label for="deletion-password" class="form-label">Confirm your current password</label>
               <input id="deletion-password" v-model="deletionPassword" type="password"
-                class="form-control mb-3" autocomplete="current-password" required :disabled="isDeletingAccount" />
+                class="form-control mb-3" autocomplete="current-password" required :disabled="isDeletingAccount || showFinalDeleteConfirm" />
               <p v-if="deletionMessage" class="alert alert-danger" role="alert">{{ deletionMessage }}</p>
-              <button type="submit" class="btn btn-danger me-2" :disabled="isDeletingAccount || isSaving || !deletionPassword">
+              <button type="submit" class="btn btn-danger me-2" :disabled="isDeletingAccount || isSaving || !deletionPassword || showFinalDeleteConfirm">
                 {{ isDeletingAccount ? 'Deleting...' : 'Permanently delete account' }}
               </button>
               <button type="button" class="btn btn-outline-secondary" :disabled="isDeletingAccount"
-                @click="showDeleteAccount = false; deletionPassword = ''; deletionMessage = ''">Cancel</button>
+                @click="showDeleteAccount = false; showFinalDeleteConfirm = false; deletionPassword = ''; deletionMessage = ''">Cancel</button>
+              <div v-if="showFinalDeleteConfirm" class="alert alert-secondary mt-3 mb-0" role="alert">
+                <p class="text-danger">Permanently delete your account? This cannot be undone.</p>
+                <button type="button" class="btn btn-danger me-2" @click="deleteAccount">Confirm</button>
+                <button type="button" class="btn btn-outline-secondary" @click="showFinalDeleteConfirm = false">Cancel</button>
+              </div>
             </form>
           </div>
         </div>

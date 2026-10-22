@@ -83,7 +83,7 @@ onMounted(loadArrivals)
       </div>
 
       <p v-if="isLoading" role="status">Loading bus arrivals…</p>
-      <p v-else-if="message" class="text-danger" role="alert">
+      <p v-else-if="message" class="alert alert-danger" role="alert">
         {{ message }}
       </p>
       <p v-else-if="services.length === 0" class="text-muted">

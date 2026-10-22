@@ -114,7 +114,7 @@ function handleSelect(result) {
       </button>
     </div>
     <p v-if="isLoading" class="small text-muted mt-2 mb-0" role="status">Searching addresses...</p>
-    <p v-else-if="message" class="small text-danger mt-2 mb-0" role="alert">{{ message }}</p>
+    <p v-else-if="message" class="alert alert-danger small mt-2 mb-0" role="alert">{{ message }}</p>
     <p v-else-if="query.trim().length > 0 && query.trim().length < 3" class="small text-muted mt-2 mb-0">Type at least 3 characters to search.</p>
 
     <ul v-if="results.length > 0" class="list-group position-absolute w-100 mt-1 shadow-sm" style="z-index: 1050; max-height: 320px; overflow-y: auto;">

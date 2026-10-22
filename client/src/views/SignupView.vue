@@ -155,7 +155,7 @@ async function submitSignup() {
         </p>
       </div>
 
-      <p v-if="message" class="alert alert-info" role="status">
+      <p v-if="message" class="alert alert-danger" role="alert">
         {{ message }}
       </p>
 

@@ -18,12 +18,16 @@ const router = express.Router();
 // TODO 1: Require the meetups controller.
 //         Example: Week 5/server/blog-with-mongodb/routes/blogs-routes.js
 const meetupsController = require('../controllers/meetups-controller');
+const { requireAuth } = require('../middleware/auth');
 // TODO 2: Register the endpoints from the header, each pointing at its controller function.
 //         Start with POST / and GET /:code, then POST /:code/members,
 //         then PUT /:code/members/:memberId later.
-router.post("/", meetupsController.createMeetup);
+router.post("/", requireAuth, meetupsController.createMeetup);
 router.get("/:code", meetupsController.getMeetup);
-router.post("/:code/members",meetupsController.joinMeetup);
+router.post("/:code/members", (req, res, next) => {
+    if (req.get('Authorization')) return requireAuth(req, res, next);
+    next();
+}, meetupsController.joinMeetup);
 router.put("/:code/members/:memberId",meetupsController.setStart);
 router.put("/:code",meetupsController.updateMeetup);
 router.delete("/:code",meetupsController.deleteMeetup);

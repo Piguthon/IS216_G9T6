@@ -9,6 +9,7 @@
 -->
 <script setup>
 import { ref } from 'vue';
+import { todayInSingapore } from '../utils/meetup-date';
 
 const props = defineProps({
   meetup: {
@@ -23,6 +24,7 @@ const occasion = ref(props.meetup.occasion);
 const date = ref(props.meetup.date);
 const time = ref(props.meetup.time);
 const errorMessage = ref('');
+const today = ref(todayInSingapore());
 
 const handleSave = () => {
   if (!occasion.value || !date.value || !time.value) {
@@ -30,6 +32,11 @@ const handleSave = () => {
     return;
   }
   
+  today.value = todayInSingapore();
+  if (date.value < today.value) {
+    errorMessage.value = 'Choose today or a future date.';
+    return;
+  }
   errorMessage.value = '';
   emit('save', {
     occasion: occasion.value,
@@ -71,6 +78,7 @@ const handleCancel = () => {
             id="date" 
             class="form-control" 
             v-model="date" 
+            :min="today"
             data-testid="edit-date"
           >
         </div>

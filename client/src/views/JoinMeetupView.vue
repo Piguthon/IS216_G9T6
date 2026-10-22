@@ -22,8 +22,10 @@ import { ref } from 'vue';
 import axios from 'axios';
 import { useRouter } from 'vue-router';
 import { BASE_URL } from '../config';
+import { useAuthStore } from '../stores/auth';
 
 const router = useRouter();
+const auth = useAuthStore();
 // TODO 2: Refs for the code, name, error message and "is joining".
 const code = ref('');
 const name = ref('');
@@ -37,9 +39,10 @@ const isJoining = ref(false);
 //           - on success, save the new member _id in localStorage (fairspot-member-<code>)
 //             and open /meetup/<code>
 async function joinMeetup() {
+  if (isJoining.value) return;
   errorMessage.value = '';
 
-  if (!code.value || !name.value) {
+  if (!code.value || (!auth.isLoggedIn && !name.value.trim())) {
     errorMessage.value = 'Please fill out all fields to join the meetup.';
     return;
   }
@@ -48,9 +51,16 @@ async function joinMeetup() {
   isJoining.value = true;
 
   try {
+    let memberName = name.value.trim();
+    if (auth.isLoggedIn) {
+      const profile = await axios.get(`${BASE_URL}/users/me`, {
+        headers: { Authorization: `Bearer ${auth.token}` },
+      });
+      memberName = profile.data.user.name;
+    }
     const response = await axios.post(`${BASE_URL}/meetups/${normalizedCode}/members`, {
-      name: name.value
-    });
+      name: memberName
+    }, auth.isLoggedIn ? { headers: { Authorization: `Bearer ${auth.token}` } } : {});
 
     // Save the new member _id in localStorage
     const newMemberId = response.data._id;
@@ -60,7 +70,10 @@ async function joinMeetup() {
     router.push(`/meetup/${normalizedCode}`);
     
   } catch (error) {
-    if (error.response && error.response.status === 404) {
+    if (error.response && error.response.status === 401) {
+      auth.clearSession();
+      errorMessage.value = 'Your session is invalid. Please log in again or enter a guest name.';
+    } else if (error.response && error.response.status === 404) {
       errorMessage.value = 'No meetup with that code was found.';
     } else if (error.response && error.response.data && error.response.data.error) {
       errorMessage.value = error.response.data.error;
@@ -94,7 +107,7 @@ async function joinMeetup() {
               placeholder="e.g. ABCDEF"
             />
           </div>
-          <div class="mb-3">
+          <div v-if="!auth.isLoggedIn" class="mb-3">
             <label for="name" class="form-label">Your Name</label>
             <input 
               type="text" 

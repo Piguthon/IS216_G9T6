@@ -25,11 +25,14 @@ import {ref} from 'vue';
 import axios from 'axios';
 import {BASE_URL} from '../config';
 import { useRouter } from 'vue-router';
+import { useAuthStore } from '../stores/auth';
+import { todayInSingapore } from '../utils/meetup-date';
 
 const router = useRouter();
+const auth = useAuthStore();
+const today = ref(todayInSingapore());
 // TODO 2: Refs for the four inputs (host name, occasion, date, time), an error message,
 //         the created meetup (starts null), and an "is saving" flag.
-const hostName = ref('');
 const occasion = ref('');
 const date = ref('');
 const time = ref('');
@@ -46,28 +49,37 @@ const isSaving = ref(false);
 //         Examples: Week 6/Code_Along/client/src/App.vue (addStudent);
 //                   localStorage in Week 6/wk6_example/src/views/Example7View.vue
 async function createMeetup() {
+    if (isSaving.value) return;
     errorMessage.value = '';
 
-    if (!hostName.value || !occasion.value || !date.value || !time.value ) {
+    if (!occasion.value || !date.value || !time.value ) {
         errorMessage.value = 'Please fill out all fields to create your meetup.';
         return
+    }
+    today.value = todayInSingapore();
+    if (date.value < today.value) {
+      errorMessage.value = 'Choose today or a future date.';
+      return;
     }
     isSaving.value = true;
 
     try {
 
         const response = await axios.post(`${BASE_URL}/meetups`, {
-        hostName: hostName.value,
         occasion: occasion.value,
         date: date.value,
         time: time.value
-    });
+    }, { headers: { Authorization: `Bearer ${auth.token}` } });
     meetup.value = response.data;
     const code = response.data.code;
     const hostId = response.data.members[0]._id;
     localStorage.setItem(`fairspot-member-${code}`, hostId);
     isSaving.value = false;
 } catch (error) {
+    if (error.response && error.response.status === 401) {
+      auth.clearSession();
+      router.push('/login');
+    }
     if (error.response && error.response.data && error.response.data.error) {
       errorMessage.value = error.response.data.error;
     } else {
@@ -101,18 +113,6 @@ function goToMeetup() {
         <form @submit.prevent="createMeetup">
           
           <div class="mb-3">
-            <label for="hostName" class="form-label">Host Name</label>
-            <input 
-              type="text" 
-              id="hostName" 
-              class="form-control" 
-              v-model.trim="hostName" 
-              data-testid="create-host-name" 
-              placeholder="Your name"
-            />
-          </div>
-
-          <div class="mb-3">
             <label for="occasion" class="form-label">Occasion</label>
             <input 
               type="text" 
@@ -131,6 +131,7 @@ function goToMeetup() {
               id="date" 
               class="form-control" 
               v-model="date" 
+              :min="today"
               data-testid="create-date" 
             />
           </div>

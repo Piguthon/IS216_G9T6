@@ -31,6 +31,9 @@ import { BASE_URL } from '../config';
 import AddressSearch from '../components/AddressSearch.vue';
 import MemberList from '../components/MemberList.vue';
 import EditMeetupForm from '../components/EditMeetupForm.vue';
+import SavedStartPointPicker from '../components/SavedStartPointPicker.vue';
+import { useAuthStore } from '../stores/auth';
+const auth = useAuthStore();
 // TODO 2: Read the meetup code from the route params. Add refs for the meetup (null),
 //         "is loading" (true) and an error message.
 const route = useRoute();
@@ -199,6 +202,7 @@ async function handleLeave() {
           <div v-if="isMember" class="card app-card mb-4" data-testid="lobby-set-start">
             <div class="card-body">
               <h3 class="h5 mb-3">Set Your Start Point</h3>
+              <SavedStartPointPicker v-if="auth.isLoggedIn" :key="auth.token" @select="handleSetStart" />
               <AddressSearch @select="handleSetStart" />
             </div>
           </div>
@@ -243,7 +247,7 @@ async function handleLeave() {
                   Edit Meetup Details
                 </button>
                 
-                <div v-if="showDeleteConfirm" class="alert alert-danger p-3 mb-0">
+                <div v-if="showDeleteConfirm" class="alert alert-secondary p-3 mb-0">
                   <p class="mb-2">Are you sure? This will delete the meetup for everyone.</p>
                   <div class="d-flex gap-2">
                     <button @click="handleDelete" class="btn btn-danger btn-sm" data-testid="lobby-delete-confirm">

@@ -14,6 +14,7 @@
 -->
 <script setup>
 import { computed } from 'vue'
+import FavouriteVenueButton from './FavouriteVenueButton.vue'
 
 const props = defineProps({
   venue: { type: Object, required: true },
@@ -55,6 +56,7 @@ const distanceLabel = computed(() => {
         {{ distanceLabel }} away
       </p>
       <slot></slot>
+      <FavouriteVenueButton :key="venue.venueKey" :venue="venue" />
     </div>
   </div>
 </template>

@@ -40,7 +40,6 @@ async function submitLogin() {
     })
 
     auth.login(response.data.token)
-    message.value = `Welcome back, ${response.data.user.name}!`
     password.value = ''
     router.push('/');
   } catch (error) {
@@ -87,7 +86,7 @@ async function submitLogin() {
         />
       </div>
 
-      <p v-if="message" class="alert alert-info" role="status">
+      <p v-if="message" class="alert alert-danger" role="alert">
         {{ message }}
       </p>
 

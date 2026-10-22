@@ -26,6 +26,7 @@ const router = createRouter({
       path: '/create',
       name: 'create-meetup',
       component: CreateMeetupView,
+      meta: { requiresAuth: true },
     },
     {
       path: '/join',

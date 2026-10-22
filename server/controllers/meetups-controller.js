@@ -24,6 +24,7 @@
 //         Example: Week 5/server/blog-with-mongodb/controllers/blogs-controller.js
 const Meetup = require('../models/meetup-model');
 const {getUniqueCode} = require('../utils/generate-code');
+const { isAllowedMeetupDate } = require('../utils/meetup-date');
 
 // TODO 2: Write every handler as exports.name = async (req, res) => { ... } with try/catch.
 //         In catch, log the error and reply 500 with JSON { error: "Server error" }.
@@ -39,12 +40,15 @@ const {getUniqueCode} = require('../utils/generate-code');
 //           - replies 201 with the saved meetup
 exports.createMeetup = async (req,res) => {
     try {
-        const hostName = req.body.hostName;
+        const hostName = req.user.name;
         const occasion = req.body.occasion;
         const date = req.body.date;
         const time = req.body.time;
         if (!hostName || !occasion || !date || !time) {
             return res.status(400).json({ error: "Field cannot be empty" });
+        }
+        if (!isAllowedMeetupDate(date)) {
+            return res.status(400).json({ error: 'Choose a valid date that is today or later (Singapore time).' });
         }
         const code = await getUniqueCode();
         
@@ -54,7 +58,7 @@ exports.createMeetup = async (req,res) => {
             occasion : occasion,
             date : date,
             time : time,
-            members : [{name : hostName}]
+            members : [{name : hostName, userId: String(req.user._id)}]
         }
         let result = await Meetup.createMeetup(meetup);
         res.status(201).json(result);
@@ -85,7 +89,8 @@ exports.getMeetup = async (req,res) => {
 //           - adds the member, replies 201 with the new member (including its _id)
 exports.joinMeetup = async (req,res) => {
     try {
-        const name = req.body.name;
+        const name = req.user ? req.user.name : req.body.name;
+        const userId = req.user ? String(req.user._id) : null;
         const code = req.params.code;
         if (!name) {
             return res.status(400).json({ error: "Field cannot be empty" });
@@ -94,7 +99,11 @@ exports.joinMeetup = async (req,res) => {
         if (!check) {
             return res.status(404).json({ error: "Unknown code" });
         }
-        let result = await Meetup.addMember(code,name);
+        if (userId) {
+            const existing = check.members.find(member => member.userId === userId);
+            if (existing) return res.status(200).json(existing);
+        }
+        let result = await Meetup.addMember(code,name,userId);
         res.status(201).json(result);
     }catch(error) {
         console.error('Error joining meetup: ',error);
@@ -141,6 +150,9 @@ exports.updateMeetup = async (req, res) => {
             return res.status(400).json({ error: "Fields cannot be empty" });
         }
 
+        if (!isAllowedMeetupDate(date)) {
+            return res.status(400).json({ error: 'Choose a valid date that is today or later (Singapore time).' });
+        }
         // Find the meetup first to check the host
         const meetup = await Meetup.findByCode(code);
         if (!meetup) {

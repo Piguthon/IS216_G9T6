@@ -23,6 +23,7 @@ const mongoose = require('mongoose');
 //         frontend stores.
 const memberSchema = new mongoose.Schema(
     {
+        userId: { type: String, default: null },
         name : {
             type : String,
             trim : true,
@@ -101,14 +102,18 @@ exports.findByCode = async function(code) {
     return await Meetup.findOne({code : code});
 }
 
-exports.addMember = async function(code, name) {
+exports.addMember = async function(code, name, userId = null) {
     try {
         const meetup = await Meetup.findOne({code : code});
 
         if (!meetup) {
             throw new Error('Meetup not found');
         }
-        meetup.members.push({name : name});
+        if (userId) {
+            const existing = meetup.members.find(member => member.userId === userId);
+            if (existing) return existing;
+        }
+        meetup.members.push({name : name, userId});
 
         const updatedMeetup = await meetup.save();
         
