@@ -60,7 +60,12 @@ const journeys = computed(() => {
     for (const t of point.value.times) {
       if (t.memberId === member._id) minutes = t.minutes
     }
-    list.push({ id: member._id, name: member.name, from: member.start ? member.start.label : 'No start point', minutes })
+    list.push({
+      id: member._id,
+      name: member.name,
+      from: member.start ? member.start.label : 'No start point',
+      minutes,
+    })
   }
   return list
 })
@@ -79,7 +84,9 @@ const starts = computed(() => {
   <section data-testid="summary-page">
     <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
       <h1 class="h3 mb-0">Meetup summary</h1>
-      <RouterLink :to="`/meetup/${code}/results`" class="btn btn-outline-secondary btn-sm">Back to results</RouterLink>
+      <RouterLink :to="`/meetup/${code}/results`" class="btn btn-outline-secondary btn-sm"
+        >Back to results</RouterLink
+      >
     </div>
 
     <div v-if="isLoading" class="text-center my-5" data-testid="summary-loading">
@@ -98,7 +105,10 @@ const starts = computed(() => {
           <div class="card-body">
             <span class="badge text-bg-warning mb-2">Sample travel times</span>
             <h2 class="h5 text-primary" data-testid="summary-occasion">{{ meetup.occasion }}</h2>
-            <p class="mb-1"><strong>Meet at:</strong> <span data-testid="summary-point">{{ point.name }} MRT</span></p>
+            <p class="mb-1">
+              <strong>Meet at:</strong>
+              <span data-testid="summary-point">{{ point.name }} MRT</span>
+            </p>
             <p class="mb-1"><strong>Date:</strong> {{ meetup.date }}</p>
             <p class="mb-0"><strong>Time:</strong> {{ meetup.time }}</p>
           </div>
@@ -108,7 +118,12 @@ const starts = computed(() => {
           <div class="card-body">
             <h2 class="h6 mb-3">Everyone's journey</h2>
             <ul class="list-group list-group-flush">
-              <li v-for="j in journeys" :key="j.id" class="list-group-item px-0" data-testid="summary-journey">
+              <li
+                v-for="j in journeys"
+                :key="j.id"
+                class="list-group-item px-0"
+                data-testid="summary-journey"
+              >
                 <div class="d-flex justify-content-between">
                   <span class="fw-semibold">{{ j.name }}</span>
                   <span v-if="j.minutes !== null">{{ j.minutes }} min</span>

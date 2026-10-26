@@ -20,10 +20,14 @@ export const useAuthStore = defineStore('auth', () => {
 
   async function logout() {
     if (token.value) {
-      await axios.post(`${BASE_URL}/users/logout`, {}, {
-        headers: { Authorization: `Bearer ${token.value}` },
-        timeout: 10000,
-      })
+      await axios.post(
+        `${BASE_URL}/users/logout`,
+        {},
+        {
+          headers: { Authorization: `Bearer ${token.value}` },
+          timeout: 10000,
+        },
+      )
     }
     clearSession()
   }

@@ -41,7 +41,7 @@ async function submitLogin() {
 
     auth.login(response.data.token)
     password.value = ''
-    router.push('/');
+    router.push('/')
   } catch (error) {
     if (error.response && error.response.data && error.response.data.error) {
       message.value = error.response.data.error
@@ -90,14 +90,9 @@ async function submitLogin() {
         {{ message }}
       </p>
 
-      <button
-        type="submit"
-        class="btn btn-primary w-100"
-        :disabled="isLoggingIn"
-      >
+      <button type="submit" class="btn btn-primary w-100" :disabled="isLoggingIn">
         {{ isLoggingIn ? 'Logging in…' : 'Log in' }}
       </button>
     </form>
   </section>
 </template>
-

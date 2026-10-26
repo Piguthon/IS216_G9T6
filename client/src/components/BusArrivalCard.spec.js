@@ -20,7 +20,12 @@ function render() {
 describe('BusArrivalCard', () => {
   it('shows loading and disables refresh until the request completes', async () => {
     let finish
-    axios.get.mockImplementationOnce(() => new Promise(resolve => { finish = resolve }))
+    axios.get.mockImplementationOnce(
+      () =>
+        new Promise((resolve) => {
+          finish = resolve
+        }),
+    )
     render()
     await flushPromises()
     expect(wrapper.get('[role="status"]').text()).toContain('Loading bus arrivals')
@@ -32,10 +37,20 @@ describe('BusArrivalCard', () => {
 
   it('shows arrival minutes, arriving buses and services without predictions', async () => {
     const now = Date.now()
-    axios.get.mockResolvedValueOnce({ data: { services: [
-      { serviceNo: '7', nextArrivals: [new Date(now + 299000).toISOString(), new Date(now - 60000).toISOString()] },
-      { serviceNo: '12', nextArrivals: [] },
-    ] } })
+    axios.get.mockResolvedValueOnce({
+      data: {
+        services: [
+          {
+            serviceNo: '7',
+            nextArrivals: [
+              new Date(now + 299000).toISOString(),
+              new Date(now - 60000).toISOString(),
+            ],
+          },
+          { serviceNo: '12', nextArrivals: [] },
+        ],
+      },
+    })
     render()
     await flushPromises()
     expect(wrapper.text()).toContain('Bus 7')
@@ -52,7 +67,8 @@ describe('BusArrivalCard', () => {
   })
 
   it('shows the API error and lets the user retry successfully', async () => {
-    axios.get.mockRejectedValueOnce({ response: { data: { error: 'Please try again.' } } })
+    axios.get
+      .mockRejectedValueOnce({ response: { data: { error: 'Please try again.' } } })
       .mockResolvedValueOnce({ data: { services: [{ serviceNo: '7', nextArrivals: [] }] } })
     render()
     await flushPromises()

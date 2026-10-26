@@ -15,7 +15,6 @@
     - [ ] Bootstrap list group
 -->
 <script setup>
-
 defineProps({
   members: {
     type: Array,
@@ -28,8 +27,8 @@ defineProps({
   hostId: {
     type: String,
     required: true,
-  }
-});
+  },
+})
 </script>
 
 <template>
@@ -48,9 +47,7 @@ defineProps({
           <span v-if="member._id === currentMemberId" class="text-muted ms-2 fst-italic">
             (you)
           </span>
-          <span v-if="member._id === hostId" class="text-muted ms-1 fst-italic">
-            (host)
-          </span>
+          <span v-if="member._id === hostId" class="text-muted ms-1 fst-italic"> (host) </span>
         </div>
 
         <!-- Start Label or Waiting Badge -->
@@ -58,9 +55,7 @@ defineProps({
           <span v-if="member.start">
             {{ member.start.label }}
           </span>
-          <span v-else class="badge bg-secondary">
-            waiting
-          </span>
+          <span v-else class="badge bg-secondary"> waiting </span>
         </div>
       </li>
     </ul>

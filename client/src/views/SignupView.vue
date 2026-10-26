@@ -34,8 +34,10 @@ const passwordRules = computed(() => [
   { label: 'One digit', met: /[0-9]/.test(password.value) },
   { label: 'One symbol (e.g. !, @, #)', met: /[^A-Za-z0-9\s]/.test(password.value) },
 ])
-const passwordValid = computed(() => passwordRules.value.every(rule => rule.met))
-const passwordsMatch = computed(() => confirmPassword.value !== '' && password.value === confirmPassword.value)
+const passwordValid = computed(() => passwordRules.value.every((rule) => rule.met))
+const passwordsMatch = computed(
+  () => confirmPassword.value !== '' && password.value === confirmPassword.value,
+)
 const message = ref('')
 const isSigningUp = ref(false)
 
@@ -43,7 +45,8 @@ async function submitSignup() {
   if (isSigningUp.value) return
   message.value = ''
   if (!passwordValid.value) {
-    message.value = 'Use at least 8 characters with an uppercase letter, lowercase letter, digit and symbol.'
+    message.value =
+      'Use at least 8 characters with an uppercase letter, lowercase letter, digit and symbol.'
     return
   }
   if (!passwordsMatch.value) {
@@ -112,24 +115,34 @@ async function submitSignup() {
       <div class="mb-3">
         <label for="password" class="form-label">Password</label>
         <div class="input-group">
-        <input
-          id="password"
-          v-model="password"
-          :type="showPassword ? 'text' : 'password'"
-          class="form-control"
-          placeholder="Enter your password"
-          autocomplete="new-password"
-          minlength="8"
-          aria-describedby="password-rules"
-          required
-        />
-          <button type="button" class="btn btn-outline-secondary" :aria-pressed="showPassword"
-            aria-controls="password" :aria-label="showPassword ? 'Hide password' : 'Show password'"
-            @click="showPassword = !showPassword">{{ showPassword ? 'Hide' : 'Show' }}</button>
+          <input
+            id="password"
+            v-model="password"
+            :type="showPassword ? 'text' : 'password'"
+            class="form-control"
+            placeholder="Enter your password"
+            autocomplete="new-password"
+            minlength="8"
+            aria-describedby="password-rules"
+            required
+          />
+          <button
+            type="button"
+            class="btn btn-outline-secondary"
+            :aria-pressed="showPassword"
+            aria-controls="password"
+            :aria-label="showPassword ? 'Hide password' : 'Show password'"
+            @click="showPassword = !showPassword"
+          >
+            {{ showPassword ? 'Hide' : 'Show' }}
+          </button>
         </div>
         <ul id="password-rules" class="list-unstyled small mt-2 mb-0">
-          <li v-for="rule in passwordRules" :key="rule.label"
-            :class="rule.met ? 'text-success' : 'text-muted'">
+          <li
+            v-for="rule in passwordRules"
+            :key="rule.label"
+            :class="rule.met ? 'text-success' : 'text-muted'"
+          >
             {{ rule.met ? '✓' : '○' }} {{ rule.label }}
             <span class="visually-hidden">{{ rule.met ? ': met' : ': not met' }}</span>
           </li>
@@ -139,19 +152,41 @@ async function submitSignup() {
       <div class="mb-3">
         <label for="confirm-password" class="form-label">Confirm password</label>
         <div class="input-group">
-          <input id="confirm-password" v-model="confirmPassword"
-            :type="showConfirmation ? 'text' : 'password'" class="form-control"
-            :class="{ 'is-invalid': confirmPassword && !passwordsMatch, 'is-valid': passwordsMatch }"
+          <input
+            id="confirm-password"
+            v-model="confirmPassword"
+            :type="showConfirmation ? 'text' : 'password'"
+            class="form-control"
+            :class="{
+              'is-invalid': confirmPassword && !passwordsMatch,
+              'is-valid': passwordsMatch,
+            }"
             :aria-invalid="confirmPassword !== '' && !passwordsMatch"
-            aria-describedby="password-match" autocomplete="new-password"
-            placeholder="Re-enter your password" required />
-          <button type="button" class="btn btn-outline-secondary" :aria-pressed="showConfirmation"
-            aria-controls="confirm-password" :aria-label="showConfirmation ? 'Hide confirmed password' : 'Show confirmed password'"
-            @click="showConfirmation = !showConfirmation">{{ showConfirmation ? 'Hide' : 'Show' }}</button>
+            aria-describedby="password-match"
+            autocomplete="new-password"
+            placeholder="Re-enter your password"
+            required
+          />
+          <button
+            type="button"
+            class="btn btn-outline-secondary"
+            :aria-pressed="showConfirmation"
+            aria-controls="confirm-password"
+            :aria-label="showConfirmation ? 'Hide confirmed password' : 'Show confirmed password'"
+            @click="showConfirmation = !showConfirmation"
+          >
+            {{ showConfirmation ? 'Hide' : 'Show' }}
+          </button>
         </div>
-        <p id="password-match" class="small mt-2 mb-0" role="status"
-          :class="passwordsMatch ? 'text-success' : 'text-danger'">
-          {{ confirmPassword ? (passwordsMatch ? 'Passwords match.' : 'Passwords do not match.') : '' }}
+        <p
+          id="password-match"
+          class="small mt-2 mb-0"
+          role="status"
+          :class="passwordsMatch ? 'text-success' : 'text-danger'"
+        >
+          {{
+            confirmPassword ? (passwordsMatch ? 'Passwords match.' : 'Passwords do not match.') : ''
+          }}
         </p>
       </div>
 
@@ -159,7 +194,11 @@ async function submitSignup() {
         {{ message }}
       </p>
 
-      <button type="submit" class="btn btn-primary w-100" :disabled="isSigningUp || !passwordValid || !passwordsMatch">
+      <button
+        type="submit"
+        class="btn btn-primary w-100"
+        :disabled="isSigningUp || !passwordValid || !passwordsMatch"
+      >
         {{ isSigningUp ? 'Creating account...' : 'Create account' }}
       </button>
     </form>

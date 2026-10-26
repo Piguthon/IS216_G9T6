@@ -84,7 +84,9 @@ function confirmChoice(stationId) {
   <section data-testid="meetup-results-page">
     <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
       <h1 class="h3 mb-0">Fair meeting points</h1>
-      <RouterLink :to="`/meetup/${code}`" class="btn btn-outline-secondary btn-sm">Back to lobby</RouterLink>
+      <RouterLink :to="`/meetup/${code}`" class="btn btn-outline-secondary btn-sm"
+        >Back to lobby</RouterLink
+      >
     </div>
 
     <div v-if="isLoading" class="text-center my-5" data-testid="results-loading">
@@ -102,7 +104,9 @@ function confirmChoice(stationId) {
         <div class="alert alert-warning py-2 small" data-testid="results-sample-note">
           Sample travel times currently. Rankings logic is still a work in progress.
         </div>
-        <p class="small text-muted mb-2">Fairest first: the shortest <em>longest</em> journey wins.</p>
+        <p class="small text-muted mb-2">
+          Fairest first: the shortest <em>longest</em> journey wins.
+        </p>
         <div class="list-group mb-4" data-testid="results-list">
           <MeetingPointCard
             v-for="(point, index) in ranking"

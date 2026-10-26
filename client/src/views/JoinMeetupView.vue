@@ -18,19 +18,19 @@
 // Build this view after Create + Lobby work.
 
 // TODO 1: Same imports as Create (src/views/CreateMeetupView.vue, TODO 1).
-import { ref } from 'vue';
-import axios from 'axios';
-import { useRouter } from 'vue-router';
-import { BASE_URL } from '../config';
-import { useAuthStore } from '../stores/auth';
+import { ref } from 'vue'
+import axios from 'axios'
+import { useRouter } from 'vue-router'
+import { BASE_URL } from '../config'
+import { useAuthStore } from '../stores/auth'
 
-const router = useRouter();
-const auth = useAuthStore();
+const router = useRouter()
+const auth = useAuthStore()
 // TODO 2: Refs for the code, name, error message and "is joining".
-const code = ref('');
-const name = ref('');
-const errorMessage = ref('');
-const isJoining = ref(false);
+const code = ref('')
+const name = ref('')
+const errorMessage = ref('')
+const isJoining = ref(false)
 // TODO 3: async function joinMeetup()
 //           - both fields required
 //           - normalise the code (e.g. uppercase)
@@ -39,50 +39,53 @@ const isJoining = ref(false);
 //           - on success, save the new member _id in localStorage (fairspot-member-<code>)
 //             and open /meetup/<code>
 async function joinMeetup() {
-  if (isJoining.value) return;
-  errorMessage.value = '';
+  if (isJoining.value) return
+  errorMessage.value = ''
 
   if (!code.value || (!auth.isLoggedIn && !name.value.trim())) {
-    errorMessage.value = 'Please fill out all fields to join the meetup.';
-    return;
+    errorMessage.value = 'Please fill out all fields to join the meetup.'
+    return
   }
   // Normalise the code to uppercase as standard
-  const normalizedCode = code.value.toUpperCase();
-  isJoining.value = true;
+  const normalizedCode = code.value.toUpperCase()
+  isJoining.value = true
 
   try {
-    let memberName = name.value.trim();
+    let memberName = name.value.trim()
     if (auth.isLoggedIn) {
       const profile = await axios.get(`${BASE_URL}/users/me`, {
         headers: { Authorization: `Bearer ${auth.token}` },
-      });
-      memberName = profile.data.user.name;
+      })
+      memberName = profile.data.user.name
     }
-    const response = await axios.post(`${BASE_URL}/meetups/${normalizedCode}/members`, {
-      name: memberName
-    }, auth.isLoggedIn ? { headers: { Authorization: `Bearer ${auth.token}` } } : {});
+    const response = await axios.post(
+      `${BASE_URL}/meetups/${normalizedCode}/members`,
+      {
+        name: memberName,
+      },
+      auth.isLoggedIn ? { headers: { Authorization: `Bearer ${auth.token}` } } : {},
+    )
 
     // Save the new member _id in localStorage
-    const newMemberId = response.data._id;
-    localStorage.setItem(`fairspot-member-${normalizedCode}`, newMemberId);
+    const newMemberId = response.data._id
+    localStorage.setItem(`fairspot-member-${normalizedCode}`, newMemberId)
 
     // Navigate directly to the lobby
-    router.push(`/meetup/${normalizedCode}`);
-    
+    router.push(`/meetup/${normalizedCode}`)
   } catch (error) {
     if (error.response && error.response.status === 401) {
-      auth.clearSession();
-      errorMessage.value = 'Your session is invalid. Please log in again or enter a guest name.';
+      auth.clearSession()
+      errorMessage.value = 'Your session is invalid. Please log in again or enter a guest name.'
     } else if (error.response && error.response.status === 404) {
-      errorMessage.value = 'No meetup with that code was found.';
+      errorMessage.value = 'No meetup with that code was found.'
     } else if (error.response && error.response.data && error.response.data.error) {
-      errorMessage.value = error.response.data.error;
+      errorMessage.value = error.response.data.error
     } else {
-      errorMessage.value = 'Failed to join meetup. Please try again.';
+      errorMessage.value = 'Failed to join meetup. Please try again.'
     }
-    isJoining.value = false;
+    isJoining.value = false
   }
-};
+}
 </script>
 
 <template>
@@ -95,26 +98,25 @@ async function joinMeetup() {
     <div class="card app-card mb-4">
       <div class="card-body">
         <form @submit.prevent="joinMeetup">
-          
           <div class="mb-3">
             <label for="code" class="form-label">Meetup Code</label>
-            <input 
-              type="text" 
-              id="code" 
-              class="form-control text-uppercase" 
-              v-model.trim="code" 
-              data-testid="join-code" 
+            <input
+              type="text"
+              id="code"
+              class="form-control text-uppercase"
+              v-model.trim="code"
+              data-testid="join-code"
               placeholder="e.g. ABCDEF"
             />
           </div>
           <div v-if="!auth.isLoggedIn" class="mb-3">
             <label for="name" class="form-label">Your Name</label>
-            <input 
-              type="text" 
-              id="name" 
-              class="form-control" 
-              v-model.trim="name" 
-              data-testid="join-name" 
+            <input
+              type="text"
+              id="name"
+              class="form-control"
+              v-model.trim="name"
+              data-testid="join-name"
               placeholder="What should we call you?"
             />
           </div>
@@ -122,17 +124,17 @@ async function joinMeetup() {
             {{ errorMessage }}
           </div>
 
-          <button 
-            type="submit" 
-            class="btn btn-primary w-100 mt-2" 
-            :disabled="isJoining" 
+          <button
+            type="submit"
+            class="btn btn-primary w-100 mt-2"
+            :disabled="isJoining"
             data-testid="join-submit"
           >
             {{ isJoining ? 'Joining...' : 'Join Meetup' }}
           </button>
         </form>
+      </div>
     </div>
-</div>
     <!-- TODO 5: testids: join-code, join-name, join-submit, join-error -->
   </section>
 </template>

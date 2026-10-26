@@ -16,10 +16,17 @@ async function saveFavourite() {
   isSaving.value = true
   message.value = ''
   try {
-    await axios.post(`${BASE_URL}/users/me/favourites`, {
-      venueKey: props.venue.venueKey, name: props.venue.name,
-      address: props.venue.address || '', lat: props.venue.lat, lng: props.venue.lng,
-    }, { headers: { Authorization: `Bearer ${auth.token}` } })
+    await axios.post(
+      `${BASE_URL}/users/me/favourites`,
+      {
+        venueKey: props.venue.venueKey,
+        name: props.venue.name,
+        address: props.venue.address || '',
+        lat: props.venue.lat,
+        lng: props.venue.lng,
+      },
+      { headers: { Authorization: `Bearer ${auth.token}` } },
+    )
     hasError.value = false
     message.value = 'Saved to favourites.'
   } catch (error) {
@@ -36,9 +43,23 @@ async function saveFavourite() {
 
 <template>
   <div class="mt-2">
-    <button v-if="auth.isLoggedIn" type="button" class="btn btn-outline-primary btn-sm"
-      :disabled="isSaving" @click="saveFavourite">{{ isSaving ? 'Saving...' : 'Save to favourites' }}</button>
+    <button
+      v-if="auth.isLoggedIn"
+      type="button"
+      class="btn btn-outline-primary btn-sm"
+      :disabled="isSaving"
+      @click="saveFavourite"
+    >
+      {{ isSaving ? 'Saving...' : 'Save to favourites' }}
+    </button>
     <RouterLink v-else to="/login" class="small">Log in to save favourites</RouterLink>
-    <p v-if="message" class="alert small mt-2 mb-0" :class="hasError ? 'alert-danger' : 'alert-success'" :role="hasError ? 'alert' : 'status'">{{ message }}</p>
+    <p
+      v-if="message"
+      class="alert small mt-2 mb-0"
+      :class="hasError ? 'alert-danger' : 'alert-success'"
+      :role="hasError ? 'alert' : 'status'"
+    >
+      {{ message }}
+    </p>
   </div>
 </template>

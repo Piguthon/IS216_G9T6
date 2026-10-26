@@ -21,24 +21,24 @@
 
 // TODO 1: Imports: ref from vue, axios, BASE_URL from ../config.js, useRouter.
 //         Example: Week 6/Code_Along/client/src/App.vue (TODOs 1-2)
-import {ref} from 'vue';
-import axios from 'axios';
-import {BASE_URL} from '../config';
-import { useRouter } from 'vue-router';
-import { useAuthStore } from '../stores/auth';
-import { todayInSingapore } from '../utils/meetup-date';
+import { ref } from 'vue'
+import axios from 'axios'
+import { BASE_URL } from '../config'
+import { useRouter } from 'vue-router'
+import { useAuthStore } from '../stores/auth'
+import { todayInSingapore } from '../utils/meetup-date'
 
-const router = useRouter();
-const auth = useAuthStore();
-const today = ref(todayInSingapore());
+const router = useRouter()
+const auth = useAuthStore()
+const today = ref(todayInSingapore())
 // TODO 2: Refs for the four inputs (host name, occasion, date, time), an error message,
 //         the created meetup (starts null), and an "is saving" flag.
-const occasion = ref('');
-const date = ref('');
-const time = ref('');
-const errorMessage = ref('');
-const meetup = ref(null);
-const isSaving = ref(false);
+const occasion = ref('')
+const date = ref('')
+const time = ref('')
+const errorMessage = ref('')
+const meetup = ref(null)
+const isSaving = ref(false)
 // TODO 3: async function createMeetup()
 //           - show a message if a required field is empty
 //           - otherwise axios.post to ${BASE_URL}/meetups with the four fields, inside try/catch
@@ -49,58 +49,61 @@ const isSaving = ref(false);
 //         Examples: Week 6/Code_Along/client/src/App.vue (addStudent);
 //                   localStorage in Week 6/wk6_example/src/views/Example7View.vue
 async function createMeetup() {
-    if (isSaving.value) return;
-    errorMessage.value = '';
+  if (isSaving.value) return
+  errorMessage.value = ''
 
-    if (!occasion.value || !date.value || !time.value ) {
-        errorMessage.value = 'Please fill out all fields to create your meetup.';
-        return
-    }
-    today.value = todayInSingapore();
-    if (date.value < today.value) {
-      errorMessage.value = 'Choose today or a future date.';
-      return;
-    }
-    isSaving.value = true;
+  if (!occasion.value || !date.value || !time.value) {
+    errorMessage.value = 'Please fill out all fields to create your meetup.'
+    return
+  }
+  today.value = todayInSingapore()
+  if (date.value < today.value) {
+    errorMessage.value = 'Choose today or a future date.'
+    return
+  }
+  isSaving.value = true
 
-    try {
-
-        const response = await axios.post(`${BASE_URL}/meetups`, {
+  try {
+    const response = await axios.post(
+      `${BASE_URL}/meetups`,
+      {
         occasion: occasion.value,
         date: date.value,
-        time: time.value
-    }, { headers: { Authorization: `Bearer ${auth.token}` } });
-    meetup.value = response.data;
-    const code = response.data.code;
-    const hostId = response.data.members[0]._id;
-    localStorage.setItem(`fairspot-member-${code}`, hostId);
-    isSaving.value = false;
-} catch (error) {
+        time: time.value,
+      },
+      { headers: { Authorization: `Bearer ${auth.token}` } },
+    )
+    meetup.value = response.data
+    const code = response.data.code
+    const hostId = response.data.members[0]._id
+    localStorage.setItem(`fairspot-member-${code}`, hostId)
+    isSaving.value = false
+  } catch (error) {
     if (error.response && error.response.status === 401) {
-      auth.clearSession();
-      router.push('/login');
+      auth.clearSession()
+      router.push('/login')
     }
     if (error.response && error.response.data && error.response.data.error) {
-      errorMessage.value = error.response.data.error;
+      errorMessage.value = error.response.data.error
     } else {
-      errorMessage.value = 'Failed to create meetup. Please try again.';
+      errorMessage.value = 'Failed to create meetup. Please try again.'
     }
-    isSaving.value = false; // Added to the catch block
+    isSaving.value = false // Added to the catch block
   }
-};
+}
 function goToMeetup() {
   if (meetup.value && meetup.value.code) {
-    router.push(`/meetup/${meetup.value.code}`);
+    router.push(`/meetup/${meetup.value.code}`)
   }
-};
+}
 // TODO 4: function goToMeetup() uses the router to open /meetup/<code>.
 //         Example: Week 4/wk4_example/src/components/Example11.vue
 </script>
 
 <template>
   <section data-testid="create-meetup-page">
-  <header class="app-page-header mb-3">
-    <h1 class="h3">Create Meetup</h1>
+    <header class="app-page-header mb-3">
+      <h1 class="h3">Create Meetup</h1>
     </header>
     <!-- TODO 5: Page header (app-page-header) and a form inside "card app-card", with Bootstrap
                  form controls bound with v-model:
@@ -111,51 +114,50 @@ function goToMeetup() {
     <div v-if="!meetup" class="card app-card mb-4">
       <div class="card-body">
         <form @submit.prevent="createMeetup">
-          
           <div class="mb-3">
             <label for="occasion" class="form-label">Occasion</label>
-            <input 
-              type="text" 
-              id="occasion" 
-              class="form-control" 
-              v-model.trim="occasion" 
-              data-testid="create-occasion" 
+            <input
+              type="text"
+              id="occasion"
+              class="form-control"
+              v-model.trim="occasion"
+              data-testid="create-occasion"
               placeholder="e.g. Dinner, Project Meeting"
             />
           </div>
 
           <div class="mb-3">
             <label for="date" class="form-label">Date</label>
-            <input 
-              type="date" 
-              id="date" 
-              class="form-control" 
-              v-model="date" 
+            <input
+              type="date"
+              id="date"
+              class="form-control"
+              v-model="date"
               :min="today"
-              data-testid="create-date" 
+              data-testid="create-date"
             />
           </div>
 
           <div class="mb-3">
             <label for="time" class="form-label">Time</label>
-            <input 
-              type="time" 
-              id="time" 
-              class="form-control" 
-              v-model="time" 
-              data-testid="create-time" 
+            <input
+              type="time"
+              id="time"
+              class="form-control"
+              v-model="time"
+              data-testid="create-time"
             />
           </div>
 
-    <!-- TODO 6: Error alert (alert alert-danger) shown only when there is a message. -->
+          <!-- TODO 6: Error alert (alert alert-danger) shown only when there is a message. -->
           <div v-if="errorMessage" class="alert alert-danger" data-testid="create-error">
             {{ errorMessage }}
           </div>
 
-          <button 
-            type="submit" 
-            class="btn btn-primary w-100 mt-2" 
-            :disabled="isSaving" 
+          <button
+            type="submit"
+            class="btn btn-primary w-100 mt-2"
+            :disabled="isSaving"
             data-testid="create-submit"
           >
             {{ isSaving ? 'Creating...' : 'Create Meetup' }}
@@ -169,14 +171,14 @@ function goToMeetup() {
       <div class="card-body py-5">
         <h2 class="h4 mb-3 text-success">Meetup Created!</h2>
         <p class="text-muted mb-2">Share this code with your group</p>
-        
+
         <div class="mb-4 app-code" data-testid="create-code">
           {{ meetup.code }}
         </div>
-        
-        <button 
-          @click="goToMeetup" 
-          class="btn btn-success btn-lg px-4" 
+
+        <button
+          @click="goToMeetup"
+          class="btn btn-success btn-lg px-4"
           data-testid="create-go-to-meetup"
         >
           Go to meetup

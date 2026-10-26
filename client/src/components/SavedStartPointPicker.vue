@@ -20,7 +20,7 @@ async function loadLocations() {
       headers: { Authorization: `Bearer ${auth.token}` },
     })
     locations.value = response.data
-    const defaultLocation = locations.value.find(location => location.isDefault)
+    const defaultLocation = locations.value.find((location) => location.isDefault)
     if (defaultLocation) selectedId.value = defaultLocation._id
   } catch {
     message.value = 'Unable to load saved locations. You can still search for an address below.'
@@ -30,11 +30,13 @@ async function loadLocations() {
 }
 
 function chooseLocation() {
-  const location = locations.value.find(item => item._id === selectedId.value)
+  const location = locations.value.find((item) => item._id === selectedId.value)
   if (!location) return
   emit('select', {
     label: location.address || location.label,
-    postal: location.postal, lat: location.lat, lng: location.lng,
+    postal: location.postal,
+    lat: location.lat,
+    lng: location.lng,
   })
   selectedId.value = ''
 }
@@ -47,20 +49,36 @@ onMounted(loadLocations)
     <p v-if="isLoading" class="small text-muted" role="status">Loading saved starting points...</p>
     <div v-else-if="message" class="alert alert-danger small" role="alert">
       <p class="mb-1">{{ message }}</p>
-      <button type="button" class="btn btn-link btn-sm p-0" @click="loadLocations">Try again</button>
+      <button type="button" class="btn btn-link btn-sm p-0" @click="loadLocations">
+        Try again
+      </button>
     </div>
     <div v-else-if="locations.length">
       <label for="saved-start-point" class="form-label">Choose a saved starting point</label>
-      <select id="saved-start-point" v-model="selectedId" class="form-select"
-        data-testid="saved-start-picker">
+      <select
+        id="saved-start-point"
+        v-model="selectedId"
+        class="form-select"
+        data-testid="saved-start-picker"
+      >
         <option value="" disabled>Select Home, School or another saved location</option>
         <option v-for="location in locations" :key="location._id" :value="location._id">
-          {{ location.label }}{{ location.isDefault ? ' (default)' : '' }} — {{ location.address || location.label }}
+          {{ location.label }}{{ location.isDefault ? ' (default)' : '' }} —
+          {{ location.address || location.label }}
         </option>
       </select>
-      <button v-if="selectedId" type="button" class="btn btn-outline-primary btn-sm mt-2"
-        @click="chooseLocation">Use</button>
+      <button
+        v-if="selectedId"
+        type="button"
+        class="btn btn-outline-primary btn-sm mt-2"
+        @click="chooseLocation"
+      >
+        Use
+      </button>
     </div>
-    <p v-else class="small text-muted mb-0">No saved starting points yet. Add them in <RouterLink to="/profile">Profile</RouterLink>, or search below.</p>
+    <p v-else class="small text-muted mb-0">
+      No saved starting points yet. Add them in <RouterLink to="/profile">Profile</RouterLink>, or
+      search below.
+    </p>
   </div>
 </template>

@@ -49,7 +49,13 @@ function confirmAccountDeletion() {
 }
 
 async function deleteAccount() {
-  if (isDeletingAccount.value || isSaving.value || !deletionPassword.value || !showFinalDeleteConfirm.value) return
+  if (
+    isDeletingAccount.value ||
+    isSaving.value ||
+    !deletionPassword.value ||
+    !showFinalDeleteConfirm.value
+  )
+    return
   showFinalDeleteConfirm.value = false
   isDeletingAccount.value = true
   deletionMessage.value = ''
@@ -76,7 +82,13 @@ async function deleteAccount() {
 }
 const initials = computed(() => {
   if (!user.value) return ''
-  return user.value.name.trim().split(/\s+/).slice(0, 2).map(part => part[0]).join('').toUpperCase()
+  return user.value.name
+    .trim()
+    .split(/\s+/)
+    .slice(0, 2)
+    .map((part) => part[0])
+    .join('')
+    .toUpperCase()
 })
 
 function showLocationError(error) {
@@ -98,10 +110,17 @@ async function addLocation() {
   locationMessage.value = ''
   try {
     const address = selectedAddress.value
-    const response = await axios.post(`${BASE_URL}/users/me/locations`, {
-      label: nickname.value.trim(), address: address.label,
-      postal: address.postal, lat: address.lat, lng: address.lng,
-    }, { headers: { Authorization: `Bearer ${auth.token}` } })
+    const response = await axios.post(
+      `${BASE_URL}/users/me/locations`,
+      {
+        label: nickname.value.trim(),
+        address: address.label,
+        postal: address.postal,
+        lat: address.lat,
+        lng: address.lng,
+      },
+      { headers: { Authorization: `Bearer ${auth.token}` } },
+    )
     locations.value = response.data
     nickname.value = ''
     selectedAddress.value = null
@@ -148,9 +167,13 @@ async function setDefaultLocation(id) {
   isSaving.value = true
   locationMessage.value = ''
   try {
-    const response = await axios.put(`${BASE_URL}/users/me/locations/${id}/default`, {}, {
-      headers: { Authorization: `Bearer ${auth.token}` },
-    })
+    const response = await axios.put(
+      `${BASE_URL}/users/me/locations/${id}/default`,
+      {},
+      {
+        headers: { Authorization: `Bearer ${auth.token}` },
+      },
+    )
     locations.value = response.data
     locationError.value = false
     locationMessage.value = 'Default location updated.'
@@ -238,11 +261,17 @@ onMounted(loadProfile)
       <div class="col-lg-4">
         <div class="card shadow-sm border-0">
           <div class="card-body p-4">
-            <span class="profile-avatar bg-primary text-white rounded-circle d-inline-flex align-items-center justify-content-center fw-bold mb-3" aria-hidden="true">{{ initials }}</span>
+            <span
+              class="profile-avatar bg-primary text-white rounded-circle d-inline-flex align-items-center justify-content-center fw-bold mb-3"
+              aria-hidden="true"
+              >{{ initials }}</span
+            >
             <h2 class="h5" data-testid="profile-name">{{ user.name }}</h2>
             <p class="text-muted text-break" data-testid="profile-email">{{ user.email }}</p>
             <hr />
-            <p class="mb-0"><strong>{{ locations.length }}</strong> saved locations</p>
+            <p class="mb-0">
+              <strong>{{ locations.length }}</strong> saved locations
+            </p>
           </div>
         </div>
       </div>
@@ -250,9 +279,21 @@ onMounted(loadProfile)
         <div class="card shadow-sm border-0 mb-4">
           <div class="card-body p-4">
             <h2 class="h5">Saved locations</h2>
-            <p v-if="locationMessage && locationMessageTarget === 'list'" :class="locationError ? 'alert alert-danger' : 'alert alert-success'" :role="locationError ? 'alert' : 'status'">{{ locationMessage }}</p>
-            <SavedLocationList :key="locationsListKey" :locations="locations" :busy="isSaving"
-              @rename="renameLocation" @delete="deleteLocation" @default="setDefaultLocation" />
+            <p
+              v-if="locationMessage && locationMessageTarget === 'list'"
+              :class="locationError ? 'alert alert-danger' : 'alert alert-success'"
+              :role="locationError ? 'alert' : 'status'"
+            >
+              {{ locationMessage }}
+            </p>
+            <SavedLocationList
+              :key="locationsListKey"
+              :locations="locations"
+              :busy="isSaving"
+              @rename="renameLocation"
+              @delete="deleteLocation"
+              @default="setDefaultLocation"
+            />
           </div>
         </div>
         <div class="card shadow-sm border-0">
@@ -261,16 +302,36 @@ onMounted(loadProfile)
             <form @submit.prevent="addLocation" @keydown.enter.prevent>
               <fieldset :disabled="isSaving">
                 <label for="location-nickname" class="form-label">Name</label>
-                <input id="location-nickname" v-model.trim="nickname" class="form-control mb-3"
-                  placeholder="e.g. Home, School or Work" maxlength="60" required />
+                <input
+                  id="location-nickname"
+                  v-model.trim="nickname"
+                  class="form-control mb-3"
+                  placeholder="e.g. Home, School or Work"
+                  maxlength="60"
+                  required
+                />
                 <p class="form-label mb-2">Search address or postal code</p>
-                <AddressSearch :key="searchKey" @select="selectedAddress = $event" @clear="selectedAddress = null" />
-                <button type="submit" class="btn btn-primary mt-3" :disabled="isSaving || !nickname || !selectedAddress">
+                <AddressSearch
+                  :key="searchKey"
+                  @select="selectedAddress = $event"
+                  @clear="selectedAddress = null"
+                />
+                <button
+                  type="submit"
+                  class="btn btn-primary mt-3"
+                  :disabled="isSaving || !nickname || !selectedAddress"
+                >
                   {{ isSaving ? 'Saving...' : 'Save location' }}
                 </button>
               </fieldset>
-              <p v-if="locationMessage && locationMessageTarget === 'add'" class="alert mt-3 mb-0"
-                :class="locationError ? 'alert-danger' : 'alert-success'" :role="locationError ? 'alert' : 'status'">{{ locationMessage }}</p>
+              <p
+                v-if="locationMessage && locationMessageTarget === 'add'"
+                class="alert mt-3 mb-0"
+                :class="locationError ? 'alert-danger' : 'alert-success'"
+                :role="locationError ? 'alert' : 'status'"
+              >
+                {{ locationMessage }}
+              </p>
             </form>
           </div>
         </div>
@@ -278,22 +339,68 @@ onMounted(loadProfile)
         <AccountSettings :user="user" @updated="user = $event" />
         <div class="card border-0 shadow-sm mt-4">
           <div class="card-body p-4">
-            <button v-if="!showDeleteAccount" type="button" class="btn btn-outline-danger"
-              @click="showDeleteAccount = true">Delete my account</button>
+            <button
+              v-if="!showDeleteAccount"
+              type="button"
+              class="btn btn-outline-danger"
+              @click="showDeleteAccount = true"
+            >
+              Delete my account
+            </button>
             <form v-else @submit.prevent="confirmAccountDeletion">
-              <label for="deletion-password" class="form-label">Confirm your current password</label>
-              <input id="deletion-password" v-model="deletionPassword" type="password"
-                class="form-control mb-3" autocomplete="current-password" required :disabled="isDeletingAccount || showFinalDeleteConfirm" />
-              <p v-if="deletionMessage" class="alert alert-danger" role="alert">{{ deletionMessage }}</p>
-              <button type="submit" class="btn btn-danger me-2" :disabled="isDeletingAccount || isSaving || !deletionPassword || showFinalDeleteConfirm">
+              <label for="deletion-password" class="form-label"
+                >Confirm your current password</label
+              >
+              <input
+                id="deletion-password"
+                v-model="deletionPassword"
+                type="password"
+                class="form-control mb-3"
+                autocomplete="current-password"
+                required
+                :disabled="isDeletingAccount || showFinalDeleteConfirm"
+              />
+              <p v-if="deletionMessage" class="alert alert-danger" role="alert">
+                {{ deletionMessage }}
+              </p>
+              <button
+                type="submit"
+                class="btn btn-danger me-2"
+                :disabled="
+                  isDeletingAccount || isSaving || !deletionPassword || showFinalDeleteConfirm
+                "
+              >
                 {{ isDeletingAccount ? 'Deleting...' : 'Permanently delete account' }}
               </button>
-              <button type="button" class="btn btn-outline-secondary" :disabled="isDeletingAccount"
-                @click="showDeleteAccount = false; showFinalDeleteConfirm = false; deletionPassword = ''; deletionMessage = ''">Cancel</button>
-              <div v-if="showFinalDeleteConfirm" class="alert alert-secondary mt-3 mb-0" role="alert">
+              <button
+                type="button"
+                class="btn btn-outline-secondary"
+                :disabled="isDeletingAccount"
+                @click="
+                  showDeleteAccount = false
+                  showFinalDeleteConfirm = false
+                  deletionPassword = ''
+                  deletionMessage = ''
+                "
+              >
+                Cancel
+              </button>
+              <div
+                v-if="showFinalDeleteConfirm"
+                class="alert alert-secondary mt-3 mb-0"
+                role="alert"
+              >
                 <p class="text-danger">Permanently delete your account? This cannot be undone.</p>
-                <button type="button" class="btn btn-danger me-2" @click="deleteAccount">Confirm</button>
-                <button type="button" class="btn btn-outline-secondary" @click="showFinalDeleteConfirm = false">Cancel</button>
+                <button type="button" class="btn btn-danger me-2" @click="deleteAccount">
+                  Confirm
+                </button>
+                <button
+                  type="button"
+                  class="btn btn-outline-secondary"
+                  @click="showFinalDeleteConfirm = false"
+                >
+                  Cancel
+                </button>
               </div>
             </form>
           </div>

@@ -77,9 +77,7 @@ async function handleLogout() {
           </li>
           <template v-if="!auth.isLoggedIn">
             <li class="nav-item">
-              <RouterLink class="nav-link" to="/login" data-testid="nav-login">
-                Log in
-              </RouterLink>
+              <RouterLink class="nav-link" to="/login" data-testid="nav-login"> Log in </RouterLink>
             </li>
             <li class="nav-item">
               <RouterLink class="nav-link" to="/signup" data-testid="nav-signup">
@@ -87,7 +85,7 @@ async function handleLogout() {
               </RouterLink>
             </li>
           </template>
-          
+
           <template v-else>
             <li class="nav-item">
               <RouterLink class="nav-link" to="/profile" data-testid="nav-profile">
@@ -104,5 +102,7 @@ async function handleLogout() {
       </div>
     </div>
   </nav>
-  <p v-if="logoutMessage" class="alert alert-danger container mt-2" role="alert">{{ logoutMessage }}</p>
+  <p v-if="logoutMessage" class="alert alert-danger container mt-2" role="alert">
+    {{ logoutMessage }}
+  </p>
 </template>
