@@ -143,7 +143,8 @@ exports.setStart = async (req, res) => {
 exports.updateMeetup = async (req, res) => {
     try {
         const code = req.params.code;
-        const { memberId, occasion, date, time } = req.body;
+        const { occasion, date, time } = req.body;
+
 
         // Validation for required fields
         if (!occasion || !date || !time) {
@@ -160,7 +161,8 @@ exports.updateMeetup = async (req, res) => {
         }
 
         // Check if the requester is the host (first member)
-        if (!meetup.members || meetup.members.length === 0 || meetup.members[0]._id.toString() !== memberId) {
+        const host = meetup.members[0];
+        if (!host || host.userId !== String(req.user._id)) {
             return res.status(403).json({ error: "Only the host can edit the meetup" });
         }
 
@@ -177,7 +179,6 @@ exports.updateMeetup = async (req, res) => {
 exports.deleteMeetup = async (req, res) => {
     try {
         const code = req.params.code;
-        const { memberId } = req.body;
 
         const meetup = await Meetup.findByCode(code);
         if (!meetup) {
@@ -185,7 +186,8 @@ exports.deleteMeetup = async (req, res) => {
         }
 
         // Check if the requester is the host (first member)
-        if (!meetup.members || meetup.members.length === 0 || meetup.members[0]._id.toString() !== memberId) {
+        const host = meetup.members[0];
+        if (!host || host.userId !== String(req.user._id)) {
             return res.status(403).json({ error: "Only the host can delete the meetup" });
         }
 

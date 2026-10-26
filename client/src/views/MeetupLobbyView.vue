@@ -43,10 +43,19 @@ const code = route.params.code
 const meetup = ref(null)
 const isLoading = ref(true)
 const errorMessage = ref('')
+const actionError = ref('')
 const myMemberId = ref(null)
 
 const isEditing = ref(false)
 const showDeleteConfirm = ref(false)
+
+// Use the server's { error: "..." } message if there is one, otherwise a fallback
+function getErrorText(error, fallback) {
+  if (error.response && error.response.data && error.response.data.error) {
+    return error.response.data.error
+  }
+  return fallback
+}
 
 // TODO 3: async function loadMeetup(): GET ${BASE_URL}/meetups/<code> in try/catch.
 //         Show "No meetup with code ..." on a 404 and a generic message otherwise.
@@ -103,52 +112,61 @@ const canSeeResults = computed(() => {
 })
 //Set start point
 async function handleSetStart(startPoint) {
+  actionError.value = ''
   try {
     await axios.put(`${BASE_URL}/meetups/${code}/members/${myMemberId.value}`, {
       start: startPoint,
     })
     await loadMeetup()
   } catch (err) {
-    errorMessage.value = 'Failed to set start point.'
+    actionError.value = getErrorText(err, 'Failed to set start point.')
   }
 }
 //Host tools (edit)
 async function handleEdit(details) {
+  actionError.value = ''
   try {
-    await axios.put(`${BASE_URL}/meetups/${code}`, {
-      memberId: myMemberId.value,
-      occasion: details.occasion,
-      date: details.date,
-      time: details.time,
-    })
+    await axios.put(
+      `${BASE_URL}/meetups/${code}`,
+      {
+        occasion: details.occasion,
+        date: details.date,
+        time: details.time,
+      },
+      {
+        headers: { Authorization: `Bearer ${auth.token}` },
+      },
+    )
     isEditing.value = false
     await loadMeetup()
   } catch (err) {
-    errorMessage.value = 'Failed to update meetup.'
+    actionError.value = getErrorText(err, 'Failed to update meetup.')
   }
 }
 
 //Host tools (Delete)
 async function handleDelete() {
+  actionError.value = ''
   try {
     await axios.delete(`${BASE_URL}/meetups/${code}`, {
-      data: { memberId: myMemberId.value },
+      headers: { Authorization: `Bearer ${auth.token}` },
     })
     localStorage.removeItem(`fairspot-member-${code}`)
     router.push('/')
   } catch (err) {
-    errorMessage.value = 'Failed to delete meetup.'
+    actionError.value = getErrorText(err, 'Failed to delete meetup.')
   }
 }
 
 //Leave (non-hosts)
 async function handleLeave() {
+  actionError.value = ''
   try {
     await axios.delete(`${BASE_URL}/meetups/${code}/members/${myMemberId.value}`)
     localStorage.removeItem(`fairspot-member-${code}`)
     router.push('/')
   } catch (err) {
-    errorMessage.value = 'Failed to leave meetup.'
+    actionError.value = getErrorText(err, 'Failed to leave meetup.')
   }
 }
 </script>
@@ -171,6 +189,20 @@ async function handleLeave() {
 
     <!-- Meetup Content -->
     <div v-else-if="meetup">
+      <div
+        v-if="actionError"
+        class="alert alert-danger alert-dismissible"
+        role="alert"
+        data-testid="lobby-action-error"
+      >
+        {{ actionError }}
+        <button
+          type="button"
+          class="btn-close"
+          aria-label="Close"
+          @click="actionError = ''"
+        ></button>
+      </div>
       <div class="row">
         <!-- Left Column: Details & Tools -->
         <div class="col-lg-6 mb-4">

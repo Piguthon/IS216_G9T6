@@ -29,8 +29,8 @@ router.post("/:code/members", (req, res, next) => {
     next();
 }, meetupsController.joinMeetup);
 router.put("/:code/members/:memberId",meetupsController.setStart);
-router.put("/:code",meetupsController.updateMeetup);
-router.delete("/:code",meetupsController.deleteMeetup);
+router.put("/:code", requireAuth, meetupsController.updateMeetup);
+router.delete("/:code",requireAuth, meetupsController.deleteMeetup);
 router.delete("/:code/members/:memberId",meetupsController.leaveMeetup);
 
 module.exports = router;

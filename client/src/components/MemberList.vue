@@ -22,7 +22,8 @@ defineProps({
   },
   currentMemberId: {
     type: String,
-    required: true,
+    required: false,
+    default: null,
   },
   hostId: {
     type: String,
