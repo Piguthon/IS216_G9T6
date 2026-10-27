@@ -96,7 +96,7 @@ function handleSelect(result) {
     <div class="input-group">
       <input
         type="text"
-        class="form-control"
+        class="form-control app-input"
         v-model="query"
         @input="handleInput"
         @keyup.enter="search"
@@ -104,7 +104,7 @@ function handleSelect(result) {
         data-testid="address-input"
       />
       <button
-        class="btn btn-primary"
+        class="app-btn btn-teal"
         type="button"
         @click="search"
         :disabled="isLoading || query.trim().length < 3"

@@ -10,7 +10,7 @@ const express = require('express');
 const router = express.Router();
 
 // TODO (P3): register the routes listed above
-const rankingController = require('../controllers/ranking-controller'); // PITCH PLACEHOLDER
+const rankingController = require('../controllers/ranking-controller');
 router.get('/:code', rankingController.getRanking);
 
 module.exports = router;

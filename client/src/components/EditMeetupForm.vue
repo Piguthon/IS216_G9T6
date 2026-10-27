@@ -58,11 +58,11 @@ const handleCancel = () => {
 
     <form @submit.prevent="handleSave">
       <div class="mb-3">
-        <label for="occasion" class="form-label">Occasion</label>
+        <label for="occasion" class="form-label fw-bold">Occasion</label>
         <input
           type="text"
           id="occasion"
-          class="form-control"
+          class="form-control app-input"
           v-model="occasion"
           data-testid="edit-occasion"
           placeholder="e.g. Dinner, Study Session"
@@ -71,11 +71,11 @@ const handleCancel = () => {
 
       <div class="row mb-4">
         <div class="col-md-6 mb-3 mb-md-0">
-          <label for="date" class="form-label">Date</label>
+          <label for="date" class="form-label fw-bold">Date</label>
           <input
             type="date"
             id="date"
-            class="form-control"
+            class="form-control app-input"
             v-model="date"
             :min="today"
             data-testid="edit-date"
@@ -83,11 +83,11 @@ const handleCancel = () => {
         </div>
 
         <div class="col-md-6">
-          <label for="time" class="form-label">Time</label>
+          <label for="time" class="form-label fw-bold">Time</label>
           <input
             type="time"
             id="time"
-            class="form-control"
+            class="form-control app-input"
             v-model="time"
             data-testid="edit-time"
           />
@@ -95,10 +95,10 @@ const handleCancel = () => {
       </div>
 
       <div class="d-flex gap-2">
-        <button type="submit" class="btn btn-primary" data-testid="edit-save">Save</button>
+        <button type="submit" class="app-btn btn-teal" data-testid="edit-save">Save</button>
         <button
           type="button"
-          class="btn btn-outline-secondary"
+          class="app-btn btn-quiet"
           @click="handleCancel"
           data-testid="edit-cancel"
         >

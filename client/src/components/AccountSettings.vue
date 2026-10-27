@@ -105,12 +105,12 @@ async function savePassword() {
 </script>
 
 <template>
-  <div class="card shadow-sm border-0 mt-4">
-    <div class="card-body p-4">
-      <h2 class="h5 mb-0">
+  <div class="card app-card mt-4">
+    <div class="card-body">
+      <h2 class="h5 app-heading mb-0">
         <button
           type="button"
-          class="btn btn-outline-primary w-100 d-flex justify-content-between align-items-center"
+          class="app-btn btn-teal-outline w-100 d-flex justify-content-between align-items-center"
           :aria-expanded="settingsExpanded"
           aria-controls="account-settings-content"
           :disabled="savingName || changingPassword"
@@ -127,11 +127,11 @@ async function savePassword() {
         </div>
         <template v-else>
           <form class="mb-4" @submit.prevent="saveName">
-            <label for="profile-name" class="form-label">Profile name</label>
+            <label for="profile-name" class="form-label fw-bold">Profile name</label>
             <input
               id="profile-name"
               v-model.trim="name"
-              class="form-control mb-2"
+              class="form-control app-input mb-2"
               maxlength="100"
               required
               :disabled="savingName"
@@ -144,29 +144,29 @@ async function savePassword() {
             >
               {{ nameMessage }}
             </p>
-            <button class="btn btn-outline-primary" :disabled="savingName || !name">
+            <button class="app-btn btn-teal-outline" :disabled="savingName || !name">
               {{ savingName ? 'Saving...' : 'Save name' }}
             </button>
           </form>
-          <h3 class="h6">Change password</h3>
+          <h3 class="h6 app-heading">Change password</h3>
           <form @submit.prevent="confirmPasswordChange">
             <fieldset :disabled="changingPassword || showPasswordConfirm">
-              <label for="current-password" class="form-label">Current password</label>
+              <label for="current-password" class="form-label fw-bold">Current password</label>
               <input
                 id="current-password"
                 v-model="currentPassword"
                 :type="showPasswords ? 'text' : 'password'"
                 autocomplete="current-password"
-                class="form-control mb-3"
+                class="form-control app-input mb-3"
                 required
               />
-              <label for="new-password" class="form-label">New password</label>
+              <label for="new-password" class="form-label fw-bold">New password</label>
               <input
                 id="new-password"
                 v-model="newPassword"
                 :type="showPasswords ? 'text' : 'password'"
                 autocomplete="new-password"
-                class="form-control"
+                class="form-control app-input"
                 required
                 minlength="8"
                 aria-describedby="change-password-rules"
@@ -180,13 +180,15 @@ async function savePassword() {
                   {{ rule.met ? '✓' : '○' }} {{ rule.label }}
                 </li>
               </ul>
-              <label for="confirm-new-password" class="form-label">Confirm new password</label>
+              <label for="confirm-new-password" class="form-label fw-bold"
+                >Confirm new password</label
+              >
               <input
                 id="confirm-new-password"
                 v-model="confirmation"
                 :type="showPasswords ? 'text' : 'password'"
                 autocomplete="new-password"
-                class="form-control mb-2"
+                class="form-control app-input mb-2"
                 required
               />
               <p
@@ -205,31 +207,27 @@ async function savePassword() {
                   id="show-change-passwords"
                   v-model="showPasswords"
                   type="checkbox"
-                  class="form-check-input"
+                  class="form-check-input app-check"
                 />
                 <label for="show-change-passwords" class="form-check-label">Show passwords</label>
               </div>
               <p v-if="passwordMessage" class="alert alert-danger" role="alert">
                 {{ passwordMessage }}
               </p>
-              <button class="btn btn-primary" :disabled="changingPassword || !canChangePassword">
+              <button class="app-btn btn-teal" :disabled="changingPassword || !canChangePassword">
                 {{ changingPassword ? 'Updating...' : 'Change password' }}
               </button>
             </fieldset>
             <div v-if="showPasswordConfirm" class="alert alert-secondary mt-3 mb-0" role="alert">
-              <h4 class="h6">Change password?</h4>
+              <h4 class="h6 app-heading">Change password?</h4>
               <p>
                 Changing your password signs you out. You will need to log in again with your new
                 password.
               </p>
-              <button type="button" class="btn btn-primary me-2" @click="savePassword">
+              <button type="button" class="app-btn btn-teal me-2" @click="savePassword">
                 Confirm
               </button>
-              <button
-                type="button"
-                class="btn btn-outline-secondary"
-                @click="showPasswordConfirm = false"
-              >
+              <button type="button" class="app-btn btn-quiet" @click="showPasswordConfirm = false">
                 Cancel
               </button>
             </div>

@@ -5,6 +5,7 @@
             (rating filter later: decision D6)
   PROPS:    lat, lng (Number)
   EMITS:    none
+  SLOTS:    venue-actions ({ venue }): extra buttons inside each card
   TALKS TO: GET /api/venues?lat=&lng=&category=
             uses VenueCard
   DATA:     array of Venue:
@@ -74,7 +75,7 @@ const filteredVenues = computed(() => {
     <div class="d-flex flex-wrap gap-2 mb-3">
       <select
         v-model="selectedType"
-        class="form-select w-auto"
+        class="form-select app-input w-auto"
         aria-label="Type of place"
         data-testid="venue-type-filter"
       >
@@ -86,7 +87,7 @@ const filteredVenues = computed(() => {
       </select>
       <select
         v-model="maxDistance"
-        class="form-select w-auto"
+        class="form-select app-input w-auto"
         aria-label="How far"
         data-testid="venue-distance-filter"
       >
@@ -97,7 +98,7 @@ const filteredVenues = computed(() => {
     </div>
 
     <div v-if="isLoading" class="text-center my-4" data-testid="venue-loading">
-      <div class="spinner-border text-primary" role="status">
+      <div class="spinner-border text-teal" role="status">
         <span class="visually-hidden">Loading places…</span>
       </div>
     </div>
@@ -109,7 +110,10 @@ const filteredVenues = computed(() => {
     </p>
     <div v-else class="row g-3">
       <div v-for="venue in filteredVenues" :key="venue.venueKey" class="col-12 col-md-6">
-        <VenueCard :venue="venue" />
+        <VenueCard :venue="venue">
+          <!-- lets the page add buttons to each card, e.g. voting on the results page -->
+          <slot name="venue-actions" :venue="venue"></slot>
+        </VenueCard>
       </div>
     </div>
   </section>

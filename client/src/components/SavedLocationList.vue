@@ -28,11 +28,11 @@ function edit(location) {
         @submit.prevent="emit('rename', location._id, nickname, replacementAddress)"
         @keydown.enter.prevent
       >
-        <label :for="`nickname-${location._id}`" class="form-label">Location name</label>
+        <label :for="`nickname-${location._id}`" class="form-label fw-bold">Location name</label>
         <input
           :id="`nickname-${location._id}`"
           v-model.trim="nickname"
-          class="form-control mb-2"
+          class="form-control app-input mb-2"
           maxlength="60"
           required
           :disabled="busy"
@@ -50,10 +50,12 @@ function edit(location) {
           New address: {{ replacementAddress.label }}
         </p>
         <div class="d-flex align-items-center gap-2 mt-2">
-          <button class="btn btn-primary btn-sm" :disabled="busy || !nickname">Save changes</button>
+          <button class="app-btn btn-teal app-btn-sm" :disabled="busy || !nickname">
+            Save changes
+          </button>
           <button
             type="button"
-            class="btn btn-outline-secondary btn-sm"
+            class="app-btn btn-quiet app-btn-sm"
             :disabled="busy"
             @click="editingId = ''"
           >
@@ -63,8 +65,12 @@ function edit(location) {
       </form>
       <div v-else class="d-flex flex-wrap justify-content-between gap-3">
         <div>
-          <h3 class="h6 mb-1">{{ location.label }}</h3>
-          <span v-if="location.isDefault" class="badge text-bg-primary mb-1">Default</span>
+          <h3 class="h6 app-heading mb-1">{{ location.label }}</h3>
+          <span
+            v-if="location.isDefault"
+            class="badge rounded-pill text-uppercase text-bg-teal mb-1"
+            >Default</span
+          >
           <p class="text-muted small mb-0">{{ location.address }}</p>
           <p v-if="location.postal" class="text-muted small mb-0">
             Singapore {{ location.postal }}
@@ -73,7 +79,7 @@ function edit(location) {
         <div class="d-flex align-items-start gap-2">
           <button
             type="button"
-            class="btn btn-outline-primary btn-sm"
+            class="app-btn btn-teal-outline app-btn-sm"
             :disabled="busy"
             @click="edit(location)"
           >
@@ -82,7 +88,7 @@ function edit(location) {
           <button
             v-if="!location.isDefault"
             type="button"
-            class="btn btn-outline-secondary btn-sm"
+            class="app-btn btn-quiet app-btn-sm"
             :disabled="busy"
             @click="emit('default', location._id)"
           >
@@ -90,7 +96,7 @@ function edit(location) {
           </button>
           <button
             type="button"
-            class="btn btn-outline-danger btn-sm"
+            class="btn app-btn btn-outline-danger app-btn-sm"
             :disabled="busy"
             @click="deletingId = location._id"
           >
@@ -102,7 +108,7 @@ function edit(location) {
         <p class="mb-2">Delete {{ location.label }}?</p>
         <button
           type="button"
-          class="btn btn-danger btn-sm me-2"
+          class="btn app-btn btn-danger app-btn-sm me-2"
           :disabled="busy"
           @click="emit('delete', location._id)"
         >
@@ -110,7 +116,7 @@ function edit(location) {
         </button>
         <button
           type="button"
-          class="btn btn-outline-secondary btn-sm"
+          class="app-btn btn-quiet app-btn-sm"
           :disabled="busy"
           @click="deletingId = ''"
         >

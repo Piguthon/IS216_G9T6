@@ -68,5 +68,229 @@
     "type": "mrt",
     "lat": 1.30680019696175,
     "lng": 103.8496470597377
+  },
+  {
+    "stationId": "bukit-merah-int",
+    "name": "Bukit Merah Bus Interchange",
+    "type": "interchange",
+    "lat": 1.28210155945393,
+    "lng": 103.81722480263163
+  },
+  {
+    "stationId": "harbourfront-int",
+    "name": "HarbourFront Bus Interchange",
+    "type": "interchange",
+    "lat": 1.26703502614245,
+    "lng": 103.81901469907409
+  },
+  {
+    "stationId": "clementi-int",
+    "name": "Clementi Bus Interchange",
+    "type": "interchange",
+    "lat": 1.31491572870629,
+    "lng": 103.76412225438476
+  },
+  {
+    "stationId": "boon-lay-int",
+    "name": "Boon Lay Bus Interchange",
+    "type": "interchange",
+    "lat": 1.33932334709184,
+    "lng": 103.70545701843297
+  },
+  {
+    "stationId": "joo-koon-int",
+    "name": "Joo Koon Bus Interchange",
+    "type": "interchange",
+    "lat": 1.32697254709069,
+    "lng": 103.67839791240787
+  },
+  {
+    "stationId": "jurong-east-int",
+    "name": "Jurong East Bus Interchange",
+    "type": "interchange",
+    "lat": 1.33235,
+    "lng": 103.740664
+  },
+  {
+    "stationId": "jurong-town-hall-int",
+    "name": "Jurong Town Hall Bus Interchange",
+    "type": "interchange",
+    "lat": 1.329722,
+    "lng": 103.7431495
+  },
+  {
+    "stationId": "tengah-int",
+    "name": "Tengah Bus Interchange",
+    "type": "interchange",
+    "lat": 1.3627,
+    "lng": 103.735967
+  },
+  {
+    "stationId": "bukit-batok-int",
+    "name": "Bukit Batok Bus Interchange",
+    "type": "interchange",
+    "lat": 1.34999354306126,
+    "lng": 103.75106190953444
+  },
+  {
+    "stationId": "choa-chu-kang-int",
+    "name": "Choa Chu Kang Bus Interchange",
+    "type": "interchange",
+    "lat": 1.38586897797184,
+    "lng": 103.74578895932125
+  },
+  {
+    "stationId": "bukit-panjang-int",
+    "name": "Bukit Panjang Bus Interchange",
+    "type": "interchange",
+    "lat": 1.37812611932206,
+    "lng": 103.763286611367
+  },
+  {
+    "stationId": "woodlands-int",
+    "name": "Woodlands Bus Interchange",
+    "type": "interchange",
+    "lat": 1.43684944,
+    "lng": 103.7857369
+  },
+  {
+    "stationId": "toa-payoh-int",
+    "name": "Toa Payoh Bus Interchange",
+    "type": "interchange",
+    "lat": 1.33202083385749,
+    "lng": 103.84692763524869
+  },
+  {
+    "stationId": "bishan-int",
+    "name": "Bishan Bus Interchange",
+    "type": "interchange",
+    "lat": 1.35045541249544,
+    "lng": 103.84988083722291
+  },
+  {
+    "stationId": "ang-mo-kio-int",
+    "name": "Ang Mo Kio Bus Interchange",
+    "type": "interchange",
+    "lat": 1.36968769913339,
+    "lng": 103.84856716193268
+  },
+  {
+    "stationId": "yio-chu-kang-int",
+    "name": "Yio Chu Kang Bus Interchange",
+    "type": "interchange",
+    "lat": 1.38113241525166,
+    "lng": 103.8455558816965
+  },
+  {
+    "stationId": "sembawang-int",
+    "name": "Sembawang Bus Interchange",
+    "type": "interchange",
+    "lat": 1.44748179252514,
+    "lng": 103.81941391689068
+  },
+  {
+    "stationId": "yishun-int",
+    "name": "Yishun Bus Interchange",
+    "type": "interchange",
+    "lat": 1.4284,
+    "lng": 103.8360975
+  },
+  {
+    "stationId": "buangkok-int",
+    "name": "Buangkok Bus Interchange",
+    "type": "interchange",
+    "lat": 1.383707,
+    "lng": 103.892257
+  },
+  {
+    "stationId": "hougang-central-int",
+    "name": "Hougang Central Bus Interchange",
+    "type": "interchange",
+    "lat": 1.37060695394614,
+    "lng": 103.89266808874676
+  },
+  {
+    "stationId": "punggol-int",
+    "name": "Punggol Bus Interchange",
+    "type": "interchange",
+    "lat": 1.40370629859822,
+    "lng": 103.90224337575333
+  },
+  {
+    "stationId": "serangoon-int",
+    "name": "Serangoon Bus Interchange",
+    "type": "interchange",
+    "lat": 1.35046610176969,
+    "lng": 103.87168992264617
+  },
+  {
+    "stationId": "sengkang-int",
+    "name": "Sengkang Bus Interchange",
+    "type": "interchange",
+    "lat": 1.39178060381601,
+    "lng": 103.89588499436073
+  },
+  {
+    "stationId": "compassvale-int",
+    "name": "Compassvale Bus Interchange",
+    "type": "interchange",
+    "lat": 1.3912175,
+    "lng": 103.8971153
+  },
+  {
+    "stationId": "woodleigh-int",
+    "name": "Woodleigh Bus Interchange",
+    "type": "interchange",
+    "lat": 1.340141,
+    "lng": 103.871449
+  },
+  {
+    "stationId": "punggol-coast-int",
+    "name": "Punggol Coast Bus Interchange",
+    "type": "interchange",
+    "lat": 1.414795,
+    "lng": 103.908557
+  },
+  {
+    "stationId": "tampines-north-int",
+    "name": "Tampines North Bus Interchange",
+    "type": "interchange",
+    "lat": 1.368916,
+    "lng": 103.939651
+  },
+  {
+    "stationId": "tampines-int",
+    "name": "Tampines Bus Interchange",
+    "type": "interchange",
+    "lat": 1.35407552367477,
+    "lng": 103.94339098473914
+  },
+  {
+    "stationId": "tampines-concourse-int",
+    "name": "Tampines Concourse Bus Interchange",
+    "type": "interchange",
+    "lat": 1.35737133106172,
+    "lng": 103.9416488042812
+  },
+  {
+    "stationId": "pasir-ris-int",
+    "name": "Pasir Ris Bus Interchange",
+    "type": "interchange",
+    "lat": 1.373696,
+    "lng": 103.94845
+  },
+  {
+    "stationId": "eunos-int",
+    "name": "Eunos Bus Interchange",
+    "type": "interchange",
+    "lat": 1.31933717157385,
+    "lng": 103.90180834139497
+  },
+  {
+    "stationId": "bedok-int",
+    "name": "Bedok Bus Interchange",
+    "type": "interchange",
+    "lat": 1.32453874317344,
+    "lng": 103.92903818515839
   }
 ]

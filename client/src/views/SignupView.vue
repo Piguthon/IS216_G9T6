@@ -81,134 +81,139 @@ async function submitSignup() {
 </script>
 
 <template>
-  <section class="signup-page" data-testid="signup-page">
-    <h1 class="h3">Sign up</h1>
-    <p class="text-muted">Create your FairSpot account to save your locations.</p>
-
-    <form @submit.prevent="submitSignup">
-      <div class="mb-3">
-        <label for="name" class="form-label">Name</label>
-        <input
-          id="name"
-          v-model.trim="name"
-          type="text"
-          class="form-control"
-          placeholder="Enter your name"
-          autocomplete="name"
-          required
-        />
-      </div>
-
-      <div class="mb-3">
-        <label for="email" class="form-label">Email</label>
-        <input
-          id="email"
-          v-model.trim="email"
-          type="email"
-          class="form-control"
-          placeholder="Enter your email"
-          autocomplete="email"
-          required
-        />
-      </div>
-
-      <div class="mb-3">
-        <label for="password" class="form-label">Password</label>
-        <div class="input-group">
-          <input
-            id="password"
-            v-model="password"
-            :type="showPassword ? 'text' : 'password'"
-            class="form-control"
-            placeholder="Enter your password"
-            autocomplete="new-password"
-            minlength="8"
-            aria-describedby="password-rules"
-            required
-          />
-          <button
-            type="button"
-            class="btn btn-outline-secondary"
-            :aria-pressed="showPassword"
-            aria-controls="password"
-            :aria-label="showPassword ? 'Hide password' : 'Show password'"
-            @click="showPassword = !showPassword"
-          >
-            {{ showPassword ? 'Hide' : 'Show' }}
-          </button>
-        </div>
-        <ul id="password-rules" class="list-unstyled small mt-2 mb-0">
-          <li
-            v-for="rule in passwordRules"
-            :key="rule.label"
-            :class="rule.met ? 'text-success' : 'text-muted'"
-          >
-            {{ rule.met ? '✓' : '○' }} {{ rule.label }}
-            <span class="visually-hidden">{{ rule.met ? ': met' : ': not met' }}</span>
-          </li>
-        </ul>
-      </div>
-
-      <div class="mb-3">
-        <label for="confirm-password" class="form-label">Confirm password</label>
-        <div class="input-group">
-          <input
-            id="confirm-password"
-            v-model="confirmPassword"
-            :type="showConfirmation ? 'text' : 'password'"
-            class="form-control"
-            :class="{
-              'is-invalid': confirmPassword && !passwordsMatch,
-              'is-valid': passwordsMatch,
-            }"
-            :aria-invalid="confirmPassword !== '' && !passwordsMatch"
-            aria-describedby="password-match"
-            autocomplete="new-password"
-            placeholder="Re-enter your password"
-            required
-          />
-          <button
-            type="button"
-            class="btn btn-outline-secondary"
-            :aria-pressed="showConfirmation"
-            aria-controls="confirm-password"
-            :aria-label="showConfirmation ? 'Hide confirmed password' : 'Show confirmed password'"
-            @click="showConfirmation = !showConfirmation"
-          >
-            {{ showConfirmation ? 'Hide' : 'Show' }}
-          </button>
-        </div>
-        <p
-          id="password-match"
-          class="small mt-2 mb-0"
-          role="status"
-          :class="passwordsMatch ? 'text-success' : 'text-danger'"
-        >
-          {{
-            confirmPassword ? (passwordsMatch ? 'Passwords match.' : 'Passwords do not match.') : ''
-          }}
+  <div class="row justify-content-center">
+    <section class="col-md-8 col-lg-6" data-testid="signup-page">
+      <header class="app-page-header">
+        <h1 class="display-5 app-heading mb-3">Sign up</h1>
+        <p class="text-muted mb-0">
+          Create an account to save Home, School or Work as starting points.
         </p>
-      </div>
+      </header>
 
-      <p v-if="message" class="alert alert-danger" role="alert">
-        {{ message }}
+      <form class="card app-card card-body" @submit.prevent="submitSignup">
+        <div class="mb-3">
+          <label for="name" class="form-label fw-bold">Name</label>
+          <input
+            id="name"
+            v-model.trim="name"
+            type="text"
+            class="form-control app-input"
+            placeholder="Enter your name"
+            autocomplete="name"
+            required
+          />
+        </div>
+
+        <div class="mb-3">
+          <label for="email" class="form-label fw-bold">Email</label>
+          <input
+            id="email"
+            v-model.trim="email"
+            type="email"
+            class="form-control app-input"
+            placeholder="Enter your email"
+            autocomplete="email"
+            required
+          />
+        </div>
+
+        <div class="mb-3">
+          <label for="password" class="form-label fw-bold">Password</label>
+          <div class="input-group">
+            <input
+              id="password"
+              v-model="password"
+              :type="showPassword ? 'text' : 'password'"
+              class="form-control app-input"
+              placeholder="Enter your password"
+              autocomplete="new-password"
+              minlength="8"
+              aria-describedby="password-rules"
+              required
+            />
+            <button
+              type="button"
+              class="app-btn btn-quiet"
+              :aria-pressed="showPassword"
+              aria-controls="password"
+              :aria-label="showPassword ? 'Hide password' : 'Show password'"
+              @click="showPassword = !showPassword"
+            >
+              {{ showPassword ? 'Hide' : 'Show' }}
+            </button>
+          </div>
+          <ul id="password-rules" class="list-unstyled small mt-2 mb-0">
+            <li
+              v-for="rule in passwordRules"
+              :key="rule.label"
+              :class="rule.met ? 'text-success' : 'text-muted'"
+            >
+              {{ rule.met ? '✓' : '○' }} {{ rule.label }}
+              <span class="visually-hidden">{{ rule.met ? ': met' : ': not met' }}</span>
+            </li>
+          </ul>
+        </div>
+
+        <div class="mb-3">
+          <label for="confirm-password" class="form-label fw-bold">Confirm password</label>
+          <div class="input-group">
+            <input
+              id="confirm-password"
+              v-model="confirmPassword"
+              :type="showConfirmation ? 'text' : 'password'"
+              class="form-control app-input"
+              :class="{
+                'is-invalid': confirmPassword && !passwordsMatch,
+                'is-valid': passwordsMatch,
+              }"
+              :aria-invalid="confirmPassword !== '' && !passwordsMatch"
+              aria-describedby="password-match"
+              autocomplete="new-password"
+              placeholder="Re-enter your password"
+              required
+            />
+            <button
+              type="button"
+              class="app-btn btn-quiet"
+              :aria-pressed="showConfirmation"
+              aria-controls="confirm-password"
+              :aria-label="showConfirmation ? 'Hide confirmed password' : 'Show confirmed password'"
+              @click="showConfirmation = !showConfirmation"
+            >
+              {{ showConfirmation ? 'Hide' : 'Show' }}
+            </button>
+          </div>
+          <p
+            id="password-match"
+            class="small mt-2 mb-0"
+            role="status"
+            :class="passwordsMatch ? 'text-success' : 'text-danger'"
+          >
+            {{
+              confirmPassword
+                ? passwordsMatch
+                  ? 'Passwords match.'
+                  : 'Passwords do not match.'
+                : ''
+            }}
+          </p>
+        </div>
+
+        <p v-if="message" class="alert alert-danger" role="alert">
+          {{ message }}
+        </p>
+
+        <button
+          type="submit"
+          class="app-btn btn-teal w-100"
+          :disabled="isSigningUp || !passwordValid || !passwordsMatch"
+        >
+          {{ isSigningUp ? 'Creating account...' : 'Create account' }}
+        </button>
+      </form>
+      <p class="mt-3 text-center">
+        Already have an account? <RouterLink to="/login">Log in</RouterLink>
       </p>
-
-      <button
-        type="submit"
-        class="btn btn-primary w-100"
-        :disabled="isSigningUp || !passwordValid || !passwordsMatch"
-      >
-        {{ isSigningUp ? 'Creating account...' : 'Create account' }}
-      </button>
-    </form>
-  </section>
+    </section>
+  </div>
 </template>
-
-<style scoped>
-.signup-page {
-  width: 100%;
-  max-width: 480px;
-  margin: 0 auto;
-}
-</style>

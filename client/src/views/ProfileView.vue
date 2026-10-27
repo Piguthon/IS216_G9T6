@@ -246,27 +246,29 @@ onMounted(loadProfile)
 
 <template>
   <section data-testid="profile-page">
-    <h1 class="h3 mb-2">Your profile</h1>
+    <header class="app-page-header">
+      <h1 class="display-5 app-heading mb-0">Your profile</h1>
+    </header>
 
     <p v-if="isLoading" role="status">Loading your profile…</p>
 
     <div v-else-if="message" class="alert alert-danger" role="alert">
       <p class="mb-2">{{ message }}</p>
-      <button type="button" class="btn btn-outline-danger btn-sm" @click="loadProfile">
+      <button type="button" class="btn app-btn btn-outline-danger app-btn-sm" @click="loadProfile">
         Try again
       </button>
     </div>
 
     <div v-else-if="user && auth.isLoggedIn" class="row g-4">
       <div class="col-lg-4">
-        <div class="card shadow-sm border-0">
-          <div class="card-body p-4">
+        <div class="card app-card">
+          <div class="card-body">
             <span
-              class="profile-avatar bg-primary text-white rounded-circle d-inline-flex align-items-center justify-content-center fw-bold mb-3"
+              class="profile-avatar display-6 app-heading d-inline-flex align-items-center justify-content-center rounded-3 mb-3"
               aria-hidden="true"
               >{{ initials }}</span
             >
-            <h2 class="h5" data-testid="profile-name">{{ user.name }}</h2>
+            <h2 data-testid="profile-name">{{ user.name }}</h2>
             <p class="text-muted text-break" data-testid="profile-email">{{ user.email }}</p>
             <hr />
             <p class="mb-0">
@@ -276,9 +278,9 @@ onMounted(loadProfile)
         </div>
       </div>
       <div class="col-lg-8">
-        <div class="card shadow-sm border-0 mb-4">
-          <div class="card-body p-4">
-            <h2 class="h5">Saved locations</h2>
+        <div class="card app-card mb-4">
+          <div class="card-body">
+            <h2 class="h5 app-heading">Saved locations</h2>
             <p
               v-if="locationMessage && locationMessageTarget === 'list'"
               :class="locationError ? 'alert alert-danger' : 'alert alert-success'"
@@ -296,21 +298,21 @@ onMounted(loadProfile)
             />
           </div>
         </div>
-        <div class="card shadow-sm border-0">
-          <div class="card-body p-4">
-            <h2 class="h5 mb-3">Add a location</h2>
+        <div class="card app-card">
+          <div class="card-body">
+            <h2 class="h5 app-heading mb-3">Add a location</h2>
             <form @submit.prevent="addLocation" @keydown.enter.prevent>
               <fieldset :disabled="isSaving">
-                <label for="location-nickname" class="form-label">Name</label>
+                <label for="location-nickname" class="form-label fw-bold">Name</label>
                 <input
                   id="location-nickname"
                   v-model.trim="nickname"
-                  class="form-control mb-3"
+                  class="form-control app-input mb-3"
                   placeholder="e.g. Home, School or Work"
                   maxlength="60"
                   required
                 />
-                <p class="form-label mb-2">Search address or postal code</p>
+                <p class="form-label fw-bold mb-2">Search address or postal code</p>
                 <AddressSearch
                   :key="searchKey"
                   @select="selectedAddress = $event"
@@ -318,7 +320,7 @@ onMounted(loadProfile)
                 />
                 <button
                   type="submit"
-                  class="btn btn-primary mt-3"
+                  class="app-btn btn-teal mt-3"
                   :disabled="isSaving || !nickname || !selectedAddress"
                 >
                   {{ isSaving ? 'Saving...' : 'Save location' }}
@@ -337,25 +339,25 @@ onMounted(loadProfile)
         </div>
         <FavouriteVenueList />
         <AccountSettings :user="user" @updated="user = $event" />
-        <div class="card border-0 shadow-sm mt-4">
-          <div class="card-body p-4">
+        <div class="card app-card mt-4">
+          <div class="card-body">
             <button
               v-if="!showDeleteAccount"
               type="button"
-              class="btn btn-outline-danger"
+              class="btn app-btn btn-outline-danger"
               @click="showDeleteAccount = true"
             >
               Delete my account
             </button>
             <form v-else @submit.prevent="confirmAccountDeletion">
-              <label for="deletion-password" class="form-label"
+              <label for="deletion-password" class="form-label fw-bold"
                 >Confirm your current password</label
               >
               <input
                 id="deletion-password"
                 v-model="deletionPassword"
                 type="password"
-                class="form-control mb-3"
+                class="form-control app-input mb-3"
                 autocomplete="current-password"
                 required
                 :disabled="isDeletingAccount || showFinalDeleteConfirm"
@@ -365,7 +367,7 @@ onMounted(loadProfile)
               </p>
               <button
                 type="submit"
-                class="btn btn-danger me-2"
+                class="btn app-btn btn-danger me-2"
                 :disabled="
                   isDeletingAccount || isSaving || !deletionPassword || showFinalDeleteConfirm
                 "
@@ -374,13 +376,13 @@ onMounted(loadProfile)
               </button>
               <button
                 type="button"
-                class="btn btn-outline-secondary"
+                class="app-btn btn-quiet"
                 :disabled="isDeletingAccount"
                 @click="
-                  showDeleteAccount = false,
-                  showFinalDeleteConfirm = false,
-                  deletionPassword = '',
-                  deletionMessage = ''
+                  ((showDeleteAccount = false),
+                  (showFinalDeleteConfirm = false),
+                  (deletionPassword = ''),
+                  (deletionMessage = ''))
                 "
               >
                 Cancel
@@ -391,12 +393,12 @@ onMounted(loadProfile)
                 role="alert"
               >
                 <p class="text-danger">Permanently delete your account? This cannot be undone.</p>
-                <button type="button" class="btn btn-danger me-2" @click="deleteAccount">
+                <button type="button" class="btn app-btn btn-danger me-2" @click="deleteAccount">
                   Confirm
                 </button>
                 <button
                   type="button"
-                  class="btn btn-outline-secondary"
+                  class="app-btn btn-quiet"
                   @click="showFinalDeleteConfirm = false"
                 >
                   Cancel
@@ -411,9 +413,13 @@ onMounted(loadProfile)
 </template>
 
 <style scoped>
+/* Square with the user's initials: bright teal letters on black */
 .profile-avatar {
-  width: 64px;
-  height: 64px;
-  font-size: 1.5rem;
+  width: 72px;
+  height: 72px;
+  background-color: #000000;
+  color: #2dd4bf;
+  font-stretch: condensed;
+  font-weight: 900;
 }
 </style>

@@ -56,7 +56,7 @@ defineProps({
           <span v-if="member.start">
             {{ member.start.label }}
           </span>
-          <span v-else class="badge bg-secondary"> waiting </span>
+          <span v-else class="badge rounded-pill text-uppercase bg-secondary"> waiting </span>
         </div>
       </li>
     </ul>

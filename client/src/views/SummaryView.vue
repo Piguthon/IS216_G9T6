@@ -82,15 +82,15 @@ const starts = computed(() => {
 
 <template>
   <section data-testid="summary-page">
-    <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
-      <h1 class="h3 mb-0">Meetup summary</h1>
-      <RouterLink :to="`/meetup/${code}/results`" class="btn btn-outline-secondary btn-sm"
+    <header class="app-page-header d-flex flex-wrap justify-content-between align-items-end gap-3">
+      <h1 class="display-5 app-heading mb-0">Meetup summary</h1>
+      <RouterLink :to="`/meetup/${code}/results`" class="app-btn btn-quiet app-btn-sm"
         >Back to results</RouterLink
       >
-    </div>
+    </header>
 
     <div v-if="isLoading" class="text-center my-5" data-testid="summary-loading">
-      <div class="spinner-border text-primary" role="status">
+      <div class="spinner-border text-teal" role="status">
         <span class="visually-hidden">Loading summary…</span>
       </div>
     </div>
@@ -101,22 +101,17 @@ const starts = computed(() => {
 
     <div v-else-if="meetup && point" class="row g-4">
       <div class="col-lg-5">
-        <div class="card app-card mb-4">
-          <div class="card-body">
-            <span class="badge text-bg-warning mb-2">Sample travel times</span>
-            <h2 class="h5 text-primary" data-testid="summary-occasion">{{ meetup.occasion }}</h2>
-            <p class="mb-1">
-              <strong>Meet at:</strong>
-              <span data-testid="summary-point">{{ point.name }} MRT</span>
-            </p>
-            <p class="mb-1"><strong>Date:</strong> {{ meetup.date }}</p>
-            <p class="mb-0"><strong>Time:</strong> {{ meetup.time }}</p>
-          </div>
+        <div class="app-ticket app-halftone text-start mb-4">
+          <h2 class="h4 app-heading mb-2" data-testid="summary-occasion">{{ meetup.occasion }}</h2>
+          <p class="display-4 app-heading app-text-bright mb-3" data-testid="summary-point">
+            {{ point.type === 'interchange' ? point.name : `${point.name} MRT` }}
+          </p>
+          <p class="app-on-dark-muted mb-0">{{ meetup.date }}, {{ meetup.time }}</p>
         </div>
 
         <div class="card app-card mb-4">
           <div class="card-body">
-            <h2 class="h6 mb-3">Everyone's journey</h2>
+            <h2 class="h5 app-heading mb-3">Everyone's journey</h2>
             <ul class="list-group list-group-flush">
               <li
                 v-for="j in journeys"
@@ -126,7 +121,9 @@ const starts = computed(() => {
               >
                 <div class="d-flex justify-content-between">
                   <span class="fw-semibold">{{ j.name }}</span>
-                  <span v-if="j.minutes !== null">{{ j.minutes }} min</span>
+                  <span v-if="j.minutes !== null" class="h5 app-heading mb-0"
+                    >{{ j.minutes }} min</span
+                  >
                 </div>
                 <div class="small text-muted">from {{ j.from }}</div>
               </li>
