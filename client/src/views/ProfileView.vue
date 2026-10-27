@@ -377,9 +377,9 @@ onMounted(loadProfile)
                 class="btn btn-outline-secondary"
                 :disabled="isDeletingAccount"
                 @click="
-                  showDeleteAccount = false
-                  showFinalDeleteConfirm = false
-                  deletionPassword = ''
+                  showDeleteAccount = false,
+                  showFinalDeleteConfirm = false,
+                  deletionPassword = '',
                   deletionMessage = ''
                 "
               >
