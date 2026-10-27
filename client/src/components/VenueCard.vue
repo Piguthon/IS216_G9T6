@@ -48,8 +48,12 @@ const distanceLabel = computed(() => {
   <div class="card app-card h-100" data-testid="venue-card">
     <div class="card-body d-flex flex-column gap-1">
       <div class="d-flex justify-content-between align-items-start gap-2">
-        <h3 class="h6 mb-0" data-testid="venue-name">{{ venue.name }}</h3>
-        <span class="badge text-bg-light border" data-testid="venue-type">{{ typeLabel }}</span>
+        <h3 class="h6 app-heading mb-0" data-testid="venue-name">{{ venue.name }}</h3>
+        <span
+          class="badge rounded-pill text-uppercase text-bg-light border"
+          data-testid="venue-type"
+          >{{ typeLabel }}</span
+        >
       </div>
       <p class="small text-muted mb-0" data-testid="venue-address">{{ venue.address }}</p>
       <p v-if="distanceLabel" class="small mb-0" data-testid="venue-distance">

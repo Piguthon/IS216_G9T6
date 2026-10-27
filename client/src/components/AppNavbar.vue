@@ -39,9 +39,9 @@ async function handleLogout() {
 
 <!-- Responsive Bootstrap 5 navbar (https://getbootstrap.com/docs/5.3/components/navbar/) -->
 <template>
-  <nav class="navbar navbar-expand-md navbar-dark bg-primary" data-testid="app-navbar">
+  <nav class="navbar navbar-expand-md bg-black" data-bs-theme="dark" data-testid="app-navbar">
     <div class="container">
-      <RouterLink class="navbar-brand" :to="{ name: 'home' }" data-testid="nav-brand">
+      <RouterLink class="navbar-brand app-logo" :to="{ name: 'home' }" data-testid="nav-brand">
         FairSpot
       </RouterLink>
 
@@ -59,28 +59,56 @@ async function handleLogout() {
       </button>
 
       <div id="mainNavbar" class="collapse navbar-collapse">
-        <ul class="navbar-nav ms-auto">
+        <ul class="navbar-nav me-auto small">
           <li class="nav-item">
-            <RouterLink class="nav-link" :to="{ name: 'home' }" data-testid="nav-home">
+            <RouterLink
+              exact-active-class="active"
+              class="nav-link text-uppercase fw-bold"
+              :to="{ name: 'home' }"
+              data-testid="nav-home"
+            >
               Home
             </RouterLink>
           </li>
           <li class="nav-item">
-            <RouterLink class="nav-link" :to="{ name: 'create-meetup' }" data-testid="nav-create">
+            <RouterLink
+              exact-active-class="active"
+              class="nav-link text-uppercase fw-bold"
+              :to="{ name: 'create-meetup' }"
+              data-testid="nav-create"
+            >
               Create Meetup
             </RouterLink>
           </li>
           <li class="nav-item">
-            <RouterLink class="nav-link" :to="{ name: 'join-meetup' }" data-testid="nav-join">
+            <RouterLink
+              exact-active-class="active"
+              class="nav-link text-uppercase fw-bold"
+              :to="{ name: 'join-meetup' }"
+              data-testid="nav-join"
+            >
               Join Meetup
             </RouterLink>
           </li>
+        </ul>
+        <ul class="navbar-nav align-items-md-center gap-md-2 small">
           <template v-if="!auth.isLoggedIn">
             <li class="nav-item">
-              <RouterLink class="nav-link" to="/login" data-testid="nav-login"> Log in </RouterLink>
+              <RouterLink
+                exact-active-class="active"
+                class="nav-link text-uppercase fw-bold"
+                to="/login"
+                data-testid="nav-login"
+              >
+                Log in
+              </RouterLink>
             </li>
             <li class="nav-item">
-              <RouterLink class="nav-link" to="/signup" data-testid="nav-signup">
+              <RouterLink
+                class="app-btn btn-bright app-btn-sm my-2 my-md-0"
+                to="/signup"
+                data-testid="nav-signup"
+              >
                 Sign up
               </RouterLink>
             </li>
@@ -88,12 +116,22 @@ async function handleLogout() {
 
           <template v-else>
             <li class="nav-item">
-              <RouterLink class="nav-link" to="/profile" data-testid="nav-profile">
+              <RouterLink
+                exact-active-class="active"
+                class="nav-link text-uppercase fw-bold"
+                to="/profile"
+                data-testid="nav-profile"
+              >
                 Profile
               </RouterLink>
             </li>
             <li class="nav-item">
-              <a href="#" class="nav-link" @click.prevent="handleLogout" data-testid="nav-logout">
+              <a
+                href="#"
+                class="nav-link text-uppercase fw-bold"
+                @click.prevent="handleLogout"
+                data-testid="nav-logout"
+              >
                 Log out
               </a>
             </li>

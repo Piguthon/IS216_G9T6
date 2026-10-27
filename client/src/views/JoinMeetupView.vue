@@ -89,52 +89,55 @@ async function joinMeetup() {
 </script>
 
 <template>
-  <section data-testid="join-meetup-page">
-    <header class="app-page-header mb-3">
-      <h1 class="h3">Join Meetup</h1>
-    </header>
+  <div class="row justify-content-center">
+    <section class="col-md-8 col-lg-6" data-testid="join-meetup-page">
+      <header class="app-page-header">
+        <h1 class="display-5 app-heading mb-3">Join Meetup</h1>
+        <p class="text-muted mb-0">Enter the six-letter code your host shared.</p>
+      </header>
 
-    <!-- TODO 4: Header + form card + error alert, as in Create. -->
-    <div class="card app-card mb-4">
-      <div class="card-body">
-        <form @submit.prevent="joinMeetup">
-          <div class="mb-3">
-            <label for="code" class="form-label">Meetup Code</label>
-            <input
-              type="text"
-              id="code"
-              class="form-control text-uppercase"
-              v-model.trim="code"
-              data-testid="join-code"
-              placeholder="e.g. ABCDEF"
-            />
-          </div>
-          <div v-if="!auth.isLoggedIn" class="mb-3">
-            <label for="name" class="form-label">Your Name</label>
-            <input
-              type="text"
-              id="name"
-              class="form-control"
-              v-model.trim="name"
-              data-testid="join-name"
-              placeholder="What should we call you?"
-            />
-          </div>
-          <div v-if="errorMessage" class="alert alert-danger" data-testid="join-error">
-            {{ errorMessage }}
-          </div>
+      <!-- TODO 4: Header + form card + error alert, as in Create. -->
+      <div class="card app-card mb-4">
+        <div class="card-body">
+          <form @submit.prevent="joinMeetup">
+            <div class="mb-3">
+              <label for="code" class="form-label fw-bold">Meetup Code</label>
+              <input
+                type="text"
+                id="code"
+                class="form-control app-input form-control-lg text-uppercase fw-bold"
+                v-model.trim="code"
+                data-testid="join-code"
+                placeholder="e.g. ABCDEF"
+              />
+            </div>
+            <div v-if="!auth.isLoggedIn" class="mb-3">
+              <label for="name" class="form-label fw-bold">Your Name</label>
+              <input
+                type="text"
+                id="name"
+                class="form-control app-input"
+                v-model.trim="name"
+                data-testid="join-name"
+                placeholder="What should we call you?"
+              />
+            </div>
+            <div v-if="errorMessage" class="alert alert-danger" data-testid="join-error">
+              {{ errorMessage }}
+            </div>
 
-          <button
-            type="submit"
-            class="btn btn-primary w-100 mt-2"
-            :disabled="isJoining"
-            data-testid="join-submit"
-          >
-            {{ isJoining ? 'Joining...' : 'Join Meetup' }}
-          </button>
-        </form>
+            <button
+              type="submit"
+              class="app-btn btn-teal w-100 mt-2"
+              :disabled="isJoining"
+              data-testid="join-submit"
+            >
+              {{ isJoining ? 'Joining...' : 'Join Meetup' }}
+            </button>
+          </form>
+        </div>
       </div>
-    </div>
-    <!-- TODO 5: testids: join-code, join-name, join-submit, join-error -->
-  </section>
+      <!-- TODO 5: testids: join-code, join-name, join-submit, join-error -->
+    </section>
+  </div>
 </template>

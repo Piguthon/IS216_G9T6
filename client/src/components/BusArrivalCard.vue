@@ -65,16 +65,16 @@ onMounted(loadArrivals)
 </script>
 
 <template>
-  <section class="card" data-testid="bus-arrival-card">
+  <section class="card app-card" data-testid="bus-arrival-card">
     <div class="card-body">
       <div class="d-flex justify-content-between align-items-center gap-3 mb-3">
-        <h2 class="h5 mb-0">
+        <h2 class="h5 app-heading mb-0">
           {{ props.label || `Bus stop ${props.stopCode}` }}
         </h2>
 
         <button
           type="button"
-          class="btn btn-outline-primary btn-sm"
+          class="app-btn btn-teal-outline app-btn-sm"
           :disabled="isLoading"
           @click="loadArrivals"
         >
@@ -98,7 +98,7 @@ onMounted(loadArrivals)
             <span
               v-for="(arrival, index) in service.nextArrivals"
               :key="index"
-              class="badge text-bg-light"
+              class="badge rounded-pill text-uppercase text-bg-light"
             >
               {{ minutesUntil(arrival) }}
             </span>

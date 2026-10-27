@@ -70,6 +70,21 @@ const meetupSchema = new mongoose.Schema({
         required : true
     },
     members : [memberSchema],
+    // The host's confirmed choices from group voting (controllers/votes-controller.js)
+    finalStation : {
+        type : new mongoose.Schema(
+            { optionId : String, name : String, lat : Number, lng : Number },
+            { _id : false }
+        ),
+        default : null
+    },
+    finalVenue : {
+        type : new mongoose.Schema(
+            { optionId : String, name : String, address : String, lat : Number, lng : Number },
+            { _id : false }
+        ),
+        default : null
+    },
     createdAt : {
         type : Date,
         default : mongoose.now
@@ -172,3 +187,12 @@ exports.removeMember = async function(code, memberId) {
     
     return meetup;
 };
+
+// setFinalChoice(code, kind, choice): kind is 'station' or 'venue'; choice null clears it.
+// A new meeting point clears the confirmed venue, because venues depend on the meeting point.
+exports.setFinalChoice = async function(code, kind, choice) {
+    const update = kind === 'station'
+        ? { finalStation : choice, finalVenue : null }
+        : { finalVenue : choice };
+    return await Meetup.findOneAndUpdate({ code : code }, update, { returnDocument : 'after' });
+}

@@ -54,11 +54,13 @@ onMounted(loadLocations)
       </button>
     </div>
     <div v-else-if="locations.length">
-      <label for="saved-start-point" class="form-label">Choose a saved starting point</label>
+      <label for="saved-start-point" class="form-label fw-bold"
+        >Choose a saved starting point</label
+      >
       <select
         id="saved-start-point"
         v-model="selectedId"
-        class="form-select"
+        class="form-select app-input"
         data-testid="saved-start-picker"
       >
         <option value="" disabled>Select Home, School or another saved location</option>
@@ -70,7 +72,7 @@ onMounted(loadLocations)
       <button
         v-if="selectedId"
         type="button"
-        class="btn btn-outline-primary btn-sm mt-2"
+        class="app-btn btn-teal-outline app-btn-sm mt-2"
         @click="chooseLocation"
       >
         Use

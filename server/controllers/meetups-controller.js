@@ -23,6 +23,7 @@
 // TODO 1: Require the meetup model.
 //         Example: Week 5/server/blog-with-mongodb/controllers/blogs-controller.js
 const Meetup = require('../models/meetup-model');
+const Vote = require('../models/vote-model');
 const {getUniqueCode} = require('../utils/generate-code');
 const { isAllowedMeetupDate } = require('../utils/meetup-date');
 
@@ -192,6 +193,7 @@ exports.deleteMeetup = async (req, res) => {
         }
 
         await Meetup.deleteByCode(code);
+        await Vote.deleteByCode(code);
         res.status(200).json({ message: "Meetup deleted successfully" });
 
     } catch (error) {
@@ -217,6 +219,7 @@ exports.leaveMeetup = async (req, res) => {
         }
 
         await Meetup.removeMember(code, memberId);
+        await Vote.deleteByMember(code, memberId);
         res.status(200).json({ message: "Left meetup successfully" });
 
     } catch (error) {

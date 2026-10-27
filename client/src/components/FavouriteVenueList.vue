@@ -56,13 +56,17 @@ onMounted(loadFavourites)
 </script>
 
 <template>
-  <div class="card shadow-sm border-0 mt-4" data-testid="favourite-venues">
-    <div class="card-body p-4">
-      <h2 class="h5">Favourite venues</h2>
+  <div class="card app-card mt-4" data-testid="favourite-venues">
+    <div class="card-body">
+      <h2 class="h5 app-heading">Favourite venues</h2>
       <p v-if="isLoading" role="status">Loading favourites...</p>
       <div v-else-if="message" class="alert alert-danger" role="alert">
         <p>{{ message }}</p>
-        <button type="button" class="btn btn-outline-danger btn-sm" @click="loadFavourites">
+        <button
+          type="button"
+          class="btn app-btn btn-outline-danger app-btn-sm"
+          @click="loadFavourites"
+        >
           Try again
         </button>
       </div>
@@ -76,12 +80,12 @@ onMounted(loadFavourites)
           class="list-group-item px-0 d-flex flex-wrap justify-content-between gap-3"
         >
           <div>
-            <h3 class="h6 mb-1">{{ venue.name }}</h3>
+            <h3 class="h6 app-heading mb-1">{{ venue.name }}</h3>
             <p class="small text-muted mb-0">{{ venue.address }}</p>
           </div>
           <button
             type="button"
-            class="btn btn-outline-danger btn-sm align-self-start"
+            class="btn app-btn btn-outline-danger app-btn-sm align-self-start"
             :disabled="isRemoving"
             :aria-label="`Remove ${venue.name} from favourites`"
             @click="removeFavourite(venue.venueKey)"

@@ -46,7 +46,7 @@ async function saveFavourite() {
     <button
       v-if="auth.isLoggedIn"
       type="button"
-      class="btn btn-outline-primary btn-sm"
+      class="app-btn btn-teal-outline app-btn-sm"
       :disabled="isSaving"
       @click="saveFavourite"
     >
