@@ -21,7 +21,6 @@ const showPasswords = ref(false)
 const changingPassword = ref(false)
 const passwordMessage = ref('')
 const passwordChanged = ref(false)
-const settingsExpanded = ref(false)
 const showPasswordConfirm = ref(false)
 
 function confirmPasswordChange() {
@@ -105,61 +104,53 @@ async function savePassword() {
 </script>
 
 <template>
-  <div class="card app-card mt-4">
-    <div class="card-body">
-      <h2 class="h5 app-heading mb-0">
-        <button
-          type="button"
-          class="app-btn btn-teal-outline w-100 d-flex justify-content-between align-items-center"
-          :aria-expanded="settingsExpanded"
-          aria-controls="account-settings-content"
-          :disabled="savingName || changingPassword"
-          @click="settingsExpanded = !settingsExpanded"
+  <div v-if="passwordChanged" class="alert alert-success mb-0" role="status">
+    Password changed. You have been signed out.
+    <RouterLink to="/login">Log in with your new password</RouterLink>.
+  </div>
+  <div v-else class="row g-4">
+    <div class="col-md-5">
+      <form @submit.prevent="saveName">
+        <h3 class="h5 app-heading mb-3">Your name</h3>
+        <label for="profile-name" class="form-label fw-bold">Profile name</label>
+        <input
+          id="profile-name"
+          v-model.trim="name"
+          class="form-control app-input mb-2"
+          maxlength="100"
+          required
+          :disabled="savingName"
+        />
+        <p
+          v-if="nameMessage"
+          class="alert small"
+          :class="nameError ? 'alert-danger' : 'alert-success'"
+          :role="nameError ? 'alert' : 'status'"
         >
-          Account settings
-          <span aria-hidden="true">{{ settingsExpanded ? '−' : '+' }}</span>
+          {{ nameMessage }}
+        </p>
+        <button class="app-btn btn-sign-outline" :disabled="savingName || !name">
+          {{ savingName ? 'Saving...' : 'Save name' }}
         </button>
-      </h2>
-      <div id="account-settings-content" v-show="settingsExpanded" class="mt-3">
-        <div v-if="passwordChanged" class="alert alert-success" role="status">
-          Password changed. You have been signed out.
-          <RouterLink to="/login">Log in with your new password</RouterLink>.
-        </div>
-        <template v-else>
-          <form class="mb-4" @submit.prevent="saveName">
-            <label for="profile-name" class="form-label fw-bold">Profile name</label>
-            <input
-              id="profile-name"
-              v-model.trim="name"
-              class="form-control app-input mb-2"
-              maxlength="100"
-              required
-              :disabled="savingName"
-            />
-            <p
-              v-if="nameMessage"
-              class="alert small"
-              :class="nameError ? 'alert-danger' : 'alert-success'"
-              :role="nameError ? 'alert' : 'status'"
-            >
-              {{ nameMessage }}
-            </p>
-            <button class="app-btn btn-teal-outline" :disabled="savingName || !name">
-              {{ savingName ? 'Saving...' : 'Save name' }}
-            </button>
-          </form>
-          <h3 class="h6 app-heading">Change password</h3>
-          <form @submit.prevent="confirmPasswordChange">
-            <fieldset :disabled="changingPassword || showPasswordConfirm">
-              <label for="current-password" class="form-label fw-bold">Current password</label>
-              <input
-                id="current-password"
-                v-model="currentPassword"
-                :type="showPasswords ? 'text' : 'password'"
-                autocomplete="current-password"
-                class="form-control app-input mb-3"
-                required
-              />
+      </form>
+      <!-- The parent puts the delete-account section here -->
+      <slot></slot>
+    </div>
+    <div class="col-md-7">
+      <form @submit.prevent="confirmPasswordChange">
+        <h3 class="h5 app-heading mb-3">Change password</h3>
+        <fieldset :disabled="changingPassword || showPasswordConfirm">
+          <label for="current-password" class="form-label fw-bold">Current password</label>
+          <input
+            id="current-password"
+            v-model="currentPassword"
+            :type="showPasswords ? 'text' : 'password'"
+            autocomplete="current-password"
+            class="form-control app-input mb-3"
+            required
+          />
+          <div class="row g-3">
+            <div class="col-sm-6">
               <label for="new-password" class="form-label fw-bold">New password</label>
               <input
                 id="new-password"
@@ -171,15 +162,8 @@ async function savePassword() {
                 minlength="8"
                 aria-describedby="change-password-rules"
               />
-              <ul id="change-password-rules" class="small list-unstyled mt-2">
-                <li
-                  v-for="rule in rules"
-                  :key="rule.label"
-                  :class="rule.met ? 'text-success' : 'text-muted'"
-                >
-                  {{ rule.met ? '✓' : '○' }} {{ rule.label }}
-                </li>
-              </ul>
+            </div>
+            <div class="col-sm-6">
               <label for="confirm-new-password" class="form-label fw-bold"
                 >Confirm new password</label
               >
@@ -188,52 +172,62 @@ async function savePassword() {
                 v-model="confirmation"
                 :type="showPasswords ? 'text' : 'password'"
                 autocomplete="new-password"
-                class="form-control app-input mb-2"
+                class="form-control app-input"
                 required
               />
-              <p
-                v-if="confirmation"
-                class="small"
-                :class="confirmation === newPassword ? 'text-success' : 'text-danger'"
-                role="status"
-              >
-                {{ confirmation === newPassword ? 'Passwords match.' : 'Passwords do not match.' }}
-              </p>
-              <p v-if="newPassword && currentPassword === newPassword" class="small text-danger">
-                Choose a different new password.
-              </p>
-              <div class="form-check mb-3">
-                <input
-                  id="show-change-passwords"
-                  v-model="showPasswords"
-                  type="checkbox"
-                  class="form-check-input app-check"
-                />
-                <label for="show-change-passwords" class="form-check-label">Show passwords</label>
-              </div>
-              <p v-if="passwordMessage" class="alert alert-danger" role="alert">
-                {{ passwordMessage }}
-              </p>
-              <button class="app-btn btn-teal" :disabled="changingPassword || !canChangePassword">
-                {{ changingPassword ? 'Updating...' : 'Change password' }}
-              </button>
-            </fieldset>
-            <div v-if="showPasswordConfirm" class="alert alert-secondary mt-3 mb-0" role="alert">
-              <h4 class="h6 app-heading">Change password?</h4>
-              <p>
-                Changing your password signs you out. You will need to log in again with your new
-                password.
-              </p>
-              <button type="button" class="app-btn btn-teal me-2" @click="savePassword">
-                Confirm
-              </button>
-              <button type="button" class="app-btn btn-quiet" @click="showPasswordConfirm = false">
-                Cancel
-              </button>
             </div>
-          </form>
-        </template>
-      </div>
+          </div>
+          <ul
+            id="change-password-rules"
+            class="d-flex flex-wrap column-gap-3 small list-unstyled mt-2 mb-2"
+          >
+            <li
+              v-for="rule in rules"
+              :key="rule.label"
+              :class="rule.met ? 'text-success' : 'text-muted'"
+            >
+              {{ rule.met ? '✓' : '○' }} {{ rule.label }}
+            </li>
+          </ul>
+          <p
+            v-if="confirmation"
+            class="small mb-2"
+            :class="confirmation === newPassword ? 'text-success' : 'text-danger'"
+            role="status"
+          >
+            {{ confirmation === newPassword ? 'Passwords match.' : 'Passwords do not match.' }}
+          </p>
+          <p v-if="newPassword && currentPassword === newPassword" class="small text-danger mb-2">
+            Choose a different new password.
+          </p>
+          <div class="form-check mb-3">
+            <input
+              id="show-change-passwords"
+              v-model="showPasswords"
+              type="checkbox"
+              class="form-check-input app-check"
+            />
+            <label for="show-change-passwords" class="form-check-label">Show passwords</label>
+          </div>
+          <p v-if="passwordMessage" class="alert alert-danger" role="alert">
+            {{ passwordMessage }}
+          </p>
+          <button class="app-btn btn-sign" :disabled="changingPassword || !canChangePassword">
+            {{ changingPassword ? 'Updating...' : 'Change password' }}
+          </button>
+        </fieldset>
+        <div v-if="showPasswordConfirm" class="alert alert-secondary mt-3 mb-0" role="alert">
+          <h4 class="h6 app-heading">Change password?</h4>
+          <p>
+            Changing your password signs you out. You will need to log in again with your new
+            password.
+          </p>
+          <button type="button" class="app-btn btn-sign me-2" @click="savePassword">Confirm</button>
+          <button type="button" class="app-btn btn-quiet" @click="showPasswordConfirm = false">
+            Cancel
+          </button>
+        </div>
+      </form>
     </div>
   </div>
 </template>

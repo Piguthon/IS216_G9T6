@@ -83,38 +83,36 @@ async function submitSignup() {
 <template>
   <div class="row justify-content-center">
     <section class="col-md-8 col-lg-6" data-testid="signup-page">
-      <header class="app-page-header">
-        <h1 class="display-5 app-heading mb-3">Sign up</h1>
-        <p class="text-muted mb-0">
-          Create an account to save Home, School or Work as starting points.
-        </p>
-      </header>
+      <form class="card app-card card-body p-4" @submit.prevent="submitSignup">
+        <header class="app-page-header">
+          <h1 class="app-heading mb-0">Sign up</h1>
+        </header>
 
-      <form class="card app-card card-body" @submit.prevent="submitSignup">
-        <div class="mb-3">
-          <label for="name" class="form-label fw-bold">Name</label>
-          <input
-            id="name"
-            v-model.trim="name"
-            type="text"
-            class="form-control app-input"
-            placeholder="Enter your name"
-            autocomplete="name"
-            required
-          />
-        </div>
-
-        <div class="mb-3">
-          <label for="email" class="form-label fw-bold">Email</label>
-          <input
-            id="email"
-            v-model.trim="email"
-            type="email"
-            class="form-control app-input"
-            placeholder="Enter your email"
-            autocomplete="email"
-            required
-          />
+        <div class="row g-3 mb-3">
+          <div class="col-sm-6">
+            <label for="name" class="form-label fw-bold">Name</label>
+            <input
+              id="name"
+              v-model.trim="name"
+              type="text"
+              class="form-control app-input"
+              placeholder="Enter your name"
+              autocomplete="name"
+              required
+            />
+          </div>
+          <div class="col-sm-6">
+            <label for="email" class="form-label fw-bold">Email</label>
+            <input
+              id="email"
+              v-model.trim="email"
+              type="email"
+              class="form-control app-input"
+              placeholder="Enter your email"
+              autocomplete="email"
+              required
+            />
+          </div>
         </div>
 
         <div class="mb-3">
@@ -142,7 +140,10 @@ async function submitSignup() {
               {{ showPassword ? 'Hide' : 'Show' }}
             </button>
           </div>
-          <ul id="password-rules" class="list-unstyled small mt-2 mb-0">
+          <ul
+            id="password-rules"
+            class="d-flex flex-wrap column-gap-3 list-unstyled small mt-2 mb-0"
+          >
             <li
               v-for="rule in passwordRules"
               :key="rule.label"
@@ -205,7 +206,7 @@ async function submitSignup() {
 
         <button
           type="submit"
-          class="app-btn btn-teal w-100"
+          class="app-btn app-btn-lg btn-sign w-100"
           :disabled="isSigningUp || !passwordValid || !passwordsMatch"
         >
           {{ isSigningUp ? 'Creating account...' : 'Create account' }}

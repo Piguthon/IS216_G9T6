@@ -1,7 +1,7 @@
 <!--
   FILE:     src/views/ProfileView.vue
   OWNER:    JX (team-written)
-  PURPOSE:  Account details and saved start locations
+  PURPOSE:  Account details and saved start locations, in one card with three tabs
   ROUTE:    /profile
   TALKS TO: GET /api/users/me; GET/POST/PUT/DELETE /api/users/me/locations
   DATA:     { user: { _id, name, email } }
@@ -41,6 +41,21 @@ const deletionPassword = ref('')
 const deletionMessage = ref('')
 const isDeletingAccount = ref(false)
 const showFinalDeleteConfirm = ref(false)
+const activeTab = ref('locations')
+const showAddForm = ref(false)
+
+const tabs = computed(() => [
+  { id: 'locations', label: `Locations (${locations.value.length})` },
+  { id: 'favourites', label: 'Favourites' },
+  { id: 'account', label: 'Account' },
+])
+
+function closeAddForm() {
+  showAddForm.value = false
+  nickname.value = ''
+  selectedAddress.value = null
+  searchKey.value++
+}
 
 function confirmAccountDeletion() {
   if (!isDeletingAccount.value && !isSaving.value && deletionPassword.value) {
@@ -80,17 +95,6 @@ async function deleteAccount() {
     isDeletingAccount.value = false
   }
 }
-const initials = computed(() => {
-  if (!user.value) return ''
-  return user.value.name
-    .trim()
-    .split(/\s+/)
-    .slice(0, 2)
-    .map((part) => part[0])
-    .join('')
-    .toUpperCase()
-})
-
 function showLocationError(error) {
   locationError.value = true
   if (error.response && error.response.status === 401) {
@@ -122,9 +126,8 @@ async function addLocation() {
       { headers: { Authorization: `Bearer ${auth.token}` } },
     )
     locations.value = response.data
-    nickname.value = ''
-    selectedAddress.value = null
-    searchKey.value++
+    closeAddForm()
+    locationMessageTarget.value = 'list'
     locationError.value = false
     locationMessage.value = 'Location saved.'
   } catch (error) {
@@ -245,167 +248,194 @@ onMounted(loadProfile)
 </script>
 
 <template>
-  <section data-testid="profile-page">
-    <header class="app-page-header">
-      <h1 class="display-5 app-heading mb-0">Your profile</h1>
-    </header>
+  <section class="row justify-content-center" data-testid="profile-page">
+    <div class="col-lg-9">
+      <header class="app-page-header">
+        <h1 class="app-heading mb-1">Your profile</h1>
+        <p v-if="user" class="text-muted text-break mb-0">
+          <span data-testid="profile-name">{{ user.name }}</span
+          >, <span data-testid="profile-email">{{ user.email }}</span>
+        </p>
+      </header>
 
-    <p v-if="isLoading" role="status">Loading your profile…</p>
+      <p v-if="isLoading" role="status">Loading your profile…</p>
 
-    <div v-else-if="message" class="alert alert-danger" role="alert">
-      <p class="mb-2">{{ message }}</p>
-      <button type="button" class="btn app-btn btn-outline-danger app-btn-sm" @click="loadProfile">
-        Try again
-      </button>
-    </div>
-
-    <div v-else-if="user && auth.isLoggedIn" class="row g-4">
-      <div class="col-lg-4">
-        <div class="card app-card">
-          <div class="card-body">
-            <span
-              class="profile-avatar display-6 app-heading d-inline-flex align-items-center justify-content-center rounded-3 mb-3"
-              aria-hidden="true"
-              >{{ initials }}</span
-            >
-            <h2 data-testid="profile-name">{{ user.name }}</h2>
-            <p class="text-muted text-break" data-testid="profile-email">{{ user.email }}</p>
-            <hr />
-            <p class="mb-0">
-              <strong>{{ locations.length }}</strong> saved locations
-            </p>
-          </div>
-        </div>
+      <div v-else-if="message" class="alert alert-danger" role="alert">
+        <p class="mb-2">{{ message }}</p>
+        <button
+          type="button"
+          class="btn app-btn btn-outline-danger app-btn-sm"
+          @click="loadProfile"
+        >
+          Try again
+        </button>
       </div>
-      <div class="col-lg-8">
-        <div class="card app-card mb-4">
-          <div class="card-body">
-            <h2 class="h5 app-heading">Saved locations</h2>
-            <p
-              v-if="locationMessage && locationMessageTarget === 'list'"
-              :class="locationError ? 'alert alert-danger' : 'alert alert-success'"
-              :role="locationError ? 'alert' : 'status'"
+
+      <div v-else-if="user && auth.isLoggedIn" class="card app-card">
+        <!-- Bootstrap navs (https://getbootstrap.com/docs/5.3/components/navs-tabs/) -->
+        <ul class="nav nav-fill profile-tabs" role="tablist">
+          <li v-for="tab in tabs" :key="tab.id" class="nav-item" role="presentation">
+            <button
+              type="button"
+              class="nav-link"
+              :class="{ active: activeTab === tab.id }"
+              role="tab"
+              :aria-selected="activeTab === tab.id"
+              :data-testid="`profile-tab-${tab.id}`"
+              @click="activeTab = tab.id"
             >
-              {{ locationMessage }}
-            </p>
-            <SavedLocationList
-              :key="locationsListKey"
-              :locations="locations"
-              :busy="isSaving"
-              @rename="renameLocation"
-              @delete="deleteLocation"
-              @default="setDefaultLocation"
-            />
-          </div>
-        </div>
-        <div class="card app-card">
-          <div class="card-body">
-            <h2 class="h5 app-heading mb-3">Add a location</h2>
-            <form @submit.prevent="addLocation" @keydown.enter.prevent>
-              <fieldset :disabled="isSaving">
-                <label for="location-nickname" class="form-label fw-bold">Name</label>
-                <input
-                  id="location-nickname"
-                  v-model.trim="nickname"
-                  class="form-control app-input mb-3"
-                  placeholder="e.g. Home, School or Work"
-                  maxlength="60"
-                  required
-                />
-                <p class="form-label fw-bold mb-2">Search address or postal code</p>
-                <AddressSearch
-                  :key="searchKey"
-                  @select="selectedAddress = $event"
-                  @clear="selectedAddress = null"
-                />
+              {{ tab.label }}
+            </button>
+          </li>
+        </ul>
+
+        <!-- v-show keeps half-typed forms when you switch tabs -->
+        <div v-show="activeTab === 'locations'" class="card-body p-3 p-md-4" role="tabpanel">
+          <p
+            v-if="locationMessage && locationMessageTarget === 'list'"
+            :class="locationError ? 'alert alert-danger' : 'alert alert-success'"
+            :role="locationError ? 'alert' : 'status'"
+          >
+            {{ locationMessage }}
+          </p>
+          <SavedLocationList
+            :key="locationsListKey"
+            :locations="locations"
+            :busy="isSaving"
+            @rename="renameLocation"
+            @delete="deleteLocation"
+            @default="setDefaultLocation"
+          />
+          <button
+            v-if="!showAddForm"
+            type="button"
+            class="app-btn btn-sign mt-3"
+            data-testid="location-add"
+            @click="showAddForm = true"
+          >
+            Add a location
+          </button>
+          <form
+            v-else
+            class="bg-body-tertiary rounded-3 p-3 mt-3"
+            @submit.prevent="addLocation"
+            @keydown.enter.prevent
+          >
+            <fieldset :disabled="isSaving">
+              <label for="location-nickname" class="form-label fw-bold">Name</label>
+              <input
+                id="location-nickname"
+                v-model.trim="nickname"
+                class="form-control app-input mb-3"
+                placeholder="e.g. Home, School or Work"
+                maxlength="60"
+                required
+              />
+              <p class="form-label fw-bold mb-2">Search address or postal code</p>
+              <AddressSearch
+                :key="searchKey"
+                @select="selectedAddress = $event"
+                @clear="selectedAddress = null"
+              />
+              <div class="d-flex gap-2 mt-3">
                 <button
                   type="submit"
-                  class="app-btn btn-teal mt-3"
+                  class="app-btn btn-sign"
                   :disabled="isSaving || !nickname || !selectedAddress"
                 >
                   {{ isSaving ? 'Saving...' : 'Save location' }}
                 </button>
-              </fieldset>
-              <p
-                v-if="locationMessage && locationMessageTarget === 'add'"
-                class="alert mt-3 mb-0"
-                :class="locationError ? 'alert-danger' : 'alert-success'"
-                :role="locationError ? 'alert' : 'status'"
-              >
-                {{ locationMessage }}
-              </p>
-            </form>
-          </div>
-        </div>
-        <FavouriteVenueList />
-        <AccountSettings :user="user" @updated="user = $event" />
-        <div class="card app-card mt-4">
-          <div class="card-body">
-            <button
-              v-if="!showDeleteAccount"
-              type="button"
-              class="btn app-btn btn-outline-danger"
-              @click="showDeleteAccount = true"
-            >
-              Delete my account
-            </button>
-            <form v-else @submit.prevent="confirmAccountDeletion">
-              <label for="deletion-password" class="form-label fw-bold"
-                >Confirm your current password</label
-              >
-              <input
-                id="deletion-password"
-                v-model="deletionPassword"
-                type="password"
-                class="form-control app-input mb-3"
-                autocomplete="current-password"
-                required
-                :disabled="isDeletingAccount || showFinalDeleteConfirm"
-              />
-              <p v-if="deletionMessage" class="alert alert-danger" role="alert">
-                {{ deletionMessage }}
-              </p>
-              <button
-                type="submit"
-                class="btn app-btn btn-danger me-2"
-                :disabled="
-                  isDeletingAccount || isSaving || !deletionPassword || showFinalDeleteConfirm
-                "
-              >
-                {{ isDeletingAccount ? 'Deleting...' : 'Permanently delete account' }}
-              </button>
-              <button
-                type="button"
-                class="app-btn btn-quiet"
-                :disabled="isDeletingAccount"
-                @click="
-                  ((showDeleteAccount = false),
-                  (showFinalDeleteConfirm = false),
-                  (deletionPassword = ''),
-                  (deletionMessage = ''))
-                "
-              >
-                Cancel
-              </button>
-              <div
-                v-if="showFinalDeleteConfirm"
-                class="alert alert-secondary mt-3 mb-0"
-                role="alert"
-              >
-                <p class="text-danger">Permanently delete your account? This cannot be undone.</p>
-                <button type="button" class="btn app-btn btn-danger me-2" @click="deleteAccount">
-                  Confirm
-                </button>
-                <button
-                  type="button"
-                  class="app-btn btn-quiet"
-                  @click="showFinalDeleteConfirm = false"
-                >
+                <button type="button" class="app-btn btn-quiet" @click="closeAddForm">
                   Cancel
                 </button>
               </div>
-            </form>
-          </div>
+            </fieldset>
+            <p
+              v-if="locationMessage && locationMessageTarget === 'add'"
+              class="alert mt-3 mb-0"
+              :class="locationError ? 'alert-danger' : 'alert-success'"
+              :role="locationError ? 'alert' : 'status'"
+            >
+              {{ locationMessage }}
+            </p>
+          </form>
+        </div>
+
+        <div v-show="activeTab === 'favourites'" class="card-body p-3 p-md-4" role="tabpanel">
+          <FavouriteVenueList />
+        </div>
+
+        <div v-show="activeTab === 'account'" class="card-body p-3 p-md-4" role="tabpanel">
+          <AccountSettings :user="user" @updated="user = $event">
+            <div class="border-top pt-3 mt-4">
+              <button
+                v-if="!showDeleteAccount"
+                type="button"
+                class="btn app-btn btn-outline-danger"
+                @click="showDeleteAccount = true"
+              >
+                Delete my account
+              </button>
+              <form v-else @submit.prevent="confirmAccountDeletion">
+                <label for="deletion-password" class="form-label fw-bold"
+                  >Confirm your current password</label
+                >
+                <input
+                  id="deletion-password"
+                  v-model="deletionPassword"
+                  type="password"
+                  class="form-control app-input mb-3"
+                  autocomplete="current-password"
+                  required
+                  :disabled="isDeletingAccount || showFinalDeleteConfirm"
+                />
+                <p v-if="deletionMessage" class="alert alert-danger" role="alert">
+                  {{ deletionMessage }}
+                </p>
+                <div class="d-flex flex-wrap gap-2">
+                  <button
+                    type="submit"
+                    class="btn app-btn btn-danger"
+                    :disabled="
+                      isDeletingAccount || isSaving || !deletionPassword || showFinalDeleteConfirm
+                    "
+                  >
+                    {{ isDeletingAccount ? 'Deleting...' : 'Permanently delete account' }}
+                  </button>
+                  <button
+                    type="button"
+                    class="app-btn btn-quiet"
+                    :disabled="isDeletingAccount"
+                    @click="
+                      ((showDeleteAccount = false),
+                      (showFinalDeleteConfirm = false),
+                      (deletionPassword = ''),
+                      (deletionMessage = ''))
+                    "
+                  >
+                    Cancel
+                  </button>
+                </div>
+                <div
+                  v-if="showFinalDeleteConfirm"
+                  class="alert alert-secondary mt-3 mb-0"
+                  role="alert"
+                >
+                  <p class="text-danger">Permanently delete your account? This cannot be undone.</p>
+                  <button type="button" class="btn app-btn btn-danger me-2" @click="deleteAccount">
+                    Confirm
+                  </button>
+                  <button
+                    type="button"
+                    class="app-btn btn-quiet"
+                    @click="showFinalDeleteConfirm = false"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </form>
+            </div>
+          </AccountSettings>
         </div>
       </div>
     </div>
@@ -413,13 +443,27 @@ onMounted(loadProfile)
 </template>
 
 <style scoped>
-/* Square with the user's initials: bright teal letters on black */
-.profile-avatar {
-  width: 72px;
-  height: 72px;
-  background-color: #000000;
-  color: #2dd4bf;
-  font-stretch: condensed;
-  font-weight: 900;
+/* Dark tab bar along the top of the card, with the open tab in white */
+.profile-tabs {
+  overflow: hidden;
+  border-radius: 4px 4px 0 0;
+  background-color: #2a2d36;
+}
+
+.profile-tabs .nav-link {
+  width: 100%;
+  border-radius: 0;
+  color: #e4e6e8;
+  font-weight: 700;
+}
+
+.profile-tabs .nav-link.active {
+  background-color: #ffffff;
+  color: #000000;
+}
+
+.profile-tabs .nav-link:focus-visible {
+  outline: 3px solid #f2c230;
+  outline-offset: -3px;
 }
 </style>

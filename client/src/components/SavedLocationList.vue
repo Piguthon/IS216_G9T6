@@ -22,7 +22,7 @@ function edit(location) {
     No saved locations yet. Add Home, School or Work to keep your usual starting points handy.
   </p>
   <ul v-else class="list-group list-group-flush">
-    <li v-for="location in locations" :key="location._id" class="list-group-item px-0 py-3">
+    <li v-for="location in locations" :key="location._id" class="list-group-item px-0 py-2">
       <form
         v-if="editingId === location._id"
         @submit.prevent="emit('rename', location._id, nickname, replacementAddress)"
@@ -50,7 +50,7 @@ function edit(location) {
           New address: {{ replacementAddress.label }}
         </p>
         <div class="d-flex align-items-center gap-2 mt-2">
-          <button class="app-btn btn-teal app-btn-sm" :disabled="busy || !nickname">
+          <button class="app-btn btn-sign app-btn-sm" :disabled="busy || !nickname">
             Save changes
           </button>
           <button
@@ -63,28 +63,15 @@ function edit(location) {
           </button>
         </div>
       </form>
-      <div v-else class="d-flex flex-wrap justify-content-between gap-3">
-        <div>
-          <h3 class="h6 app-heading mb-1">{{ location.label }}</h3>
-          <span
-            v-if="location.isDefault"
-            class="badge rounded-pill text-uppercase text-bg-teal mb-1"
-            >Default</span
-          >
-          <p class="text-muted small mb-0">{{ location.address }}</p>
-          <p v-if="location.postal" class="text-muted small mb-0">
-            Singapore {{ location.postal }}
-          </p>
-        </div>
-        <div class="d-flex align-items-start gap-2">
-          <button
-            type="button"
-            class="app-btn btn-teal-outline app-btn-sm"
-            :disabled="busy"
-            @click="edit(location)"
-          >
-            Edit
-          </button>
+      <div v-else class="d-flex flex-wrap align-items-center gap-2">
+        <span class="app-street-sign">{{ location.label }}</span>
+        <span v-if="location.isDefault" class="badge rounded-pill text-uppercase text-bg-dark"
+          >Default</span
+        >
+        <span class="small flex-grow-1 me-2">
+          {{ location.address }}<template v-if="location.postal">, S{{ location.postal }}</template>
+        </span>
+        <div class="d-flex gap-2">
           <button
             v-if="!location.isDefault"
             type="button"
@@ -93,6 +80,14 @@ function edit(location) {
             @click="emit('default', location._id)"
           >
             Make default
+          </button>
+          <button
+            type="button"
+            class="app-btn btn-sign-outline app-btn-sm"
+            :disabled="busy"
+            @click="edit(location)"
+          >
+            Edit
           </button>
           <button
             type="button"

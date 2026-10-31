@@ -57,14 +57,10 @@ async function submitLogin() {
 <template>
   <div class="row justify-content-center">
     <section class="col-md-8 col-lg-6" data-testid="login-page">
-      <header class="app-page-header">
-        <h1 class="display-5 app-heading mb-3">Log in</h1>
-        <p class="text-muted mb-0">
-          Log in to use your saved starting points and favourite places.
-        </p>
-      </header>
-
-      <form class="card app-card card-body" @submit.prevent="submitLogin">
+      <form class="card app-card card-body p-4" @submit.prevent="submitLogin">
+        <header class="app-page-header">
+          <h1 class="app-heading mb-0">Log in</h1>
+        </header>
         <div class="mb-3">
           <label for="email" class="form-label fw-bold">Email</label>
           <input
@@ -95,7 +91,7 @@ async function submitLogin() {
           {{ message }}
         </p>
 
-        <button type="submit" class="app-btn btn-teal w-100" :disabled="isLoggingIn">
+        <button type="submit" class="app-btn app-btn-lg btn-sign w-100" :disabled="isLoggingIn">
           {{ isLoggingIn ? 'Logging in…' : 'Log in' }}
         </button>
       </form>

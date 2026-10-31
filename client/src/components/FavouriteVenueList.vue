@@ -56,44 +56,41 @@ onMounted(loadFavourites)
 </script>
 
 <template>
-  <div class="card app-card mt-4" data-testid="favourite-venues">
-    <div class="card-body">
-      <h2 class="h5 app-heading">Favourite venues</h2>
-      <p v-if="isLoading" role="status">Loading favourites...</p>
-      <div v-else-if="message" class="alert alert-danger" role="alert">
-        <p>{{ message }}</p>
+  <div data-testid="favourite-venues">
+    <p v-if="isLoading" role="status">Loading favourites...</p>
+    <div v-else-if="message" class="alert alert-danger" role="alert">
+      <p>{{ message }}</p>
+      <button
+        type="button"
+        class="btn app-btn btn-outline-danger app-btn-sm"
+        @click="loadFavourites"
+      >
+        Try again
+      </button>
+    </div>
+    <p v-else-if="venues.length === 0" class="text-muted mb-0">
+      No favourites yet. Save a venue from the meetup results to see it here.
+    </p>
+    <ul v-else class="list-group list-group-flush">
+      <li
+        v-for="venue in venues"
+        :key="venue.venueKey"
+        class="list-group-item px-0 d-flex flex-wrap justify-content-between gap-3"
+      >
+        <div>
+          <h3 class="h6 app-heading mb-1">{{ venue.name }}</h3>
+          <p class="small text-muted mb-0">{{ venue.address }}</p>
+        </div>
         <button
           type="button"
-          class="btn app-btn btn-outline-danger app-btn-sm"
-          @click="loadFavourites"
+          class="btn app-btn btn-outline-danger app-btn-sm align-self-start"
+          :disabled="isRemoving"
+          :aria-label="`Remove ${venue.name} from favourites`"
+          @click="removeFavourite(venue.venueKey)"
         >
-          Try again
+          Remove favourite
         </button>
-      </div>
-      <p v-else-if="venues.length === 0" class="text-muted mb-0">
-        No favourites yet. Save a venue from the meetup results to see it here.
-      </p>
-      <ul v-else class="list-group list-group-flush">
-        <li
-          v-for="venue in venues"
-          :key="venue.venueKey"
-          class="list-group-item px-0 d-flex flex-wrap justify-content-between gap-3"
-        >
-          <div>
-            <h3 class="h6 app-heading mb-1">{{ venue.name }}</h3>
-            <p class="small text-muted mb-0">{{ venue.address }}</p>
-          </div>
-          <button
-            type="button"
-            class="btn app-btn btn-outline-danger app-btn-sm align-self-start"
-            :disabled="isRemoving"
-            :aria-label="`Remove ${venue.name} from favourites`"
-            @click="removeFavourite(venue.venueKey)"
-          >
-            Remove favourite
-          </button>
-        </li>
-      </ul>
-    </div>
+      </li>
+    </ul>
   </div>
 </template>
