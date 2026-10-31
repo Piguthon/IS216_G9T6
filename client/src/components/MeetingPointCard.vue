@@ -10,6 +10,7 @@
 -->
 <script setup>
 import { computed } from 'vue'
+import { tripTone } from '../utils/trip-tone'
 
 const props = defineProps({
   point: { type: Object, required: true },
@@ -27,6 +28,8 @@ const typeLabel = computed(() =>
 // Slowest trip first, so the number that decides the rank sits at the top
 const sortedTimes = computed(() => [...props.point.times].sort((a, b) => b.minutes - a.minutes))
 
+const shortestMinutes = computed(() => Math.min(...props.point.times.map((t) => t.minutes)))
+
 function barWidth(minutes) {
   const scale = Math.max(props.scaleMinutes, props.point.longestMinutes, 1)
   return `${(minutes / scale) * 100}%`
@@ -34,118 +37,97 @@ function barWidth(minutes) {
 </script>
 
 <template>
+  <!-- An LED board: only the selected card opens up to show everyone's trip -->
   <button
     type="button"
-    class="list-group-item list-group-item-action text-start p-3 point"
+    class="app-ticket point w-100 text-start"
     :class="{ 'point-selected': selected }"
     :aria-pressed="selected"
     @click="emit('select', props.point.stationId)"
     data-testid="meeting-point-card"
   >
     <!-- Top row: rank, name and type, longest trip -->
-    <span class="d-flex align-items-start gap-3">
-      <span class="h1 app-heading mb-0 point-rank" aria-hidden="true">{{ rank }}</span>
+    <span class="d-flex align-items-center gap-3">
+      <span class="point-number app-doto" aria-hidden="true">{{ rank }}</span>
       <span class="d-block flex-grow-1">
-        <span class="h4 app-heading d-block mb-1">
+        <span class="point-name d-block">
           <span class="visually-hidden">Rank {{ rank }}: </span>{{ point.name }}
         </span>
-        <span class="small point-muted">
+        <span class="small">
           {{ typeLabel }}
-          <span v-if="confirmed" class="badge rounded-pill text-uppercase point-confirmed ms-1"
+          <span v-if="confirmed" class="badge rounded-pill text-uppercase text-bg-light ms-1"
             >Confirmed</span
           >
         </span>
       </span>
       <span class="d-block text-end">
-        <span class="h3 app-heading d-block mb-0">{{ point.longestMinutes }}</span>
-        <span class="d-block small point-muted">min longest</span>
+        <span class="point-number app-doto d-block">{{ point.longestMinutes }}</span>
+        <span class="d-block small">min longest</span>
       </span>
     </span>
-
-    <!-- One row per member: name, bar, minutes. The longest trip has the darker bar. -->
-    <span class="d-block mt-3">
+    <!-- One row per member: white name, coloured bar and minutes -->
+    <span v-if="selected" class="trips point-trips mt-3 pt-3">
       <span
         v-for="t in sortedTimes"
         :key="t.memberId"
-        class="row g-2 align-items-center small"
+        class="trip"
+        :class="tripTone(t.minutes, point.longestMinutes, shortestMinutes)"
         data-testid="meeting-point-time"
       >
-        <span class="col-4 text-truncate">{{ t.name }}</span>
-        <span class="col d-block">
-          <span class="progress point-track d-flex" aria-hidden="true">
-            <span
-              class="progress-bar d-block"
-              :class="t.minutes === point.longestMinutes ? 'point-bar-longest' : 'point-bar'"
-              :style="{ width: barWidth(t.minutes) }"
-            ></span>
-          </span>
+        <span class="trip-who"
+          ><strong>{{ t.name }}</strong></span
+        >
+        <span class="trip-track" aria-hidden="true">
+          <span class="trip-fill d-block" :style="{ width: barWidth(t.minutes) }"></span>
         </span>
-        <span class="col-3 text-end fw-bold">{{ t.minutes }} min</span>
+        <span class="trip-mins">{{ t.minutes }}<small>min</small></span>
       </span>
     </span>
   </button>
 </template>
 
 <style scoped>
-/* Card text is black (Bootstrap's clickable list items are grey) */
 .point {
-  color: #000000;
+  cursor: pointer;
 }
 
-/* Selected card: black background, white text */
+.point:focus-visible {
+  outline: 3px solid #1d4f91;
+  outline-offset: 2px;
+}
+
+/* The selected board gets a yellow edge */
 .point-selected {
-  background-color: #000000;
-  color: #ffffff;
+  border-color: #f2c230;
 }
 
-/* Normal card: teal rank and bars, the longest trip in black */
-.point-rank {
-  color: #0f766e;
+.point-number {
+  font-size: 32px;
+  line-height: 1;
 }
 
-.point-muted {
-  color: #6c757d;
+.point-name {
+  font-size: 20px;
+  font-weight: 800;
+  line-height: 1.15;
 }
 
-.point-track {
-  height: 8px;
+.point-trips {
+  gap: 8px;
+  border-top: 2px dashed #3a3d41;
 }
 
-.point-bar {
-  background-color: #0f766e;
+.point-trips .trip {
+  grid-template-columns: minmax(0, 76px) minmax(0, 1fr) 62px;
+  gap: 10px;
 }
 
-.point-bar-longest {
-  background-color: #000000;
+.point-trips .trip-who strong {
+  font-size: 14px;
+  font-weight: 600;
 }
 
-.point-confirmed {
-  background-color: #0f766e;
-}
-
-/* Selected card (black background): brighter colours so they stay visible */
-.point-selected .point-rank {
-  color: #2dd4bf;
-}
-
-.point-selected .point-muted {
-  color: #c9cbc8;
-}
-
-.point-selected .point-track {
-  background-color: #3a3a3a;
-}
-
-.point-selected .point-bar {
-  background-color: #2dd4bf;
-}
-
-.point-selected .point-bar-longest {
-  background-color: #ffffff;
-}
-
-.point-selected .point-confirmed {
-  background-color: #2dd4bf;
-  color: #000000;
+.point-trips .trip-mins {
+  font-size: 21px;
 }
 </style>

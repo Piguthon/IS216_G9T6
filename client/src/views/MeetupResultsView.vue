@@ -217,19 +217,15 @@ const venuePoint = computed(() => finalStation.value || selected.value)
 
 <template>
   <section data-testid="meetup-results-page">
-    <header class="app-page-header d-flex flex-wrap justify-content-between align-items-end gap-3">
-      <h1 class="display-5 app-heading mb-0">Fair meeting points</h1>
+    <header class="app-page-header d-flex flex-wrap justify-content-between align-items-end gap-2">
+      <h1 class="app-heading mb-0">Fair meeting points</h1>
       <RouterLink :to="`/meetup/${code}`" class="app-btn btn-quiet app-btn-sm"
         >Back to lobby</RouterLink
       >
-      <p class="w-100 text-muted mb-0">
-        Ranked by the longest trip in your group, using OneMap public-transport times. The fairest
-        spot is first.
-      </p>
     </header>
 
     <div v-if="isLoading" class="text-center my-5" data-testid="results-loading">
-      <div class="spinner-border text-teal" role="status"></div>
+      <div class="spinner-border text-sign" role="status"></div>
       <p class="text-muted mt-3 mb-0" role="status">
         Getting everyone's travel times from OneMap. This can take up to a minute.
       </p>
@@ -241,7 +237,7 @@ const venuePoint = computed(() => finalStation.value || selected.value)
 
     <div v-else class="row g-4">
       <div class="col-lg-5">
-        <div class="list-group mb-4" data-testid="results-list">
+        <div class="d-grid gap-3 mb-4" data-testid="results-list">
           <MeetingPointCard
             v-for="(point, index) in ranking"
             :key="point.stationId"
@@ -311,7 +307,7 @@ const venuePoint = computed(() => finalStation.value || selected.value)
             params: { code },
             query: { station: finalStation.optionId },
           }"
-          class="app-btn btn-teal app-btn-lg w-100"
+          class="app-btn app-btn-lg btn-sign w-100"
           data-testid="results-summary-link"
         >
           See the summary
@@ -327,13 +323,10 @@ const venuePoint = computed(() => finalStation.value || selected.value)
           @select="selectedId = $event"
         />
         <div v-if="venuePoint" class="mt-4">
-          <h2 class="mb-1">Places near {{ venuePoint.name }}</h2>
-          <p v-if="finalStation && !finalVenue && isMember" class="text-muted">
-            Vote for where to go. Places with votes appear in the venue vote.
-          </p>
-          <p v-else-if="!finalStation" class="text-muted">
+          <h2 class="mb-3">Places near {{ venuePoint.name }}</h2>
+          <div v-if="!finalStation" class="alert alert-warning" data-testid="venue-vote-warning">
             Venue voting opens once the host confirms a meeting point.
-          </p>
+          </div>
           <VenueList
             :key="venuePoint.lat + ',' + venuePoint.lng"
             :lat="venuePoint.lat"
@@ -345,7 +338,7 @@ const venuePoint = computed(() => finalStation.value || selected.value)
                 type="button"
                 class="app-btn app-btn-sm mt-2 align-self-start"
                 :class="
-                  votes && votes.venue.myVote === venue.venueKey ? 'btn-teal' : 'btn-teal-outline'
+                  votes && votes.venue.myVote === venue.venueKey ? 'btn-sign' : 'btn-sign-outline'
                 "
                 :aria-pressed="votes !== null && votes.venue.myVote === venue.venueKey"
                 :disabled="isVoting"

@@ -33,6 +33,8 @@ const isLoading = ref(true)
 const errorMessage = ref('')
 const selectedType = ref('all') // 'all', or one category such as 'catering.cafe'
 const maxDistance = ref(1000) // metres
+const showAll = ref(false)
+const firstShown = 6 // the page stays short: the rest wait behind "Show more places"
 
 // 5.1: load every type of place around the point once; the filters below work on this list
 async function loadVenues() {
@@ -44,7 +46,7 @@ async function loadVenues() {
       params: { lat: props.lat, lng: props.lng },
     })
     venues.value = response.data
-  } catch (error) {
+  } catch {
     errorMessage.value = 'Could not load places near this point. Please try again.'
   }
 
@@ -68,6 +70,10 @@ const filteredVenues = computed(() => {
   }
   return result
 })
+
+const shownVenues = computed(() =>
+  showAll.value ? filteredVenues.value : filteredVenues.value.slice(0, firstShown),
+)
 </script>
 
 <template>
@@ -98,7 +104,7 @@ const filteredVenues = computed(() => {
     </div>
 
     <div v-if="isLoading" class="text-center my-4" data-testid="venue-loading">
-      <div class="spinner-border text-teal" role="status">
+      <div class="spinner-border text-sign" role="status">
         <span class="visually-hidden">Loading places…</span>
       </div>
     </div>
@@ -109,12 +115,21 @@ const filteredVenues = computed(() => {
       No places match these filters. Try a bigger distance.
     </p>
     <div v-else class="row g-3">
-      <div v-for="venue in filteredVenues" :key="venue.venueKey" class="col-12 col-md-6">
+      <div v-for="venue in shownVenues" :key="venue.venueKey" class="col-12 col-md-6">
         <VenueCard :venue="venue">
           <!-- lets the page add buttons to each card, e.g. voting on the results page -->
           <slot name="venue-actions" :venue="venue"></slot>
         </VenueCard>
       </div>
     </div>
+    <button
+      v-if="!isLoading && !errorMessage && !showAll && filteredVenues.length > firstShown"
+      type="button"
+      class="app-btn btn-quiet w-100 mt-3"
+      data-testid="venue-show-more"
+      @click="showAll = true"
+    >
+      Show more places ({{ filteredVenues.length - firstShown }})
+    </button>
   </section>
 </template>

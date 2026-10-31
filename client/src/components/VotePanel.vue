@@ -50,8 +50,8 @@ function share(option) {
 
       <!-- Confirmed: show the choice instead of the ballot -->
       <div v-if="final" class="app-ticket text-start" data-testid="vote-final">
-        <p class="small app-on-dark-muted mb-1">Confirmed by the host</p>
-        <p class="h2 app-heading app-text-bright mb-0">{{ final.name }}</p>
+        <p class="app-label mb-2">Confirmed by the host</p>
+        <p class="h2 app-doto app-text-bright mb-0">{{ final.name }}</p>
         <button
           v-if="isHost"
           type="button"
@@ -81,7 +81,7 @@ function share(option) {
                 {{ option.name }}
                 <span
                   v-if="option.count > 0 && option.count === topCount"
-                  class="badge rounded-pill text-uppercase text-bg-teal ms-1"
+                  class="badge rounded-pill text-uppercase text-bg-dark ms-1"
                   >Leading</span
                 >
               </span>
@@ -90,14 +90,14 @@ function share(option) {
               </span>
             </div>
             <div class="progress vote-track my-2" aria-hidden="true">
-              <div class="progress-bar bg-teal" :style="{ width: share(option) }"></div>
+              <div class="progress-bar bg-sign" :style="{ width: share(option) }"></div>
             </div>
             <div v-if="canVote || isHost" class="d-flex flex-wrap gap-2">
               <button
                 v-if="canVote"
                 type="button"
                 class="app-btn app-btn-sm"
-                :class="myVote === option.optionId ? 'btn-teal' : 'btn-teal-outline'"
+                :class="myVote === option.optionId ? 'btn-sign' : 'btn-sign-outline'"
                 :aria-pressed="myVote === option.optionId"
                 :disabled="busy"
                 @click="emit('vote', option)"
@@ -118,9 +118,6 @@ function share(option) {
             </div>
           </li>
         </ul>
-        <p v-if="options.length > 0 && !isHost" class="small text-muted mb-0">
-          The host confirms the final choice. Counts update every few seconds.
-        </p>
       </template>
     </div>
   </div>
@@ -132,8 +129,8 @@ function share(option) {
   height: 6px;
 }
 
-/* The option I voted for: pale teal */
+/* The option I voted for: pale blue */
 .vote-mine {
-  background-color: #e6f4f2;
+  background-color: #e7eef8;
 }
 </style>
