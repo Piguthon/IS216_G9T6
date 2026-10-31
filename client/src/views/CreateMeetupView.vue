@@ -21,7 +21,7 @@
 
 // TODO 1: Imports: ref from vue, axios, BASE_URL from ../config.js, useRouter.
 //         Example: Week 6/Code_Along/client/src/App.vue (TODOs 1-2)
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import axios from 'axios'
 import { BASE_URL } from '../config'
 import { useRouter } from 'vue-router'
@@ -39,6 +39,8 @@ const time = ref('')
 const errorMessage = ref('')
 const meetup = ref(null)
 const isSaving = ref(false)
+const copyLabel = ref('Copy code')
+const previewOccasion = computed(() => occasion.value || 'Your occasion')
 // TODO 3: async function createMeetup()
 //           - show a message if a required field is empty
 //           - otherwise axios.post to ${BASE_URL}/meetups with the four fields, inside try/catch
@@ -96,104 +98,148 @@ function goToMeetup() {
     router.push(`/meetup/${meetup.value.code}`)
   }
 }
+// Clipboard API (browser built-in, https://developer.mozilla.org/docs/Web/API/Clipboard/writeText)
+async function copyCode() {
+  try {
+    await navigator.clipboard.writeText(meetup.value.code)
+    copyLabel.value = 'Copied'
+  } catch {
+    copyLabel.value = 'Select and copy the code'
+  }
+}
 // TODO 4: function goToMeetup() uses the router to open /meetup/<code>.
 //         Example: Week 4/wk4_example/src/components/Example11.vue
 </script>
 
 <template>
-  <div class="row justify-content-center">
-    <section class="col-md-8 col-lg-6" data-testid="create-meetup-page">
-      <header class="app-page-header">
-        <h1 class="display-5 app-heading mb-3">Create Meetup</h1>
-        <p class="text-muted mb-0">
-          Set the occasion and time. You will get a code to share with your group.
-        </p>
-      </header>
-      <!-- TODO 5: Page header (app-page-header) and a form inside "card app-card", with Bootstrap
-                 form controls bound with v-model:
-                   - .trim on the text inputs
-                   - type="date" and type="time" for date and time
-                   - submit with @submit.prevent
-                   - button disabled while saving -->
-      <div v-if="!meetup" class="card app-card mb-4">
-        <div class="card-body">
-          <form @submit.prevent="createMeetup">
-            <div class="mb-3">
-              <label for="occasion" class="form-label fw-bold">Occasion</label>
-              <input
-                type="text"
-                id="occasion"
-                class="form-control app-input"
-                v-model.trim="occasion"
-                data-testid="create-occasion"
-                placeholder="e.g. Dinner, Project Meeting"
-              />
-            </div>
+  <section data-testid="create-meetup-page">
+    <header class="app-page-header">
+      <h1 class="app-heading mb-0">Create Meetup</h1>
+    </header>
+    <!-- TODO 5: Page header (app-page-header) and a form inside "card app-card", with Bootstrap
+               form controls bound with v-model:
+                 - .trim on the text inputs
+                 - type="date" and type="time" for date and time
+                 - submit with @submit.prevent
+                 - button disabled while saving -->
+    <div v-if="!meetup" class="row g-4">
+      <div class="col-lg-7">
+        <div class="card app-card">
+          <div class="card-body p-4">
+            <form @submit.prevent="createMeetup">
+              <div class="mb-3">
+                <label for="occasion" class="form-label fw-bold">Occasion</label>
+                <input
+                  type="text"
+                  id="occasion"
+                  class="form-control app-input"
+                  v-model.trim="occasion"
+                  data-testid="create-occasion"
+                  placeholder="e.g. Dinner, Project Meeting"
+                />
+              </div>
 
-            <div class="mb-3">
-              <label for="date" class="form-label fw-bold">Date</label>
-              <input
-                type="date"
-                id="date"
-                class="form-control app-input"
-                v-model="date"
-                :min="today"
-                data-testid="create-date"
-              />
-            </div>
+              <div class="row g-3 mb-3">
+                <div class="col-sm-6">
+                  <label for="date" class="form-label fw-bold">Date</label>
+                  <input
+                    type="date"
+                    id="date"
+                    class="form-control app-input"
+                    v-model="date"
+                    :min="today"
+                    data-testid="create-date"
+                  />
+                </div>
+                <div class="col-sm-6">
+                  <label for="time" class="form-label fw-bold">Time</label>
+                  <input
+                    type="time"
+                    id="time"
+                    class="form-control app-input"
+                    v-model="time"
+                    data-testid="create-time"
+                  />
+                </div>
+              </div>
 
-            <div class="mb-3">
-              <label for="time" class="form-label fw-bold">Time</label>
-              <input
-                type="time"
-                id="time"
-                class="form-control app-input"
-                v-model="time"
-                data-testid="create-time"
-              />
-            </div>
+              <!-- TODO 6: Error alert (alert alert-danger) shown only when there is a message. -->
+              <div v-if="errorMessage" class="alert alert-danger" data-testid="create-error">
+                {{ errorMessage }}
+              </div>
 
-            <!-- TODO 6: Error alert (alert alert-danger) shown only when there is a message. -->
-            <div v-if="errorMessage" class="alert alert-danger" data-testid="create-error">
-              {{ errorMessage }}
-            </div>
-
-            <button
-              type="submit"
-              class="app-btn btn-teal w-100 mt-2"
-              :disabled="isSaving"
-              data-testid="create-submit"
-            >
-              {{ isSaving ? 'Creating...' : 'Create Meetup' }}
-            </button>
-          </form>
+              <button
+                type="submit"
+                class="app-btn app-btn-lg btn-sign w-100 mt-2"
+                :disabled="isSaving"
+                data-testid="create-submit"
+              >
+                {{ isSaving ? 'Creating...' : 'Create Meetup' }}
+              </button>
+            </form>
+          </div>
         </div>
       </div>
-      <!-- TODO 7: Success panel shown once the meetup exists: the code in app-code, a short
-                 "share this code" line, and a "Go to meetup" button. -->
-      <div v-else class="app-ticket app-halftone py-5" data-testid="create-result">
-        <h2 class="h4 app-heading mb-3">Meetup created</h2>
-        <p class="mb-3">Share this code with your group</p>
-
-        <div class="mb-4 app-code display-5 app-heading" data-testid="create-code">
-          {{ meetup.code }}
-        </div>
-
-        <div>
-          <button
-            @click="goToMeetup"
-            class="app-btn btn-bright app-btn-lg"
-            data-testid="create-go-to-meetup"
-          >
-            Go to meetup
-          </button>
+      <div class="col-lg-5">
+        <aside class="app-ticket text-start" aria-label="Preview of your meetup">
+          <span class="app-label">Preview</span>
+          <p class="preview-title app-doto mt-2 mb-3">{{ previewOccasion }}</p>
+          <div class="d-flex justify-content-between gap-3 mb-2">
+            <span class="fw-bold">Date</span><span>{{ date || 'Not set' }}</span>
+          </div>
+          <div class="d-flex justify-content-between gap-3">
+            <span class="fw-bold">Time</span><span>{{ time || 'Not set' }}</span>
+          </div>
+        </aside>
+      </div>
+    </div>
+    <!-- TODO 7: Success panel shown once the meetup exists: the code in app-code, a short
+               "share this code" line, and a "Go to meetup" button. -->
+    <div v-else class="row justify-content-center">
+      <div class="col-md-8 col-lg-6">
+        <div class="card app-card" data-testid="create-result">
+          <div class="card-body p-4">
+            <h2 class="h3 app-heading mb-3">Meetup created</h2>
+            <div class="app-ticket mb-4">
+              <span class="app-label">Share this code with your group</span>
+              <span class="app-code mt-2" data-testid="create-code">{{ meetup.code }}</span>
+              <span class="d-block mt-2"
+                >{{ meetup.occasion }}, {{ meetup.date }}, {{ meetup.time }}</span
+              >
+            </div>
+            <div class="d-flex flex-wrap gap-3">
+              <button
+                type="button"
+                class="app-btn app-btn-lg btn-quiet flex-fill"
+                @click="copyCode"
+                data-testid="create-copy"
+              >
+                {{ copyLabel }}
+              </button>
+              <button
+                @click="goToMeetup"
+                class="app-btn app-btn-lg btn-sign flex-fill"
+                data-testid="create-go-to-meetup"
+              >
+                Go to meetup
+              </button>
+            </div>
+          </div>
         </div>
       </div>
-      <!-- TODO 8: Use these testids:
-                 create-host-name, create-occasion, create-date, create-time, create-submit,
-                 create-error, create-result, create-code, create-go-to-meetup -->
+    </div>
+    <!-- TODO 8: Use these testids:
+               create-host-name, create-occasion, create-date, create-time, create-submit,
+               create-error, create-result, create-code, create-go-to-meetup -->
 
-      <!-- TODO 9: Check it at 375px and XL in DevTools. -->
-    </section>
-  </div>
+    <!-- TODO 9: Check it at 375px and XL in DevTools. -->
+  </section>
 </template>
+
+<style scoped>
+.preview-title {
+  font-size: 30px;
+  line-height: 1.1;
+  overflow-wrap: anywhere;
+}
+</style>

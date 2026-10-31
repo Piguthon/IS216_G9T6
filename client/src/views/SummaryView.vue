@@ -9,6 +9,7 @@ import { ref, computed, onMounted } from 'vue'
 import axios from 'axios'
 import { useRoute } from 'vue-router'
 import { BASE_URL } from '../config'
+import { tripTone } from '../utils/trip-tone'
 import MapView from '../components/MapView.vue'
 import BusArrivalCard from '../components/BusArrivalCard.vue'
 
@@ -70,6 +71,13 @@ const journeys = computed(() => {
   return list
 })
 
+// The board colours and scales the bars against the trips we have times for
+const knownMinutes = computed(() =>
+  journeys.value.filter((j) => j.minutes !== null).map((j) => j.minutes),
+)
+const longest = computed(() => Math.max(...knownMinutes.value))
+const shortest = computed(() => Math.min(...knownMinutes.value))
+
 const starts = computed(() => {
   const list = []
   if (!meetup.value) return list
@@ -83,14 +91,14 @@ const starts = computed(() => {
 <template>
   <section data-testid="summary-page">
     <header class="app-page-header d-flex flex-wrap justify-content-between align-items-end gap-3">
-      <h1 class="display-5 app-heading mb-0">Meetup summary</h1>
+      <h1 class="app-heading mb-0">Meetup summary</h1>
       <RouterLink :to="`/meetup/${code}/results`" class="app-btn btn-quiet app-btn-sm"
         >Back to results</RouterLink
       >
     </header>
 
     <div v-if="isLoading" class="text-center my-5" data-testid="summary-loading">
-      <div class="spinner-border text-teal" role="status">
+      <div class="spinner-border text-sign" role="status">
         <span class="visually-hidden">Loading summary…</span>
       </div>
     </div>
@@ -101,36 +109,38 @@ const starts = computed(() => {
 
     <div v-else-if="meetup && point" class="row g-4">
       <div class="col-lg-5">
-        <div class="app-ticket app-halftone text-start mb-4">
-          <h2 class="h4 app-heading mb-2" data-testid="summary-occasion">{{ meetup.occasion }}</h2>
-          <p class="display-4 app-heading app-text-bright mb-3" data-testid="summary-point">
+        <div class="app-ticket text-start mb-3">
+          <h2 class="app-label mb-2" data-testid="summary-occasion">{{ meetup.occasion }}</h2>
+          <p class="summary-place app-doto app-text-bright mb-3" data-testid="summary-point">
             {{ point.type === 'interchange' ? point.name : `${point.name} MRT` }}
           </p>
-          <p class="app-on-dark-muted mb-0">{{ meetup.date }}, {{ meetup.time }}</p>
-        </div>
-
-        <div class="card app-card mb-4">
-          <div class="card-body">
-            <h2 class="h5 app-heading mb-3">Everyone's journey</h2>
-            <ul class="list-group list-group-flush">
-              <li
-                v-for="j in journeys"
-                :key="j.id"
-                class="list-group-item px-0"
-                data-testid="summary-journey"
+          <p class="summary-date pb-3 mb-3">{{ meetup.date }}, {{ meetup.time }}</p>
+          <h3 class="app-label mb-3">Everyone's journey</h3>
+          <ul class="trips">
+            <li
+              v-for="j in journeys"
+              :key="j.id"
+              class="trip"
+              :class="j.minutes !== null ? tripTone(j.minutes, longest, shortest) : ''"
+              data-testid="summary-journey"
+            >
+              <div class="trip-who">
+                <strong>{{ j.name }}</strong>
+                <span>from {{ j.from }}</span>
+              </div>
+              <div class="trip-track" aria-hidden="true">
+                <div
+                  v-if="j.minutes !== null"
+                  class="trip-fill"
+                  :style="{ width: (j.minutes / longest) * 100 + '%' }"
+                ></div>
+              </div>
+              <span v-if="j.minutes !== null" class="trip-mins"
+                >{{ j.minutes }}<small>min</small></span
               >
-                <div class="d-flex justify-content-between">
-                  <span class="fw-semibold">{{ j.name }}</span>
-                  <span v-if="j.minutes !== null" class="h5 app-heading mb-0"
-                    >{{ j.minutes }} min</span
-                  >
-                </div>
-                <div class="small text-muted">from {{ j.from }}</div>
-              </li>
-            </ul>
-          </div>
+            </li>
+          </ul>
         </div>
-
         <BusArrivalCard :stop-code="SAMPLE_STOP.code" :label="SAMPLE_STOP.label" />
       </div>
 
@@ -140,3 +150,15 @@ const starts = computed(() => {
     </div>
   </section>
 </template>
+
+<style scoped>
+.summary-place {
+  font-size: clamp(34px, 5vw, 46px);
+  line-height: 1;
+  text-transform: uppercase;
+}
+
+.summary-date {
+  border-bottom: 2px dashed #3a3d41;
+}
+</style>

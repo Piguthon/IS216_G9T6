@@ -110,6 +110,14 @@ const canSeeResults = computed(() => {
   const readyCount = meetup.value.members.filter((m) => m.start !== null).length
   return readyCount >= 2
 })
+
+// The ranking needs two start points and leaves out anyone still without one
+const startWarning = computed(() => {
+  if (!meetup.value || !meetup.value.members) return ''
+  if (!canSeeResults.value) return 'Results open once everyone has a start point.'
+  const isWaiting = meetup.value.members.some((m) => m.start === null)
+  return isWaiting ? 'Results leave out anyone without a start point.' : ''
+})
 //Set start point
 async function handleSetStart(startPoint) {
   actionError.value = ''
@@ -173,16 +181,13 @@ async function handleLeave() {
 
 <template>
   <section data-testid="meetup-lobby-page">
-    <header class="app-page-header d-flex flex-wrap justify-content-between align-items-end gap-3">
-      <h1 class="display-5 app-heading mb-0">Meetup Lobby</h1>
-      <p class="w-100 text-muted mb-0">
-        Add your starting point. Results open once everyone has one.
-      </p>
+    <header class="app-page-header">
+      <h1 class="app-heading mb-0">Meetup Lobby</h1>
     </header>
 
     <!-- Loading state -->
     <div v-if="isLoading" class="text-center my-5" data-testid="lobby-loading">
-      <div class="spinner-border text-teal" role="status">
+      <div class="spinner-border text-sign" role="status">
         <span class="visually-hidden">Loading..</span>
       </div>
     </div>
@@ -210,30 +215,33 @@ async function handleLeave() {
       </div>
       <div class="row">
         <!-- Left Column: Details & Tools -->
-        <div class="col-lg-6 mb-4">
+        <div class="col-lg-7 mb-3">
           <!-- Details card -->
-          <div class="card app-card mb-4">
+          <div class="card app-card mb-3">
             <div class="card-body">
               <div v-if="isEditing">
                 <EditMeetupForm :meetup="meetup" @save="handleEdit" @cancel="isEditing = false" />
               </div>
               <div v-else>
-                <h2 class="mb-3" data-testid="lobby-occasion">
-                  {{ meetup.occasion }}
-                </h2>
-                <dl class="row mb-4">
-                  <dt class="col-3 text-muted">Date</dt>
-                  <dd class="col-9">{{ meetup.date }}</dd>
-                  <dt class="col-3 text-muted">Time</dt>
-                  <dd class="col-9">{{ meetup.time }}</dd>
-                  <dt class="col-3 text-muted">Host</dt>
-                  <dd class="col-9 mb-0" data-testid="lobby-host">{{ meetup.hostName }}</dd>
-                </dl>
-
-                <div class="app-ticket app-halftone">
-                  <p class="app-on-dark-muted mb-1">Share this code with your group</p>
-                  <div class="app-code display-5 app-heading" data-testid="lobby-code">
-                    {{ meetup.code }}
+                <div class="row align-items-center g-3">
+                  <div class="col-sm-5">
+                    <h2 class="mb-2" data-testid="lobby-occasion">
+                      {{ meetup.occasion }}
+                    </h2>
+                    <dl class="row mb-0">
+                      <dt class="col-3 text-muted fw-normal">Date</dt>
+                      <dd class="col-9 mb-1">{{ meetup.date }}</dd>
+                      <dt class="col-3 text-muted fw-normal">Time</dt>
+                      <dd class="col-9 mb-1">{{ meetup.time }}</dd>
+                      <dt class="col-3 text-muted fw-normal">Host</dt>
+                      <dd class="col-9 mb-0" data-testid="lobby-host">{{ meetup.hostName }}</dd>
+                    </dl>
+                  </div>
+                  <div class="col-sm-7">
+                    <div class="app-ticket">
+                      <span class="app-label">Share this code with your group</span>
+                      <span class="app-code mt-2" data-testid="lobby-code">{{ meetup.code }}</span>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -241,7 +249,7 @@ async function handleLeave() {
           </div>
 
           <!-- Set my start point -->
-          <div v-if="isMember" class="card app-card mb-4" data-testid="lobby-set-start">
+          <div v-if="isMember" class="card app-card" data-testid="lobby-set-start">
             <div class="card-body">
               <h3 class="mb-3">Your start point</h3>
               <SavedStartPointPicker
@@ -255,9 +263,9 @@ async function handleLeave() {
         </div>
 
         <!-- Right Column: Members & Actions -->
-        <div class="col-lg-6">
+        <div class="col-lg-5">
           <!-- MemberList Component replacing inline code -->
-          <div class="card app-card mb-4">
+          <div class="card app-card mb-3">
             <div class="card-body">
               <h3 class="mb-3">Members</h3>
               <MemberList
@@ -269,10 +277,13 @@ async function handleLeave() {
           </div>
 
           <!-- "See fair meeting points" link -->
-          <div v-if="canSeeResults" class="mb-4">
+          <div v-if="startWarning" class="alert alert-warning" data-testid="lobby-start-warning">
+            {{ startWarning }}
+          </div>
+          <div v-if="canSeeResults" class="mb-3">
             <router-link
               :to="`/meetup/${code}/results`"
-              class="app-btn btn-teal app-btn-lg w-100"
+              class="app-btn app-btn-lg btn-sign w-100"
               data-testid="lobby-results-link"
             >
               See fair meeting points
@@ -280,29 +291,33 @@ async function handleLeave() {
           </div>
 
           <!-- TODO 9: Join meetup link -->
-          <div v-if="!isMember" class="text-center mt-4">
-            <router-link to="/join" class="app-btn btn-teal w-100" data-testid="lobby-join-link">
+          <div v-if="!isMember" class="text-center">
+            <router-link
+              to="/join"
+              class="app-btn app-btn-lg btn-sign w-100"
+              data-testid="lobby-join-link"
+            >
               Join this meetup
             </router-link>
           </div>
 
           <!-- Host tools & Leave options -->
-          <div v-if="isMember" class="card app-card mt-4">
+          <div v-if="isMember" class="card app-card">
             <div class="card-body">
               <h3 class="h6 app-heading mb-3">Manage meetup</h3>
 
               <!-- Host Tools -->
-              <div v-if="isHost" class="d-flex flex-column gap-2">
+              <div v-if="isHost" class="d-flex flex-wrap gap-2">
                 <button
                   v-if="!isEditing"
                   @click="isEditing = true"
-                  class="app-btn btn-teal-outline"
+                  class="app-btn btn-sign-outline"
                   data-testid="lobby-edit"
                 >
                   Edit Meetup Details
                 </button>
 
-                <div v-if="showDeleteConfirm" class="alert alert-secondary p-3 mb-0">
+                <div v-if="showDeleteConfirm" class="alert alert-secondary p-3 mb-0 w-100">
                   <p class="mb-2">Are you sure? This will delete the meetup for everyone.</p>
                   <div class="d-flex gap-2">
                     <button
@@ -331,7 +346,7 @@ async function handleLeave() {
               <div v-else>
                 <button
                   @click="handleLeave"
-                  class="btn app-btn btn-outline-danger w-100"
+                  class="btn app-btn btn-outline-danger"
                   data-testid="lobby-leave"
                 >
                   Leave Meetup

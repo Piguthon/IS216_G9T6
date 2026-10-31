@@ -91,24 +91,25 @@ async function joinMeetup() {
 <template>
   <div class="row justify-content-center">
     <section class="col-md-8 col-lg-6" data-testid="join-meetup-page">
-      <header class="app-page-header">
-        <h1 class="display-5 app-heading mb-3">Join Meetup</h1>
-        <p class="text-muted mb-0">Enter the six-letter code your host shared.</p>
-      </header>
-
       <!-- TODO 4: Header + form card + error alert, as in Create. -->
-      <div class="card app-card mb-4">
-        <div class="card-body">
+      <div class="card app-card">
+        <div class="card-body p-4">
+          <header class="app-page-header">
+            <h1 class="app-heading mb-0">Join Meetup</h1>
+          </header>
           <form @submit.prevent="joinMeetup">
-            <div class="mb-3">
-              <label for="code" class="form-label fw-bold">Meetup Code</label>
+            <div class="app-ticket mb-3">
+              <label for="code" class="app-label">Meetup Code</label>
               <input
                 type="text"
                 id="code"
-                class="form-control app-input form-control-lg text-uppercase fw-bold"
+                class="app-code join-code mt-2"
                 v-model.trim="code"
+                maxlength="6"
+                autocomplete="off"
+                spellcheck="false"
                 data-testid="join-code"
-                placeholder="e.g. ABCDEF"
+                placeholder="ABCDEF"
               />
             </div>
             <div v-if="!auth.isLoggedIn" class="mb-3">
@@ -128,7 +129,7 @@ async function joinMeetup() {
 
             <button
               type="submit"
-              class="app-btn btn-teal w-100 mt-2"
+              class="app-btn app-btn-lg btn-sign w-100 mt-2"
               :disabled="isJoining"
               data-testid="join-submit"
             >
@@ -137,7 +138,31 @@ async function joinMeetup() {
           </form>
         </div>
       </div>
+      <p class="text-center mt-3 mb-0">
+        Hosting instead? <RouterLink to="/create">Create a meetup</RouterLink>
+      </p>
       <!-- TODO 5: testids: join-code, join-name, join-submit, join-error -->
     </section>
   </div>
 </template>
+
+<style scoped>
+/* The code is typed straight onto the LED board */
+.join-code {
+  width: 100%;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  text-align: center;
+}
+
+.join-code:focus {
+  outline: 2px solid #f2c230;
+  outline-offset: 4px;
+}
+
+.join-code::placeholder {
+  color: #8a7a3f;
+  opacity: 1;
+}
+</style>
