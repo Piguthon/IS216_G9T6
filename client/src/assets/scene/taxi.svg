@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 48" width="120" height="48">
+  <!-- Blue Singapore taxi, facing left -->
+  <style>
+    .wheel { transform-box: fill-box; transform-origin: center; animation: spin 0.5s linear infinite reverse; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    @media (prefers-reduced-motion: reduce) { .wheel { animation: none; } }
+  </style>
+  <rect x="57" y="2" width="24" height="7" rx="2" fill="#f4f6f8" stroke="#9aa3ab" stroke-width="0.6"/>
+  <text x="69" y="7.4" font-family="Arial, sans-serif" font-size="5" font-weight="700" fill="#1565c0" text-anchor="middle">TAXI</text>
+  <path d="M4 31 Q4 24 12 23 L28 22 L44 10.5 Q48 9 54 9 L84 9 Q90 9 94 12.5 L106 22 L112 23 Q118 24 118 31 V38 Q118 41 115 41 H7 Q4 41 4 38 Z" fill="#1f73d1"/>
+  <path d="M4 33 H118 V38 Q118 41 115 41 H7 Q4 41 4 38 Z" fill="#14549e"/>
+  <polygon points="32,22 46,12.5 66,12.5 66,22" fill="#2a3b48"/>
+  <polygon points="69,12.5 89,12.5 101,22 69,22" fill="#2a3b48"/>
+  <polygon points="40,22 50,12.5 55,12.5 45,22" fill="#ffffff" opacity="0.15"/>
+  <line x1="67.5" y1="12" x2="67.5" y2="38" stroke="#14549e" stroke-width="1"/>
+  <line x1="36" y1="24" x2="36" y2="38" stroke="#14549e" stroke-width="0.8"/>
+  <rect x="44" y="26" width="6" height="1.5" rx="0.7" fill="#cfd8e0"/>
+  <rect x="74" y="26" width="6" height="1.5" rx="0.7" fill="#cfd8e0"/>
+  <rect x="4" y="27" width="7" height="3.5" rx="1.5" fill="#fff6c8"/>
+  <rect x="114" y="27" width="4" height="4" rx="1" fill="#d32f2f"/>
+  <circle cx="26" cy="40" r="9" fill="#0c2747"/>
+  <circle cx="96" cy="40" r="9" fill="#0c2747"/>
+  <g class="wheel"><circle cx="26" cy="40" r="7.2" fill="#222"/><circle cx="26" cy="40" r="3.8" fill="#b3b9be"/><rect x="25.4" y="36.4" width="1.2" height="7.2" fill="#6c7378"/></g>
+  <g class="wheel"><circle cx="96" cy="40" r="7.2" fill="#222"/><circle cx="96" cy="40" r="3.8" fill="#b3b9be"/><rect x="95.4" y="36.4" width="1.2" height="7.2" fill="#6c7378"/></g>
+</svg>

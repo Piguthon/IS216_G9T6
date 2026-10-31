@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 620 250" width="620" height="250"><defs><clipPath id="env"><ellipse cx="320" cy="104" rx="280" ry="96"/></clipPath></defs>
+    <polygon points="92,60 26,6 72,6 150,48" fill="#1d4f91"/>
+    <polygon points="92,148 26,202 72,202 150,160" fill="#1d4f91"/>
+    <polygon points="70,92 8,92 8,116 70,116" fill="#163c70"/>
+    <ellipse cx="320" cy="104" rx="280" ry="96" fill="#f7f7f3"/>
+    <g clip-path="url(#env)">
+      <rect x="0" y="150" width="620" height="60" fill="#e2e3dd"/>
+      <rect x="0" y="136" width="620" height="16" fill="#f2c230"/>
+      <path d="M170 0 Q130 104 170 208 M320 0 V208 M470 0 Q510 104 470 208" stroke="#e2e3dd" stroke-width="2" fill="none"/>
+    </g>
+    <text x="320" y="118" text-anchor="middle" font-family="Arial Black, Arial, sans-serif" font-size="72" font-weight="900" fill="#1d4f91" letter-spacing="1">FAIRSPOT</text>
+    <rect x="268" y="196" width="104" height="34" rx="12" fill="#26282b"/>
+    <g fill="#9fd3ee"><rect x="282" y="205" width="16" height="12" rx="2"/><rect x="304" y="205" width="16" height="12" rx="2"/><rect x="326" y="205" width="16" height="12" rx="2"/><rect x="348" y="205" width="12" height="12" rx="2"/></g>
+    <rect x="290" y="194" width="60" height="4" fill="#1b1c1e"/></svg>

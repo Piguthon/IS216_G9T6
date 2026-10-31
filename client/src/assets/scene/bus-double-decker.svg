@@ -1,0 +1,46 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 80" width="200" height="80">
+  <!-- Singapore double-decker in the green public bus colours, facing right -->
+  <style>
+    .wheel { transform-box: fill-box; transform-origin: center; animation: spin 0.7s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    @media (prefers-reduced-motion: reduce) { .wheel { animation: none; } }
+  </style>
+  <defs>
+    <linearGradient id="g" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#16a64a"/>
+      <stop offset="1" stop-color="#00873a"/>
+    </linearGradient>
+  </defs>
+  <path d="M6 2 H184 Q197 2 198 14 V62 Q198 66 194 66 H4 Q2 66 2 62 V8 Q2 2 6 2 Z" fill="url(#g)"/>
+  <rect x="8" y="2.5" width="178" height="2.5" rx="1.2" fill="#46c26f"/>
+  <!-- upper deck windows -->
+  <rect x="8" y="9" width="174" height="18" rx="3" fill="#1b2830"/>
+  <g fill="#00933d"><rect x="50" y="9" width="3" height="18"/><rect x="94" y="9" width="3" height="18"/><rect x="138" y="9" width="3" height="18"/></g>
+  <path d="M184 9 H192 Q196 10 196 16 V27 H184 Z" fill="#1b2830"/>
+  <g fill="#ffffff" opacity="0.13"><polygon points="20,9 32,9 22,27 10,27"/><polygon points="104,9 112,9 102,27 94,27"/><polygon points="188,9 193,10 186,27 184,27"/></g>
+  <!-- lower deck windows and doors -->
+  <rect x="8" y="33" width="66" height="17" rx="2" fill="#1b2830"/>
+  <rect x="98" y="33" width="54" height="17" rx="2" fill="#1b2830"/>
+  <rect x="76" y="31" width="20" height="33" fill="#24343e" stroke="#0b6b2d" stroke-width="1.2"/>
+  <line x1="86" y1="31" x2="86" y2="64" stroke="#0b6b2d" stroke-width="1"/>
+  <rect x="156" y="31" width="20" height="33" fill="#24343e" stroke="#0b6b2d" stroke-width="1.2"/>
+  <line x1="166" y1="31" x2="166" y2="64" stroke="#0b6b2d" stroke-width="1"/>
+  <path d="M179 31 H194 Q197 32 197 38 V56 H179 Z" fill="#24343e"/>
+  <g fill="#ffffff" opacity="0.12"><polygon points="18,33 28,33 20,50 10,50"/><polygon points="110,33 118,33 110,50 102,50"/></g>
+  <!-- route number display -->
+  <rect x="155" y="25" width="22" height="5" rx="1" fill="#111"/>
+  <text x="166" y="29.2" font-family="Arial, sans-serif" font-size="4.6" font-weight="700" fill="#ffb000" text-anchor="middle">190</text>
+  <!-- lime skirt and dark sill -->
+  <path d="M2 54 H198 V60 H2 Z" fill="#8dc63f"/>
+  <path d="M2 54 Q60 50 120 54 Z" fill="#8dc63f"/>
+  <rect x="2" y="60" width="196" height="6" fill="#0b6b2d"/>
+  <!-- lights and mirror -->
+  <rect x="193" y="56" width="4" height="3" rx="1" fill="#fff6c8"/>
+  <rect x="2" y="48" width="3" height="8" rx="1" fill="#d32f2f"/>
+  <path d="M197 30 Q201 30 201 34 V38" stroke="#111" stroke-width="1.5" fill="none"/>
+  <!-- wheels -->
+  <circle cx="44" cy="66" r="12.5" fill="#0d1a12"/>
+  <circle cx="152" cy="66" r="12.5" fill="#0d1a12"/>
+  <g class="wheel"><circle cx="44" cy="66" r="10" fill="#222"/><circle cx="44" cy="66" r="5.5" fill="#a2a8ad"/><rect x="43.2" y="61" width="1.6" height="10" fill="#6c7378"/><rect x="39" y="65.2" width="10" height="1.6" fill="#6c7378"/></g>
+  <g class="wheel"><circle cx="152" cy="66" r="10" fill="#222"/><circle cx="152" cy="66" r="5.5" fill="#a2a8ad"/><rect x="151.2" y="61" width="1.6" height="10" fill="#6c7378"/><rect x="147" y="65.2" width="10" height="1.6" fill="#6c7378"/></g>
+</svg>

@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 48" width="120" height="48">
+  <!-- White private car, facing right -->
+  <style>
+    .wheel { transform-box: fill-box; transform-origin: center; animation: spin 0.5s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    @media (prefers-reduced-motion: reduce) { .wheel { animation: none; } }
+  </style>
+  <g transform="translate(120 0) scale(-1 1)">
+    <path d="M4 31 Q4 24 12 23 L28 22 L42 11 Q46 9 52 9 L86 9 Q92 9 96 12.5 L108 22 L112 23 Q118 24 118 31 V38 Q118 41 115 41 H7 Q4 41 4 38 Z" fill="#f2f4f5" stroke="#c4cacf" stroke-width="0.8"/>
+    <path d="M4 33 H118 V38 Q118 41 115 41 H7 Q4 41 4 38 Z" fill="#d6dadd"/>
+    <polygon points="31,22 44,12.5 66,12.5 66,22" fill="#2a3b48"/>
+    <polygon points="69,12.5 91,12.5 103,22 69,22" fill="#2a3b48"/>
+    <polygon points="39,22 49,12.5 54,12.5 44,22" fill="#ffffff" opacity="0.18"/>
+    <line x1="67.5" y1="12" x2="67.5" y2="38" stroke="#c4cacf" stroke-width="1"/>
+    <rect x="44" y="26" width="6" height="1.5" rx="0.7" fill="#a9b0b6"/>
+    <rect x="74" y="26" width="6" height="1.5" rx="0.7" fill="#a9b0b6"/>
+    <rect x="4" y="27" width="7" height="3.5" rx="1.5" fill="#fff6c8"/>
+    <rect x="114" y="27" width="4" height="4" rx="1" fill="#d32f2f"/>
+    <circle cx="26" cy="40" r="9" fill="#3b4147"/>
+    <circle cx="96" cy="40" r="9" fill="#3b4147"/>
+  </g>
+  <g class="wheel"><circle cx="94" cy="40" r="7.2" fill="#222"/><circle cx="94" cy="40" r="3.8" fill="#b3b9be"/><rect x="93.4" y="36.4" width="1.2" height="7.2" fill="#6c7378"/></g>
+  <g class="wheel"><circle cx="24" cy="40" r="7.2" fill="#222"/><circle cx="24" cy="40" r="3.8" fill="#b3b9be"/><rect x="23.4" y="36.4" width="1.2" height="7.2" fill="#6c7378"/></g>
+</svg>
