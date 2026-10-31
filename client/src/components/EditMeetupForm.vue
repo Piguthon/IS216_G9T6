@@ -95,7 +95,7 @@ const handleCancel = () => {
       </div>
 
       <div class="d-flex gap-2">
-        <button type="submit" class="app-btn btn-teal" data-testid="edit-save">Save</button>
+        <button type="submit" class="app-btn btn-sign" data-testid="edit-save">Save</button>
         <button
           type="button"
           class="app-btn btn-quiet"

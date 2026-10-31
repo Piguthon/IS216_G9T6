@@ -74,7 +74,7 @@ onMounted(loadArrivals)
 
         <button
           type="button"
-          class="app-btn btn-teal-outline app-btn-sm"
+          class="app-btn btn-sign-outline app-btn-sm"
           :disabled="isLoading"
           @click="loadArrivals"
         >

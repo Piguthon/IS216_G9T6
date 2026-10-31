@@ -104,7 +104,7 @@ function handleSelect(result) {
         data-testid="address-input"
       />
       <button
-        class="app-btn btn-teal"
+        class="app-btn btn-sign"
         type="button"
         @click="search"
         :disabled="isLoading || query.trim().length < 3"

@@ -39,9 +39,17 @@ async function handleLogout() {
 
 <!-- Responsive Bootstrap 5 navbar (https://getbootstrap.com/docs/5.3/components/navbar/) -->
 <template>
-  <nav class="navbar navbar-expand-md bg-black" data-bs-theme="dark" data-testid="app-navbar">
+  <nav
+    class="navbar navbar-expand-md app-bar app-navbar"
+    data-bs-theme="dark"
+    data-testid="app-navbar"
+  >
     <div class="container">
       <RouterLink class="navbar-brand app-logo" :to="{ name: 'home' }" data-testid="nav-brand">
+        <svg width="14" height="18" viewBox="0 0 14 18" aria-hidden="true">
+          <path d="M7 0C3.1 0 0 3 0 6.9 0 12 7 18 7 18s7-6 7-11.1C14 3 10.9 0 7 0Z" fill="#fff" />
+          <circle cx="7" cy="7" r="2.6" fill="#1d4f91" />
+        </svg>
         FairSpot
       </RouterLink>
 
@@ -105,7 +113,7 @@ async function handleLogout() {
             </li>
             <li class="nav-item">
               <RouterLink
-                class="app-btn btn-bright app-btn-sm my-2 my-md-0"
+                class="app-btn btn-quiet app-btn-sm text-uppercase my-2 my-md-0"
                 to="/signup"
                 data-testid="nav-signup"
               >
