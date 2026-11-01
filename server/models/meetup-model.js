@@ -5,7 +5,7 @@
   FIELDS:    as the Meetup shape, plus createdAt; members are embedded sub-documents
              Meetup { code, hostName, occasion, date "YYYY-MM-DD", time "HH:MM",
                       members: [ { _id, name, start: { label, postal, lat, lng } | null } ] }
-  FUNCTIONS: create, find by code, add member, update a member's start
+  FUNCTIONS: create, find by code, find by user, add member, update a member's start
   REVISE:    Wk 5 blog-model.js (schema + exported CRUD functions)
 */
 
@@ -115,6 +115,11 @@ exports.createMeetup = async function(data) {
 
 exports.findByCode = async function(code) {
     return await Meetup.findOne({code : code});
+}
+
+// findByUser(userId): every meetup this account is a member of
+exports.findByUser = async function(userId) {
+    return await Meetup.find({ 'members.userId' : userId });
 }
 
 exports.addMember = async function(code, name, userId = null) {

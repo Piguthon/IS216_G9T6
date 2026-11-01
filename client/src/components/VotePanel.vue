@@ -4,7 +4,8 @@
   PURPOSE:  One round of group voting (meeting point or venue): every option's vote count,
             my vote, and the host's confirm button. The parent loads the shared tallies from
             /api/votes/:code (polling) and sends the votes, so everyone sees the same counts.
-  PROPS:    title, options [ { optionId, name, count, ... } ], myVote (optionId or null),
+  PROPS:    title, finalTitle (heading once the host confirms),
+            options [ { optionId, name, count, ... } ], myVote (optionId or null),
             voterCount (members who can vote), canVote, isHost, final (confirmed option or null),
             busy, emptyText (shown when there is nothing to vote on yet)
   EMITS:    vote (option), confirm (option), reopen ()
@@ -14,6 +15,7 @@ import { computed } from 'vue'
 
 const props = defineProps({
   title: { type: String, required: true },
+  finalTitle: { type: String, required: true },
   options: { type: Array, required: true },
   myVote: { type: String, default: null },
   voterCount: { type: Number, default: 0 },
@@ -38,7 +40,9 @@ function share(option) {
   <div class="card app-card" data-testid="vote-panel">
     <div class="card-body p-4">
       <div class="d-flex justify-content-between align-items-start gap-2 mb-3">
-        <h2 class="h4 app-heading mb-0">{{ title }}</h2>
+        <h2 class="h4 app-heading mb-0" data-testid="vote-title">
+          {{ final ? finalTitle : title }}
+        </h2>
         <span
           v-if="!final && voterCount"
           class="small text-muted text-nowrap"
@@ -49,9 +53,10 @@ function share(option) {
       </div>
 
       <!-- Confirmed: show the choice instead of the ballot -->
-      <div v-if="final" class="app-ticket text-start" data-testid="vote-final">
-        <p class="app-label mb-2">Confirmed by the host</p>
-        <p class="h2 app-doto app-text-bright mb-0">{{ final.name }}</p>
+      <div v-if="final" data-testid="vote-final">
+        <div class="app-ticket text-start">
+          <p class="h2 app-doto app-text-bright mb-0">{{ final.name }}</p>
+        </div>
         <button
           v-if="isHost"
           type="button"

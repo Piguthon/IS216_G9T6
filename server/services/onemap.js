@@ -2,7 +2,9 @@
 // OWNER:     I (team-written)
 // PURPOSE:   OneMap client for FairSpot: token management + public-transport routing.
 // EXPORTS:   getToken()   → a valid OneMap access token
-//            getPtRoute(start, end, date, time) → { minutes, firstBusStopCode } or null
+//            getPtRoute(start, end, date, time) → { minutes, waitMinutes, firstBusStopCode, steps }
+//                or null. steps: [ { mode, route, routeName, from, fromCode, to, toCode,
+//                stops, minutes, points } ], where points is the leg's encoded map line
 //                start/end { lat, lng } · date "YYYY-MM-DD" · time "HH:MM"
 //            tokenStatus() → { ok, expiresAt } (used by routes/health-routes.js)
 // USED BY:   ranking (JS) via getPtRoute · health route via tokenStatus
@@ -86,8 +88,24 @@ async function callRouting(start, end, date, time, token) {
   return response.data;
 }
 
+// One part of a trip, e.g. "bus 99 from A to B". Each is at least 1 minute.
+function toStep(leg) {
+  return {
+    mode: leg.mode,                             // WALK, BUS, SUBWAY
+    route: leg.route || '',                     // "99", "EW"
+    routeName: leg.routeLongName || '',         // "EAST WEST LINE"
+    from: leg.from.name,
+    fromCode: leg.from.stopCode || null,
+    to: leg.to.name,
+    toCode: leg.to.stopCode || null,
+    stops: leg.transitLeg ? (leg.intermediateStops || []).length + 1 : 0,
+    minutes: Math.max(1, Math.round(leg.duration / 60)),
+    points: leg.legGeometry ? leg.legGeometry.points : ''
+  };
+}
+
 // start/end: { lat, lng } · date "YYYY-MM-DD" · time "HH:MM"
-// returns { minutes, firstBusStopCode } or null if OneMap finds no route
+// returns { minutes, waitMinutes, firstBusStopCode, steps } or null if OneMap finds no route
 async function getPtRoute(start, end, date, time) {
   let data;
   try {
@@ -121,7 +139,9 @@ async function getPtRoute(start, end, date, time) {
 
   return {
     minutes: Math.round(fastest.duration / 60),   // duration is in seconds
-    firstBusStopCode: firstBusStopCode
+    waitMinutes: Math.round((fastest.waitingTime || 0) / 60),
+    firstBusStopCode: firstBusStopCode,
+    steps: fastest.legs.map(toStep)
   };
 }
 async function tokenStatus() {

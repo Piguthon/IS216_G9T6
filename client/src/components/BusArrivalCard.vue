@@ -1,34 +1,30 @@
 <!--
   FILE:     src/components/BusArrivalCard.vue
   OWNER:    P4 (team-written)
-  PURPOSE:  Live next-bus times at a member's first bus stop
-  PROPS:    stopCode (String), label (String)
+  PURPOSE:  Live waiting times for the buses in the user's route, at the stops they board at
+  PROPS:    buses (Array of { stopCode, stopName, serviceNo })
   EMITS:    none
   TALKS TO: GET /api/bus-arrival/:stopCode
   DATA:     Bus { stopCode, services: [ { serviceNo, nextArrivals: [ ISO time strings ] } ] }
             arrival times are ISO strings with +08:00
   REVISE:   Wk 5 onMounted + Axios GET, computed
   DONE WHEN:
-    - [ ] shows each service's next arrivals in minutes
+    - [ ] shows each bus's next arrivals in minutes
     - [ ] refresh button
     - [ ] empty state when buses aren't running (late night)
 -->
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import axios from 'axios'
 import { BASE_URL } from '../config'
 const props = defineProps({
-  stopCode: {
-    type: String,
+  buses: {
+    type: Array,
     required: true,
-  },
-  label: {
-    type: String,
-    default: '',
   },
 })
 
-const services = ref([])
+const arrivalsByStop = ref({}) // stopCode → services from the API
 const message = ref('')
 const isLoading = ref(false)
 
@@ -39,11 +35,17 @@ async function loadArrivals() {
   isLoading.value = true
 
   try {
-    const response = await axios.get(`${BASE_URL}/bus-arrival/${props.stopCode}`)
-
-    services.value = response.data.services
+    const stopCodes = [...new Set(props.buses.map((bus) => bus.stopCode))]
+    const responses = await Promise.all(
+      stopCodes.map((stopCode) => axios.get(`${BASE_URL}/bus-arrival/${stopCode}`)),
+    )
+    const loaded = {}
+    stopCodes.forEach((stopCode, index) => {
+      loaded[stopCode] = responses[index].data.services
+    })
+    arrivalsByStop.value = loaded
   } catch (error) {
-    services.value = []
+    arrivalsByStop.value = {}
     if (error.response && error.response.data && error.response.data.error) {
       message.value = error.response.data.error
     } else {
@@ -53,6 +55,17 @@ async function loadArrivals() {
     isLoading.value = false
   }
 }
+
+// Each bus in the route, with its next arrivals. Other buses at the stop are left out.
+const rows = computed(() =>
+  props.buses.map((bus) => {
+    const services = arrivalsByStop.value[bus.stopCode] || []
+    const service = services.find(
+      (item) => item.serviceNo.toLowerCase() === bus.serviceNo.toLowerCase(),
+    )
+    return { ...bus, nextArrivals: service ? service.nextArrivals : [] }
+  }),
+)
 
 function minutesUntil(arrivalTime) {
   const difference = new Date(arrivalTime).getTime() - Date.now()
@@ -68,9 +81,7 @@ onMounted(loadArrivals)
   <section class="card app-card" data-testid="bus-arrival-card">
     <div class="card-body">
       <div class="d-flex justify-content-between align-items-center gap-3 mb-3">
-        <h2 class="h5 app-heading mb-0">
-          {{ props.label || `Bus stop ${props.stopCode}` }}
-        </h2>
+        <h2 class="h5 app-heading mb-0">Your buses</h2>
 
         <button
           type="button"
@@ -86,29 +97,42 @@ onMounted(loadArrivals)
       <p v-else-if="message" class="alert alert-danger" role="alert">
         {{ message }}
       </p>
-      <p v-else-if="services.length === 0" class="text-muted">
-        No bus services are available right now.
-      </p>
 
-      <ul v-else class="list-group list-group-flush">
-        <li v-for="service in services" :key="service.serviceNo" class="list-group-item px-0">
-          <div class="d-flex flex-wrap align-items-center gap-2">
-            <strong class="me-2">Bus {{ service.serviceNo }}</strong>
-
-            <span
-              v-for="(arrival, index) in service.nextArrivals"
-              :key="index"
-              class="badge rounded-pill text-uppercase text-bg-light"
+      <div v-else class="table-responsive">
+        <table class="table align-middle mb-0">
+          <thead>
+            <tr>
+              <th scope="col">Bus stop</th>
+              <th scope="col">Bus</th>
+              <th scope="col">Waiting time</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr
+              v-for="row in rows"
+              :key="`${row.stopCode}-${row.serviceNo}`"
+              data-testid="bus-arrival-row"
             >
-              {{ minutesUntil(arrival) }}
-            </span>
-
-            <span v-if="service.nextArrivals.length === 0" class="text-muted small">
-              No upcoming arrivals
-            </span>
-          </div>
-        </li>
-      </ul>
+              <td>{{ row.stopName }} ({{ row.stopCode }})</td>
+              <td class="fw-bold">{{ row.serviceNo }}</td>
+              <td>
+                <div class="d-flex flex-wrap gap-2">
+                  <span
+                    v-for="(arrival, index) in row.nextArrivals"
+                    :key="index"
+                    class="badge rounded-pill text-uppercase text-bg-light"
+                  >
+                    {{ minutesUntil(arrival) }}
+                  </span>
+                  <span v-if="row.nextArrivals.length === 0" class="text-muted small">
+                    No upcoming arrivals
+                  </span>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
     </div>
   </section>
 </template>

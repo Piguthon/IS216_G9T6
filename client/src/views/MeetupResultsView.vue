@@ -15,6 +15,7 @@ import axios from 'axios'
 import { useRoute } from 'vue-router'
 import { BASE_URL } from '../config'
 import { useAuthStore } from '../stores/auth'
+import { formatDate, formatTime } from '../utils/meetup-date'
 import MeetingPointCard from '../components/MeetingPointCard.vue'
 import MapView from '../components/MapView.vue'
 import VenueList from '../components/VenueList.vue'
@@ -29,6 +30,7 @@ const code = route.params.code
 
 const meetup = ref(null)
 const ranking = ref([])
+const departure = ref(null)
 const selectedId = ref('')
 const myMemberId = ref(null)
 const isLoading = ref(true)
@@ -53,7 +55,8 @@ async function loadResults() {
     const meetupResponse = await axios.get(`${BASE_URL}/meetups/${code}`)
     meetup.value = meetupResponse.data
     const rankingResponse = await axios.get(`${BASE_URL}/ranking/${code}`)
-    ranking.value = rankingResponse.data
+    ranking.value = rankingResponse.data.ranking
+    departure.value = rankingResponse.data.departure
     if (ranking.value.length > 0) {
       selectedId.value = ranking.value[0].stationId
     }
@@ -113,6 +116,13 @@ const selected = computed(() => {
     if (point.stationId === selectedId.value) return point
   }
   return null
+})
+
+// Once the host confirms a meeting point, it is the only one shown
+const shownPoints = computed(() => {
+  if (!finalStation.value) return ranking.value
+  const confirmed = ranking.value.filter((p) => p.stationId === finalStation.value.optionId)
+  return confirmed.length > 0 ? confirmed : ranking.value
 })
 
 // Same bar scale on every card, so a longer bar always means a longer trip
@@ -236,13 +246,26 @@ const venuePoint = computed(() => finalStation.value || selected.value)
     </div>
 
     <div v-else class="row g-4">
-      <div class="col-lg-5">
+      <div v-if="departure && departure.time === '05:30'" class="col-12">
+        <div class="alert alert-warning mb-0" role="status" data-testid="results-time-note">
+          Travel times are for leaving at 5:30am on
+          {{ formatDate(departure.date) }}.
+        </div>
+      </div>
+      <div v-else-if="departure" class="col-12">
+        <p class="small text-muted mb-0" data-testid="results-time-note">
+          Travel times are calculated at {{ formatTime(departure.time) }} on
+          {{ formatDate(departure.date) }}.
+        </p>
+      </div>
+      <!-- Once the venue is confirmed the map and places go, so this column moves to the centre -->
+      <div :class="finalVenue ? 'col-lg-6 mx-auto' : 'col-lg-5'">
         <div class="d-grid gap-3 mb-4" data-testid="results-list">
           <MeetingPointCard
-            v-for="(point, index) in ranking"
+            v-for="point in shownPoints"
             :key="point.stationId"
             :point="point"
-            :rank="index + 1"
+            :rank="ranking.indexOf(point) + 1"
             :selected="point.stationId === selectedId"
             :confirmed="finalStation !== null && finalStation.optionId === point.stationId"
             :scale-minutes="scaleMinutes"
@@ -271,6 +294,7 @@ const venuePoint = computed(() => finalStation.value || selected.value)
         <VotePanel
           class="mb-4"
           title="Vote for a meeting point"
+          final-title="Meeting point confirmed by the host"
           :options="stationOptions"
           :my-vote="votes ? votes.station.myVote : null"
           :voter-count="meetup ? meetup.members.length : 0"
@@ -287,6 +311,7 @@ const venuePoint = computed(() => finalStation.value || selected.value)
           v-if="finalStation"
           class="mb-4"
           title="Vote for a venue"
+          final-title="Venue confirmed by the host"
           :options="venueOptions"
           :my-vote="votes ? votes.venue.myVote : null"
           :voter-count="meetup ? meetup.members.length : 0"
@@ -302,11 +327,7 @@ const venuePoint = computed(() => finalStation.value || selected.value)
 
         <RouterLink
           v-if="finalStation"
-          :to="{
-            name: 'meetup-summary',
-            params: { code },
-            query: { station: finalStation.optionId },
-          }"
+          :to="{ name: 'meetup-summary', params: { code } }"
           class="app-btn app-btn-lg btn-sign w-100"
           data-testid="results-summary-link"
         >
@@ -314,11 +335,11 @@ const venuePoint = computed(() => finalStation.value || selected.value)
         </RouterLink>
       </div>
 
-      <div class="col-lg-7">
+      <div v-if="!finalVenue" class="col-lg-7">
         <MapView
-          :key="selectedId"
+          :key="`${selectedId}-${shownPoints.length}`"
           :starts="starts"
-          :candidates="ranking"
+          :candidates="shownPoints"
           :selected-id="selectedId"
           @select="selectedId = $event"
         />

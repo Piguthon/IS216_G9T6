@@ -89,7 +89,7 @@ async function joinMeetup() {
 </script>
 
 <template>
-  <div class="row justify-content-center">
+  <div class="row justify-content-center align-items-center flex-grow-1 pt-3">
     <section class="col-md-8 col-lg-6" data-testid="join-meetup-page">
       <!-- TODO 4: Header + form card + error alert, as in Create. -->
       <div class="card app-card">
@@ -135,12 +135,12 @@ async function joinMeetup() {
             >
               {{ isJoining ? 'Joining...' : 'Join Meetup' }}
             </button>
+            <p class="text-center mt-3 mb-0">
+              Hosting instead? <RouterLink to="/create">Create a meetup</RouterLink>
+            </p>
           </form>
         </div>
       </div>
-      <p class="text-center mt-3 mb-0">
-        Hosting instead? <RouterLink to="/create">Create a meetup</RouterLink>
-      </p>
       <!-- TODO 5: testids: join-code, join-name, join-submit, join-error -->
     </section>
   </div>

@@ -25,7 +25,7 @@
 const Meetup = require('../models/meetup-model');
 const Vote = require('../models/vote-model');
 const {getUniqueCode} = require('../utils/generate-code');
-const { isAllowedMeetupDate } = require('../utils/meetup-date');
+const { isAllowedMeetupDate, todayInSingapore } = require('../utils/meetup-date');
 
 // TODO 2: Write every handler as exports.name = async (req, res) => { ... } with try/catch.
 //         In catch, log the error and reply 500 with JSON { error: "Server error" }.
@@ -84,6 +84,45 @@ exports.getMeetup = async (req,res) => {
         res.status(500).json({ error: "Server error" });
     }
 };
+// getMyMeetups (GET /mine): the logged-in user's meetups, split into current and past.
+// A meetup stays current through its whole day in Singapore. Only list details are sent,
+// not other members' start points.
+exports.getMyMeetups = async (req, res) => {
+    try {
+        const userId = String(req.user._id);
+        const meetups = await Meetup.findByUser(userId);
+        const today = todayInSingapore();
+        const current = [];
+        const past = [];
+
+        for (const meetup of meetups) {
+            const me = meetup.members.find(member => member.userId === userId);
+            const item = {
+                code: meetup.code,
+                occasion: meetup.occasion,
+                date: meetup.date,
+                time: meetup.time,
+                hostName: meetup.hostName,
+                memberCount: meetup.members.length,
+                myMemberId: String(me._id),
+                isHost: meetup.members[0]._id.equals(me._id),
+                finalStation: meetup.finalStation,
+                finalVenue: meetup.finalVenue,
+            };
+            if (meetup.date >= today) current.push(item);
+            else past.push(item);
+        }
+
+        const when = (meetup) => `${meetup.date} ${meetup.time}`;
+        current.sort((a, b) => when(a).localeCompare(when(b))); // soonest first
+        past.sort((a, b) => when(b).localeCompare(when(a))); // most recent first
+        res.json({ current, past });
+    } catch (error) {
+        console.error('Error getting my meetups:', error);
+        res.status(500).json({ error: "Server error" });
+    }
+};
+
 // TODO 5: joinMeetup
 //           - name from the body (required → 400)
 //           - unknown code → 404

@@ -81,7 +81,7 @@ async function submitSignup() {
 </script>
 
 <template>
-  <div class="row justify-content-center">
+  <div class="row justify-content-center align-items-center flex-grow-1 pt-3">
     <section class="col-md-8 col-lg-6" data-testid="signup-page">
       <form class="card app-card card-body p-4" @submit.prevent="submitSignup">
         <header class="app-page-header">
@@ -211,10 +211,10 @@ async function submitSignup() {
         >
           {{ isSigningUp ? 'Creating account...' : 'Create account' }}
         </button>
+        <p class="mt-3 mb-0 text-center">
+          Already have an account? <RouterLink to="/login">Log in</RouterLink>
+        </p>
       </form>
-      <p class="mt-3 text-center">
-        Already have an account? <RouterLink to="/login">Log in</RouterLink>
-      </p>
     </section>
   </div>
 </template>

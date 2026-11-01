@@ -10,6 +10,8 @@ import MeetupResultsView from '../views/MeetupResultsView.vue'
 import SummaryView from '../views/SummaryView.vue'
 import LoginView from '../views/LoginView.vue'
 import SignupView from '../views/SignupView.vue'
+import LogoutView from '../views/LogoutView.vue'
+import MeetupsView from '../views/MeetupsView.vue'
 import ProfileView from '../views/ProfileView.vue'
 import { useAuthStore } from '../stores/auth'
 
@@ -32,6 +34,12 @@ const router = createRouter({
       path: '/join',
       name: 'join-meetup',
       component: JoinMeetupView,
+    },
+    {
+      path: '/meetups',
+      name: 'meetups',
+      component: MeetupsView,
+      meta: { requiresAuth: true },
     },
     {
       path: '/meetup/:code',
@@ -57,6 +65,11 @@ const router = createRouter({
       path: '/signup',
       name: 'signup',
       component: SignupView,
+    },
+    {
+      path: '/logout',
+      name: 'logout',
+      component: LogoutView,
     },
     {
       path: '/profile',

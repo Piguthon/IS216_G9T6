@@ -12,44 +12,20 @@
     - [ ] collapses on phones
 -->
 <script setup>
-import { useRouter } from 'vue-router'
-import { ref } from 'vue'
 import { useAuthStore } from '../stores/auth'
 
-const router = useRouter()
 const auth = useAuthStore()
-
-const logoutMessage = ref('')
-const isLoggingOut = ref(false)
-
-async function handleLogout() {
-  if (isLoggingOut.value) return
-  isLoggingOut.value = true
-  logoutMessage.value = ''
-  try {
-    await auth.logout()
-    router.push('/login')
-  } catch {
-    logoutMessage.value = 'Logout failed. Please try again.'
-  } finally {
-    isLoggingOut.value = false
-  }
-}
 </script>
 
 <!-- Responsive Bootstrap 5 navbar (https://getbootstrap.com/docs/5.3/components/navbar/) -->
 <template>
   <nav
-    class="navbar navbar-expand-md app-bar app-navbar"
+    class="navbar navbar-expand-lg app-bar app-navbar"
     data-bs-theme="dark"
     data-testid="app-navbar"
   >
     <div class="container">
       <RouterLink class="navbar-brand app-logo" :to="{ name: 'home' }" data-testid="nav-brand">
-        <svg width="14" height="18" viewBox="0 0 14 18" aria-hidden="true">
-          <path d="M7 0C3.1 0 0 3 0 6.9 0 12 7 18 7 18s7-6 7-11.1C14 3 10.9 0 7 0Z" fill="#fff" />
-          <circle cx="7" cy="7" r="2.6" fill="#1d4f91" />
-        </svg>
         FairSpot
       </RouterLink>
 
@@ -78,6 +54,16 @@ async function handleLogout() {
               Home
             </RouterLink>
           </li>
+          <li v-if="auth.isLoggedIn" class="nav-item">
+            <RouterLink
+              exact-active-class="active"
+              class="nav-link text-uppercase fw-bold"
+              :to="{ name: 'meetups' }"
+              data-testid="nav-meetups"
+            >
+              My Meetups
+            </RouterLink>
+          </li>
           <li class="nav-item">
             <RouterLink
               exact-active-class="active"
@@ -99,7 +85,7 @@ async function handleLogout() {
             </RouterLink>
           </li>
         </ul>
-        <ul class="navbar-nav align-items-md-center gap-md-2 small">
+        <ul class="navbar-nav align-items-lg-center gap-lg-2 small">
           <template v-if="!auth.isLoggedIn">
             <li class="nav-item">
               <RouterLink
@@ -113,7 +99,7 @@ async function handleLogout() {
             </li>
             <li class="nav-item">
               <RouterLink
-                class="app-btn btn-quiet app-btn-sm text-uppercase my-2 my-md-0"
+                class="app-btn btn-quiet app-btn-sm text-uppercase my-2 my-lg-0"
                 to="/signup"
                 data-testid="nav-signup"
               >
@@ -134,21 +120,18 @@ async function handleLogout() {
               </RouterLink>
             </li>
             <li class="nav-item">
-              <a
-                href="#"
+              <RouterLink
+                exact-active-class="active"
                 class="nav-link text-uppercase fw-bold"
-                @click.prevent="handleLogout"
+                to="/logout"
                 data-testid="nav-logout"
               >
                 Log out
-              </a>
+              </RouterLink>
             </li>
           </template>
         </ul>
       </div>
     </div>
   </nav>
-  <p v-if="logoutMessage" class="alert alert-danger container mt-2" role="alert">
-    {{ logoutMessage }}
-  </p>
 </template>

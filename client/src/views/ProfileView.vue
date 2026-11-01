@@ -38,7 +38,7 @@ const searchKey = ref(0)
 const locationsListKey = ref(0)
 const showDeleteAccount = ref(false)
 const deletionPassword = ref('')
-const deletionMessage = ref('')
+const accountSettings = ref(null)
 const isDeletingAccount = ref(false)
 const showFinalDeleteConfirm = ref(false)
 const activeTab = ref('locations')
@@ -73,7 +73,6 @@ async function deleteAccount() {
     return
   showFinalDeleteConfirm.value = false
   isDeletingAccount.value = true
-  deletionMessage.value = ''
   try {
     await axios.delete(`${BASE_URL}/users/me`, {
       headers: { Authorization: `Bearer ${auth.token}` },
@@ -86,10 +85,11 @@ async function deleteAccount() {
       auth.clearSession()
       router.push('/login')
     }
-    deletionMessage.value = 'Unable to delete your account. Please try again.'
+    let text = 'Unable to delete your account. Please try again.'
     if (error.response && error.response.data && error.response.data.error) {
-      deletionMessage.value = error.response.data.error
+      text = error.response.data.error
     }
+    accountSettings.value?.showMessage(text, true)
   } finally {
     deletionPassword.value = ''
     isDeletingAccount.value = false
@@ -251,10 +251,11 @@ onMounted(loadProfile)
   <section class="row justify-content-center" data-testid="profile-page">
     <div class="col-lg-9">
       <header class="app-page-header">
-        <h1 class="app-heading mb-1">Your profile</h1>
-        <p v-if="user" class="text-muted text-break mb-0">
-          <span data-testid="profile-name">{{ user.name }}</span
-          >, <span data-testid="profile-email">{{ user.email }}</span>
+        <h1 class="app-heading text-break mb-1" data-testid="profile-name">
+          {{ user ? user.name : 'Your profile' }}
+        </h1>
+        <p v-if="user" class="text-muted text-break mb-0" data-testid="profile-email">
+          {{ user.email }}
         </p>
       </header>
 
@@ -273,7 +274,7 @@ onMounted(loadProfile)
 
       <div v-else-if="user && auth.isLoggedIn" class="card app-card">
         <!-- Bootstrap navs (https://getbootstrap.com/docs/5.3/components/navs-tabs/) -->
-        <ul class="nav nav-fill profile-tabs" role="tablist">
+        <ul class="nav nav-fill app-tabs" role="tablist">
           <li v-for="tab in tabs" :key="tab.id" class="nav-item" role="presentation">
             <button
               type="button"
@@ -366,7 +367,7 @@ onMounted(loadProfile)
         </div>
 
         <div v-show="activeTab === 'account'" class="card-body p-3 p-md-4" role="tabpanel">
-          <AccountSettings :user="user" @updated="user = $event">
+          <AccountSettings ref="accountSettings" :user="user" @updated="user = $event">
             <div class="border-top pt-3 mt-4">
               <button
                 v-if="!showDeleteAccount"
@@ -389,9 +390,6 @@ onMounted(loadProfile)
                   required
                   :disabled="isDeletingAccount || showFinalDeleteConfirm"
                 />
-                <p v-if="deletionMessage" class="alert alert-danger" role="alert">
-                  {{ deletionMessage }}
-                </p>
                 <div class="d-flex flex-wrap gap-2">
                   <button
                     type="submit"
@@ -409,8 +407,7 @@ onMounted(loadProfile)
                     @click="
                       ((showDeleteAccount = false),
                       (showFinalDeleteConfirm = false),
-                      (deletionPassword = ''),
-                      (deletionMessage = ''))
+                      (deletionPassword = ''))
                     "
                   >
                     Cancel
@@ -441,29 +438,3 @@ onMounted(loadProfile)
     </div>
   </section>
 </template>
-
-<style scoped>
-/* Dark tab bar along the top of the card, with the open tab in white */
-.profile-tabs {
-  overflow: hidden;
-  border-radius: 4px 4px 0 0;
-  background-color: #2a2d36;
-}
-
-.profile-tabs .nav-link {
-  width: 100%;
-  border-radius: 0;
-  color: #e4e6e8;
-  font-weight: 700;
-}
-
-.profile-tabs .nav-link.active {
-  background-color: #ffffff;
-  color: #000000;
-}
-
-.profile-tabs .nav-link:focus-visible {
-  outline: 3px solid #f2c230;
-  outline-offset: -3px;
-}
-</style>

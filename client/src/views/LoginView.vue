@@ -55,7 +55,7 @@ async function submitLogin() {
 </script>
 
 <template>
-  <div class="row justify-content-center">
+  <div class="row justify-content-center align-items-center flex-grow-1 pt-3">
     <section class="col-md-8 col-lg-6" data-testid="login-page">
       <form class="card app-card card-body p-4" @submit.prevent="submitLogin">
         <header class="app-page-header">
@@ -94,8 +94,10 @@ async function submitLogin() {
         <button type="submit" class="app-btn app-btn-lg btn-sign w-100" :disabled="isLoggingIn">
           {{ isLoggingIn ? 'Logging in…' : 'Log in' }}
         </button>
+        <p class="mt-3 mb-0 text-center">
+          No account yet? <RouterLink to="/signup">Sign up</RouterLink>
+        </p>
       </form>
-      <p class="mt-3 text-center">No account yet? <RouterLink to="/signup">Sign up</RouterLink></p>
     </section>
   </div>
 </template>

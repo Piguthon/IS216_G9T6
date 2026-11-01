@@ -74,7 +74,7 @@ async function search() {
     if (currentRequest !== requestNumber) return
     console.error('Error fetching addresses:', error)
     results.value = []
-    message.value = 'Unable to search addresses. Please try again.'
+    message.value = 'Unable to search addresses. Press Enter to try again.'
   } finally {
     if (currentRequest === requestNumber) isLoading.value = false
   }
@@ -93,26 +93,15 @@ function handleSelect(result) {
 
 <template>
   <div data-testid="address-search" class="position-relative">
-    <div class="input-group">
-      <input
-        type="text"
-        class="form-control app-input"
-        v-model="query"
-        @input="handleInput"
-        @keyup.enter="search"
-        :placeholder="placeholder"
-        data-testid="address-input"
-      />
-      <button
-        class="app-btn btn-sign"
-        type="button"
-        @click="search"
-        :disabled="isLoading || query.trim().length < 3"
-        data-testid="address-search-btn"
-      >
-        {{ isLoading ? 'Searching...' : 'Search' }}
-      </button>
-    </div>
+    <input
+      type="text"
+      class="form-control app-input"
+      v-model="query"
+      @input="handleInput"
+      @keyup.enter="search"
+      :placeholder="placeholder"
+      data-testid="address-input"
+    />
     <p v-if="isLoading" class="small text-muted mt-2 mb-0" role="status">Searching addresses...</p>
     <p v-else-if="message" class="alert alert-danger small mt-2 mb-0" role="alert">{{ message }}</p>
     <p

@@ -27,6 +27,7 @@ import { ref, computed, onMounted } from 'vue'
 import axios from 'axios'
 import { useRoute, useRouter } from 'vue-router'
 import { BASE_URL } from '../config'
+import { formatDate } from '../utils/meetup-date'
 
 import AddressSearch from '../components/AddressSearch.vue'
 import MemberList from '../components/MemberList.vue'
@@ -119,6 +120,24 @@ const startWarning = computed(() => {
   return isWaiting ? 'Results leave out anyone without a start point.' : ''
 })
 //Set start point
+const copyLabel = ref('Copy code')
+
+async function copyCode() {
+  try {
+    await navigator.clipboard.writeText(meetup.value.code)
+    copyLabel.value = 'Copied'
+  } catch {
+    copyLabel.value = 'Select and copy the code'
+  }
+}
+
+// This member's start point in the meetup, or null if they haven't set one
+const myStart = computed(() => {
+  if (!meetup.value) return null
+  const me = meetup.value.members.find((member) => member._id === myMemberId.value)
+  return me ? me.start : null
+})
+
 async function handleSetStart(startPoint) {
   actionError.value = ''
   try {
@@ -230,7 +249,7 @@ async function handleLeave() {
                     </h2>
                     <dl class="row mb-0">
                       <dt class="col-3 text-muted fw-normal">Date</dt>
-                      <dd class="col-9 mb-1">{{ meetup.date }}</dd>
+                      <dd class="col-9 mb-1">{{ formatDate(meetup.date) }}</dd>
                       <dt class="col-3 text-muted fw-normal">Time</dt>
                       <dd class="col-9 mb-1">{{ meetup.time }}</dd>
                       <dt class="col-3 text-muted fw-normal">Host</dt>
@@ -242,6 +261,14 @@ async function handleLeave() {
                       <span class="app-label">Share this code with your group</span>
                       <span class="app-code mt-2" data-testid="lobby-code">{{ meetup.code }}</span>
                     </div>
+                    <button
+                      type="button"
+                      class="app-btn btn-quiet w-100 mt-2"
+                      @click="copyCode"
+                      data-testid="lobby-copy"
+                    >
+                      {{ copyLabel }}
+                    </button>
                   </div>
                 </div>
               </div>
@@ -255,9 +282,12 @@ async function handleLeave() {
               <SavedStartPointPicker
                 v-if="auth.isLoggedIn"
                 :key="auth.token"
+                :current-start="myStart"
                 @select="handleSetStart"
-              />
-              <AddressSearch @select="handleSetStart" />
+              >
+                <AddressSearch @select="handleSetStart" />
+              </SavedStartPointPicker>
+              <AddressSearch v-else @select="handleSetStart" />
             </div>
           </div>
         </div>
@@ -302,56 +332,52 @@ async function handleLeave() {
           </div>
 
           <!-- Host tools & Leave options -->
-          <div v-if="isMember" class="card app-card">
-            <div class="card-body">
-              <h3 class="h6 app-heading mb-3">Manage meetup</h3>
+          <div v-if="isMember">
+            <!-- Host Tools -->
+            <div v-if="isHost" class="d-flex flex-wrap gap-2">
+              <button
+                v-if="!isEditing"
+                @click="isEditing = true"
+                class="app-btn btn-sign-outline flex-fill"
+                data-testid="lobby-edit"
+              >
+                Edit Meetup Details
+              </button>
 
-              <!-- Host Tools -->
-              <div v-if="isHost" class="d-flex flex-wrap gap-2">
-                <button
-                  v-if="!isEditing"
-                  @click="isEditing = true"
-                  class="app-btn btn-sign-outline"
-                  data-testid="lobby-edit"
-                >
-                  Edit Meetup Details
-                </button>
-
-                <div v-if="showDeleteConfirm" class="alert alert-secondary p-3 mb-0 w-100">
-                  <p class="mb-2">Are you sure? This will delete the meetup for everyone.</p>
-                  <div class="d-flex gap-2">
-                    <button
-                      @click="handleDelete"
-                      class="btn app-btn btn-danger app-btn-sm"
-                      data-testid="lobby-delete-confirm"
-                    >
-                      Yes, Delete it
-                    </button>
-                    <button @click="showDeleteConfirm = false" class="app-btn btn-quiet app-btn-sm">
-                      Cancel
-                    </button>
-                  </div>
+              <div v-if="showDeleteConfirm" class="alert alert-secondary p-3 mb-0 w-100">
+                <p class="mb-2">Are you sure? This will delete the meetup for everyone.</p>
+                <div class="d-flex gap-2">
+                  <button
+                    @click="handleDelete"
+                    class="btn app-btn btn-danger app-btn-sm"
+                    data-testid="lobby-delete-confirm"
+                  >
+                    Yes, Delete it
+                  </button>
+                  <button @click="showDeleteConfirm = false" class="app-btn btn-quiet app-btn-sm">
+                    Cancel
+                  </button>
                 </div>
-                <button
-                  v-else
-                  @click="showDeleteConfirm = true"
-                  class="btn app-btn btn-outline-danger"
-                  data-testid="lobby-delete"
-                >
-                  Delete Meetup
-                </button>
               </div>
+              <button
+                v-else
+                @click="showDeleteConfirm = true"
+                class="btn app-btn btn-outline-danger flex-fill"
+                data-testid="lobby-delete"
+              >
+                Delete Meetup
+              </button>
+            </div>
 
-              <!-- Non-Host Leave -->
-              <div v-else>
-                <button
-                  @click="handleLeave"
-                  class="btn app-btn btn-outline-danger"
-                  data-testid="lobby-leave"
-                >
-                  Leave Meetup
-                </button>
-              </div>
+            <!-- Non-Host Leave -->
+            <div v-else>
+              <button
+                @click="handleLeave"
+                class="btn app-btn btn-outline-danger w-100"
+                data-testid="lobby-leave"
+              >
+                Leave Meetup
+              </button>
             </div>
           </div>
         </div>

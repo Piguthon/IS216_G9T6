@@ -41,7 +41,7 @@ function edit(location) {
         <fieldset :disabled="busy">
           <AddressSearch
             :key="location._id"
-            placeholder="Search for a replacement address (optional)"
+            placeholder="Search for a new address (optional)"
             @select="replacementAddress = $event"
             @clear="replacementAddress = null"
           />

@@ -12,9 +12,13 @@ const isInnerPage = computed(() => route.name && route.name !== 'home')
   <!-- Full-height column, so the footer stays at the bottom on short pages -->
   <div class="d-flex flex-column min-vh-100">
     <AppNavbar />
-    <div v-if="isInnerPage" class="page-road" aria-hidden="true"></div>
-    <main class="flex-grow-1" :class="{ 'page-body': isInnerPage }" data-testid="app-main">
-      <div :class="{ container: isInnerPage }">
+    <main
+      class="flex-grow-1"
+      :class="{ 'page-body d-flex flex-column': isInnerPage }"
+      data-testid="app-main"
+    >
+      <!-- On inner pages this fills the height, so a page can centre its content -->
+      <div :class="{ 'container flex-grow-1 d-flex flex-column': isInnerPage }">
         <RouterView />
       </div>
     </main>
@@ -22,9 +26,7 @@ const isInnerPage = computed(() => route.name && route.name !== 'home')
     <footer class="app-bar py-4 small" data-bs-theme="dark">
       <div class="container d-flex flex-wrap justify-content-between align-items-center gap-2">
         <span class="app-logo">FairSpot</span>
-        <span class="text-body-secondary">
-          Fair meeting points across Singapore's MRT and bus network. IS216 G9T6.
-        </span>
+        <span class="text-body-secondary">Copyright © 2026 Fairspot.</span>
       </div>
     </footer>
   </div>

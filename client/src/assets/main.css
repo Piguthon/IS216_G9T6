@@ -12,12 +12,12 @@
   COLOURS (copy these hex values when you need them):
     #1d4f91  sign blue    main buttons, links, logo
     #163c70  dark blue    blue button on mouse over
-    #f2c230  line yellow  road markings, meetup codes, headline accents
+    #f2c230  line yellow  card borders, road markings, meetup codes, headline accents
     #0e8560  street green street-name signs
     #141517  black        navbar, footer
-    #3a3d41  asphalt      the road strip
+    #3a3d41  asphalt      dashed lines on the boards
     #efe9dc  station tile page background
-    #6b737a  steel        card borders
+    #6b737a  steel        sign poles and hangers
     Travel times only: red rgb(228, 0, 43) longest, green rgb(0, 166, 81) shortest,
     amber rgb(245, 163, 0) everything else. Names and places on the boards stay white.
 
@@ -33,7 +33,8 @@
     Forms      app-input (add to form-control / form-select), app-check (form-check-input)
     Blocks     app-card (white card), app-page-header, app-ticket (LED board),
                app-code (meetup code), app-logo, app-empty, app-street-sign (green name sign)
-    Page       page-road (thin road strip under the navbar), page-body (tiled working space)
+    Tabs       app-tabs (dark tab bar on top of a card: add to Bootstrap's nav nav-fill)
+    Page       page-body (tiled working space)
     Boards     trips, trip plus one of is-red, is-amber, is-green (see src/utils/trip-tone.js);
                inside: trip-who, trip-track, trip-fill, trip-mins
 */
@@ -228,16 +229,7 @@ h6,
   border-color: #1d4f91;
 }
 
-/* 6. Page: a thin strip of road under the navbar, then the tiled working space */
-.page-road {
-  height: 17px;
-  border-bottom: 3px solid #f2c230;
-  background:
-    repeating-linear-gradient(90deg, #f4f4f1 0 26px, transparent 26px 60px) center / 100% 2px
-      no-repeat,
-    #3a3d41;
-}
-
+/* 6. Page: the tiled working space */
 .page-body {
   padding: 24px 0 44px;
   background-color: #efe9dc;
@@ -249,7 +241,7 @@ h6,
 
 /* 7. Blocks */
 .app-card {
-  border: 5px solid #6b737a;
+  border: 5px solid #f2c230;
   border-radius: 10px;
 }
 
@@ -270,7 +262,6 @@ h6,
 .app-logo {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
   padding: 7px 14px;
   border-radius: 6px;
   background-color: #1d4f91;
@@ -299,16 +290,28 @@ h6,
   min-height: 68px;
 }
 
-/* A small green dot next to the page you are on */
-.app-navbar .nav-link.active::before {
-  content: '';
-  display: inline-block;
-  width: 8px;
-  height: 8px;
-  margin-right: 7px;
-  border-radius: 50%;
-  background-color: rgb(0, 166, 81);
-  vertical-align: 1px;
+/* Dark tab bar along the top of the card, with the open tab in white */
+.app-tabs {
+  overflow: hidden;
+  border-radius: 4px 4px 0 0;
+  background-color: #2a2d36;
+}
+
+.app-tabs .nav-link {
+  width: 100%;
+  border-radius: 0;
+  color: #e4e6e8;
+  font-weight: 700;
+}
+
+.app-tabs .nav-link.active {
+  background-color: #ffffff;
+  color: #000000;
+}
+
+.app-tabs .nav-link:focus-visible {
+  outline: 3px solid #f2c230;
+  outline-offset: -3px;
 }
 
 /* Singapore street-name sign: green blade with a thin white line */
@@ -464,7 +467,7 @@ h6,
 
 /* Leaflet map (not Bootstrap): same border as the cards */
 .leaflet-container {
-  border: 5px solid #6b737a;
+  border: 5px solid #f2c230;
   border-radius: 10px;
   font-family: inherit;
 }

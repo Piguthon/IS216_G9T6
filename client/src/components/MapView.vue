@@ -5,6 +5,7 @@
   PROPS:    starts (Array of { name, lat, lng })
             candidates (Array of { stationId, name, lat, lng })
             selectedId (String)
+            routeSteps (Array of steps from the ranking, drawn as a line for one person's route)
   EMITS:    select with stationId
   TALKS TO: Leaflet (leafletjs.com, BSD-2-Clause) with OneMap base map tiles
             both must be credited in a comment and on the slides
@@ -22,11 +23,13 @@
 import { ref, onMounted, onUnmounted } from 'vue'
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
+import { decodePolyline } from '../utils/polyline'
 
 const props = defineProps({
   starts: { type: Array, default: () => [] },
   candidates: { type: Array, default: () => [] },
   selectedId: { type: String, default: '' },
+  routeSteps: { type: Array, default: () => [] },
 })
 const emit = defineEmits(['select'])
 
@@ -39,6 +42,9 @@ const SINGAPORE = [1.3521, 103.8198]
 const START_COLOUR = '#64748b' // grey: members' start points
 const CANDIDATE_COLOUR = '#0f766e' // teal: candidate stations
 const SELECTED_COLOUR = '#f59e0b' // amber: the selected station
+const WALK_COLOUR = '#64748b' // grey dashes: walking
+const BUS_COLOUR = '#0e8560' // green: bus
+const TRAIN_COLOUR = '#1d4f91' // blue: train
 
 const mapElement = ref(null) // the <div> in the template; Leaflet draws inside it
 let map = null // the Leaflet map: a plain variable, because Vue doesn't need to track it
@@ -48,6 +54,20 @@ onMounted(() => {
   L.tileLayer(ONEMAP_TILES, { minZoom: 11, maxZoom: 19, attribution: ONEMAP_CREDIT }).addTo(map)
 
   const points = [] // every [lat, lng] drawn, used to fit the view at the end
+
+  // A line for each part of the route, drawn first so the dots stay on top
+  for (const step of props.routeSteps) {
+    if (!step.points) continue
+    const line = decodePolyline(step.points)
+    const isWalk = step.mode === 'WALK'
+    L.polyline(line, {
+      color: isWalk ? WALK_COLOUR : step.mode === 'BUS' ? BUS_COLOUR : TRAIN_COLOUR,
+      weight: isWalk ? 4 : 6,
+      opacity: 0.9,
+      dashArray: isWalk ? '4 8' : null,
+    }).addTo(map)
+    points.push(...line)
+  }
 
   // 6.1: a grey dot for each member's start point
   for (const start of props.starts) {

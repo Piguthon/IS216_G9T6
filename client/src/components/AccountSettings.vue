@@ -1,6 +1,6 @@
 <!-- OWNER: JX. Account forms use refs/computed, Axios PUT and props/emits. -->
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, nextTick } from 'vue'
 import axios from 'axios'
 import { useRouter } from 'vue-router'
 import { BASE_URL } from '../config'
@@ -11,15 +11,15 @@ const emit = defineEmits(['updated'])
 const auth = useAuthStore()
 const router = useRouter()
 const name = ref(props.user.name)
-const nameMessage = ref('')
-const nameError = ref(false)
+const accountMessage = ref('')
+const accountError = ref(false)
+const messageBanner = ref(null)
 const savingName = ref(false)
 const currentPassword = ref('')
 const newPassword = ref('')
 const confirmation = ref('')
 const showPasswords = ref(false)
 const changingPassword = ref(false)
-const passwordMessage = ref('')
 const passwordChanged = ref(false)
 const showPasswordConfirm = ref(false)
 
@@ -51,10 +51,21 @@ function errorText(error) {
   return 'Unable to save changes. Please try again.'
 }
 
+// Every update shows in one banner at the top of the card, scrolled into view on small screens
+async function showMessage(text, isError) {
+  accountMessage.value = text
+  accountError.value = isError
+  await nextTick()
+  messageBanner.value?.scrollIntoView({ block: 'nearest' })
+}
+
+// The parent's delete-account form shows its errors in this banner too
+defineExpose({ showMessage })
+
 async function saveName() {
   if (savingName.value || !name.value.trim()) return
   savingName.value = true
-  nameMessage.value = ''
+  accountMessage.value = ''
   try {
     const response = await axios.put(
       `${BASE_URL}/users/me`,
@@ -64,11 +75,9 @@ async function saveName() {
       },
     )
     emit('updated', response.data.user)
-    nameError.value = false
-    nameMessage.value = 'Name updated.'
+    await showMessage('Name updated.', false)
   } catch (error) {
-    nameError.value = true
-    nameMessage.value = errorText(error)
+    await showMessage(errorText(error), true)
   } finally {
     savingName.value = false
   }
@@ -78,7 +87,7 @@ async function savePassword() {
   if (changingPassword.value || !canChangePassword.value || !showPasswordConfirm.value) return
   showPasswordConfirm.value = false
   changingPassword.value = true
-  passwordMessage.value = ''
+  accountMessage.value = ''
   try {
     await axios.put(
       `${BASE_URL}/users/me/password`,
@@ -92,7 +101,7 @@ async function savePassword() {
     passwordChanged.value = true
     router.push('/login')
   } catch (error) {
-    passwordMessage.value = errorText(error)
+    await showMessage(errorText(error), true)
   } finally {
     currentPassword.value = ''
     newPassword.value = ''
@@ -108,126 +117,128 @@ async function savePassword() {
     Password changed. You have been signed out.
     <RouterLink to="/login">Log in with your new password</RouterLink>.
   </div>
-  <div v-else class="row g-4">
-    <div class="col-md-5">
-      <form @submit.prevent="saveName">
-        <h3 class="h5 app-heading mb-3">Your name</h3>
-        <label for="profile-name" class="form-label fw-bold">Profile name</label>
-        <input
-          id="profile-name"
-          v-model.trim="name"
-          class="form-control app-input mb-2"
-          maxlength="100"
-          required
-          :disabled="savingName"
-        />
-        <p
-          v-if="nameMessage"
-          class="alert small"
-          :class="nameError ? 'alert-danger' : 'alert-success'"
-          :role="nameError ? 'alert' : 'status'"
-        >
-          {{ nameMessage }}
-        </p>
-        <button class="app-btn btn-sign-outline" :disabled="savingName || !name">
-          {{ savingName ? 'Saving...' : 'Save name' }}
-        </button>
-      </form>
-      <!-- The parent puts the delete-account section here -->
-      <slot></slot>
-    </div>
-    <div class="col-md-7">
-      <form @submit.prevent="confirmPasswordChange">
-        <h3 class="h5 app-heading mb-3">Change password</h3>
-        <fieldset :disabled="changingPassword || showPasswordConfirm">
-          <label for="current-password" class="form-label fw-bold">Current password</label>
+  <template v-else>
+    <p
+      v-if="accountMessage"
+      ref="messageBanner"
+      :class="accountError ? 'alert alert-danger' : 'alert alert-success'"
+      :role="accountError ? 'alert' : 'status'"
+      data-testid="account-message"
+    >
+      {{ accountMessage }}
+    </p>
+    <div class="row g-4">
+      <div class="col-md-5">
+        <form @submit.prevent="saveName">
+          <h3 class="h5 app-heading mb-3">Your name</h3>
+          <label for="profile-name" class="form-label fw-bold">Profile name</label>
           <input
-            id="current-password"
-            v-model="currentPassword"
-            :type="showPasswords ? 'text' : 'password'"
-            autocomplete="current-password"
-            class="form-control app-input mb-3"
+            id="profile-name"
+            v-model.trim="name"
+            class="form-control app-input mb-2"
+            maxlength="100"
             required
+            :disabled="savingName"
           />
-          <div class="row g-3">
-            <div class="col-sm-6">
-              <label for="new-password" class="form-label fw-bold">New password</label>
-              <input
-                id="new-password"
-                v-model="newPassword"
-                :type="showPasswords ? 'text' : 'password'"
-                autocomplete="new-password"
-                class="form-control app-input"
-                required
-                minlength="8"
-                aria-describedby="change-password-rules"
-              />
-            </div>
-            <div class="col-sm-6">
-              <label for="confirm-new-password" class="form-label fw-bold"
-                >Confirm new password</label
-              >
-              <input
-                id="confirm-new-password"
-                v-model="confirmation"
-                :type="showPasswords ? 'text' : 'password'"
-                autocomplete="new-password"
-                class="form-control app-input"
-                required
-              />
-            </div>
-          </div>
-          <ul
-            id="change-password-rules"
-            class="d-flex flex-wrap column-gap-3 small list-unstyled mt-2 mb-2"
-          >
-            <li
-              v-for="rule in rules"
-              :key="rule.label"
-              :class="rule.met ? 'text-success' : 'text-muted'"
-            >
-              {{ rule.met ? '✓' : '○' }} {{ rule.label }}
-            </li>
-          </ul>
-          <p
-            v-if="confirmation"
-            class="small mb-2"
-            :class="confirmation === newPassword ? 'text-success' : 'text-danger'"
-            role="status"
-          >
-            {{ confirmation === newPassword ? 'Passwords match.' : 'Passwords do not match.' }}
-          </p>
-          <p v-if="newPassword && currentPassword === newPassword" class="small text-danger mb-2">
-            Choose a different new password.
-          </p>
-          <div class="form-check mb-3">
+          <button class="app-btn btn-sign-outline" :disabled="savingName || !name">
+            {{ savingName ? 'Saving...' : 'Save name' }}
+          </button>
+        </form>
+        <!-- The parent puts the delete-account section here -->
+        <slot></slot>
+      </div>
+      <div class="col-md-7">
+        <form @submit.prevent="confirmPasswordChange">
+          <h3 class="h5 app-heading mb-3">Change password</h3>
+          <fieldset :disabled="changingPassword || showPasswordConfirm">
+            <label for="current-password" class="form-label fw-bold">Current password</label>
             <input
-              id="show-change-passwords"
-              v-model="showPasswords"
-              type="checkbox"
-              class="form-check-input app-check"
+              id="current-password"
+              v-model="currentPassword"
+              :type="showPasswords ? 'text' : 'password'"
+              autocomplete="current-password"
+              class="form-control app-input mb-3"
+              required
             />
-            <label for="show-change-passwords" class="form-check-label">Show passwords</label>
+            <div class="row g-3">
+              <div class="col-12">
+                <label for="new-password" class="form-label fw-bold">New password</label>
+                <input
+                  id="new-password"
+                  v-model="newPassword"
+                  :type="showPasswords ? 'text' : 'password'"
+                  autocomplete="new-password"
+                  class="form-control app-input"
+                  required
+                  minlength="8"
+                  aria-describedby="change-password-rules"
+                />
+              </div>
+              <div class="col-12">
+                <label for="confirm-new-password" class="form-label fw-bold"
+                  >Confirm new password</label
+                >
+                <input
+                  id="confirm-new-password"
+                  v-model="confirmation"
+                  :type="showPasswords ? 'text' : 'password'"
+                  autocomplete="new-password"
+                  class="form-control app-input"
+                  required
+                />
+              </div>
+            </div>
+            <ul
+              id="change-password-rules"
+              class="d-flex flex-wrap column-gap-3 small list-unstyled mt-2 mb-2"
+            >
+              <li
+                v-for="rule in rules"
+                :key="rule.label"
+                :class="rule.met ? 'text-success' : 'text-muted'"
+              >
+                {{ rule.met ? '✓' : '○' }} {{ rule.label }}
+              </li>
+            </ul>
+            <p
+              v-if="confirmation"
+              class="small mb-2"
+              :class="confirmation === newPassword ? 'text-success' : 'text-danger'"
+              role="status"
+            >
+              {{ confirmation === newPassword ? 'Passwords match.' : 'Passwords do not match.' }}
+            </p>
+            <p v-if="newPassword && currentPassword === newPassword" class="small text-danger mb-2">
+              Choose a different new password.
+            </p>
+            <div class="form-check mb-3">
+              <input
+                id="show-change-passwords"
+                v-model="showPasswords"
+                type="checkbox"
+                class="form-check-input app-check"
+              />
+              <label for="show-change-passwords" class="form-check-label">Show passwords</label>
+            </div>
+            <button class="app-btn btn-sign" :disabled="changingPassword || !canChangePassword">
+              {{ changingPassword ? 'Updating...' : 'Change password' }}
+            </button>
+          </fieldset>
+          <div v-if="showPasswordConfirm" class="alert alert-secondary mt-3 mb-0" role="alert">
+            <h4 class="h6 app-heading">Change password?</h4>
+            <p>
+              Changing your password signs you out. You will need to log in again with your new
+              password.
+            </p>
+            <button type="button" class="app-btn btn-sign me-2" @click="savePassword">
+              Confirm
+            </button>
+            <button type="button" class="app-btn btn-quiet" @click="showPasswordConfirm = false">
+              Cancel
+            </button>
           </div>
-          <p v-if="passwordMessage" class="alert alert-danger" role="alert">
-            {{ passwordMessage }}
-          </p>
-          <button class="app-btn btn-sign" :disabled="changingPassword || !canChangePassword">
-            {{ changingPassword ? 'Updating...' : 'Change password' }}
-          </button>
-        </fieldset>
-        <div v-if="showPasswordConfirm" class="alert alert-secondary mt-3 mb-0" role="alert">
-          <h4 class="h6 app-heading">Change password?</h4>
-          <p>
-            Changing your password signs you out. You will need to log in again with your new
-            password.
-          </p>
-          <button type="button" class="app-btn btn-sign me-2" @click="savePassword">Confirm</button>
-          <button type="button" class="app-btn btn-quiet" @click="showPasswordConfirm = false">
-            Cancel
-          </button>
-        </div>
-      </form>
+        </form>
+      </div>
     </div>
-  </div>
+  </template>
 </template>

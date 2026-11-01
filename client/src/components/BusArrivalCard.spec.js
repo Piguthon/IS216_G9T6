@@ -12,8 +12,10 @@ afterEach(() => {
   vi.clearAllMocks()
 })
 
-function render() {
-  wrapper = mount(BusArrivalCard, { props: { stopCode: '01059' } })
+const bus7 = { stopCode: '01059', stopName: 'BUGIS STN EXIT B', serviceNo: '7' }
+
+function render(buses = [bus7]) {
+  wrapper = mount(BusArrivalCard, { props: { buses } })
   return wrapper
 }
 
@@ -35,7 +37,7 @@ describe('BusArrivalCard', () => {
     expect(wrapper.get('button').element.disabled).toBe(false)
   })
 
-  it('shows arrival minutes, arriving buses and services without predictions', async () => {
+  it('shows the bus stop, bus number and waiting times', async () => {
     const now = Date.now()
     axios.get.mockResolvedValueOnce({
       data: {
@@ -47,23 +49,51 @@ describe('BusArrivalCard', () => {
               new Date(now - 60000).toISOString(),
             ],
           },
-          { serviceNo: '12', nextArrivals: [] },
         ],
       },
     })
     render()
     await flushPromises()
-    expect(wrapper.text()).toContain('Bus 7')
-    expect(wrapper.text()).toContain('5 min')
-    expect(wrapper.text()).toContain('Arriving')
+    const row = wrapper.get('[data-testid="bus-arrival-row"]').text()
+    expect(row).toContain('BUGIS STN EXIT B (01059)')
+    expect(row).toContain('7')
+    expect(row).toContain('5 min')
+    expect(row).toContain('Arriving')
+  })
+
+  it('only shows the buses in the route, not others at the stop', async () => {
+    axios.get.mockResolvedValueOnce({
+      data: {
+        services: [
+          { serviceNo: '7', nextArrivals: [] },
+          { serviceNo: '12', nextArrivals: [new Date(Date.now() + 60000).toISOString()] },
+        ],
+      },
+    })
+    render()
+    await flushPromises()
+    expect(wrapper.findAll('[data-testid="bus-arrival-row"]')).toHaveLength(1)
+    expect(wrapper.text()).not.toContain('12')
     expect(wrapper.text()).toContain('No upcoming arrivals')
   })
 
-  it('shows the empty state when no services are returned', async () => {
+  it('shows a row for each bus and loads each stop once', async () => {
+    axios.get.mockResolvedValue({ data: { services: [] } })
+    render([
+      bus7,
+      { ...bus7, serviceNo: '12' },
+      { stopCode: '24009', stopName: 'JOO KOON INT', serviceNo: '99' },
+    ])
+    await flushPromises()
+    expect(wrapper.findAll('[data-testid="bus-arrival-row"]')).toHaveLength(3)
+    expect(axios.get).toHaveBeenCalledTimes(2)
+  })
+
+  it('shows no upcoming arrivals when the bus is not running', async () => {
     axios.get.mockResolvedValueOnce({ data: { services: [] } })
     render()
     await flushPromises()
-    expect(wrapper.text()).toContain('No bus services are available right now.')
+    expect(wrapper.text()).toContain('No upcoming arrivals')
   })
 
   it('shows the API error and lets the user retry successfully', async () => {
@@ -76,7 +106,7 @@ describe('BusArrivalCard', () => {
     await wrapper.get('button').trigger('click')
     await flushPromises()
     expect(wrapper.find('[role="alert"]').exists()).toBe(false)
-    expect(wrapper.text()).toContain('Bus 7')
+    expect(wrapper.find('[data-testid="bus-arrival-row"]').exists()).toBe(true)
     expect(axios.get).toHaveBeenCalledTimes(2)
   })
 

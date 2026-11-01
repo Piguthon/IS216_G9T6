@@ -3,6 +3,7 @@
   OWNER:     reference flow, team-written (built first; the rest of the team copies this pattern).
   PURPOSE:   Express router for /api/meetups (mounted in server.js)
   ENDPOINTS: POST /api/meetups (create)
+             GET /api/meetups/mine (the logged-in user's current and past meetups)
              GET /api/meetups/:code (get one)
              POST /api/meetups/:code/members (join)
              PUT /api/meetups/:code/members/:memberId (set start point)
@@ -23,6 +24,7 @@ const { requireAuth } = require('../middleware/auth');
 //         Start with POST / and GET /:code, then POST /:code/members,
 //         then PUT /:code/members/:memberId later.
 router.post("/", requireAuth, meetupsController.createMeetup);
+router.get("/mine", requireAuth, meetupsController.getMyMeetups); // must stay above /:code
 router.get("/:code", meetupsController.getMeetup);
 router.post("/:code/members", (req, res, next) => {
     if (req.get('Authorization')) return requireAuth(req, res, next);

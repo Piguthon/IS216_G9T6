@@ -26,7 +26,7 @@ import axios from 'axios'
 import { BASE_URL } from '../config'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '../stores/auth'
-import { todayInSingapore } from '../utils/meetup-date'
+import { todayInSingapore, formatDate } from '../utils/meetup-date'
 
 const router = useRouter()
 const auth = useAuthStore()
@@ -40,7 +40,7 @@ const errorMessage = ref('')
 const meetup = ref(null)
 const isSaving = ref(false)
 const copyLabel = ref('Copy code')
-const previewOccasion = computed(() => occasion.value || 'Your occasion')
+const previewOccasion = computed(() => occasion.value || '[Occasion]')
 // TODO 3: async function createMeetup()
 //           - show a message if a required field is empty
 //           - otherwise axios.post to ${BASE_URL}/meetups with the four fields, inside try/catch
@@ -112,8 +112,8 @@ async function copyCode() {
 </script>
 
 <template>
-  <section data-testid="create-meetup-page">
-    <header class="app-page-header">
+  <section class="my-auto pt-3" data-testid="create-meetup-page">
+    <header v-if="!meetup" class="app-page-header">
       <h1 class="app-heading mb-0">Create Meetup</h1>
     </header>
     <!-- TODO 5: Page header (app-page-header) and a form inside "card app-card", with Bootstrap
@@ -185,7 +185,7 @@ async function copyCode() {
           <span class="app-label">Preview</span>
           <p class="preview-title app-doto mt-2 mb-3">{{ previewOccasion }}</p>
           <div class="d-flex justify-content-between gap-3 mb-2">
-            <span class="fw-bold">Date</span><span>{{ date || 'Not set' }}</span>
+            <span class="fw-bold">Date</span><span>{{ date ? formatDate(date) : 'Not set' }}</span>
           </div>
           <div class="d-flex justify-content-between gap-3">
             <span class="fw-bold">Time</span><span>{{ time || 'Not set' }}</span>
@@ -204,7 +204,7 @@ async function copyCode() {
               <span class="app-label">Share this code with your group</span>
               <span class="app-code mt-2" data-testid="create-code">{{ meetup.code }}</span>
               <span class="d-block mt-2"
-                >{{ meetup.occasion }}, {{ meetup.date }}, {{ meetup.time }}</span
+                >{{ meetup.occasion }}, {{ formatDate(meetup.date) }}, {{ meetup.time }}</span
               >
             </div>
             <div class="d-flex flex-wrap gap-3">
