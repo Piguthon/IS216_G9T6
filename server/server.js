@@ -26,6 +26,7 @@ const busRoutes = require('./routes/bus-routes');
 const usersRoutes = require('./routes/users-routes');
 const reviewsRoutes = require('./routes/reviews-routes');
 const votesRoutes = require('./routes/votes-routes');
+const liveRoutes = require('./routes/live-routes');
 
 const PORT = process.env.PORT || 8000;
 const isProduction = process.env.NODE_ENV === 'production';
@@ -44,6 +45,7 @@ app.use('/api/bus-arrival', busRoutes);
 app.use('/api/users', usersRoutes);
 app.use('/api/reviews', reviewsRoutes);
 app.use('/api/votes', votesRoutes);
+app.use('/api/live', liveRoutes);
 
 // Any other /api path: answer with JSON instead of an HTML error page
 app.use('/api', (req, res) => {

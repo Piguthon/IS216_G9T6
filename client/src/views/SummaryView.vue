@@ -126,9 +126,18 @@ const starts = computed(() => {
   <section data-testid="summary-page">
     <header class="app-page-header d-flex flex-wrap justify-content-between align-items-end gap-3">
       <h1 class="app-heading mb-0">Meetup summary</h1>
-      <RouterLink :to="`/meetup/${code}/results`" class="app-btn btn-quiet app-btn-sm"
-        >Back to results</RouterLink
-      >
+      <div class="d-flex flex-wrap gap-2">
+        <RouterLink
+          v-if="point"
+          :to="{ name: 'meetup-live', params: { code } }"
+          class="app-btn btn-sign app-btn-sm"
+          data-testid="summary-live-link"
+          >Live map</RouterLink
+        >
+        <RouterLink :to="`/meetup/${code}/results`" class="app-btn btn-quiet app-btn-sm"
+          >Back to results</RouterLink
+        >
+      </div>
     </header>
 
     <div v-if="isLoading" class="text-center my-5" data-testid="summary-loading">

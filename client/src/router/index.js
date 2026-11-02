@@ -8,6 +8,7 @@ import JoinMeetupView from '../views/JoinMeetupView.vue'
 import MeetupLobbyView from '../views/MeetupLobbyView.vue'
 import MeetupResultsView from '../views/MeetupResultsView.vue'
 import SummaryView from '../views/SummaryView.vue'
+import LiveMapView from '../views/LiveMapView.vue'
 import LoginView from '../views/LoginView.vue'
 import SignupView from '../views/SignupView.vue'
 import LogoutView from '../views/LogoutView.vue'
@@ -55,6 +56,11 @@ const router = createRouter({
       path: '/meetup/:code/summary',
       name: 'meetup-summary',
       component: SummaryView,
+    },
+    {
+      path: '/meetup/:code/live',
+      name: 'meetup-live',
+      component: LiveMapView,
     },
     {
       path: '/login',
