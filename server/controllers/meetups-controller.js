@@ -24,6 +24,7 @@
 //         Example: Week 5/server/blog-with-mongodb/controllers/blogs-controller.js
 const Meetup = require('../models/meetup-model');
 const Vote = require('../models/vote-model');
+const Location = require('../models/location-model');
 const {getUniqueCode} = require('../utils/generate-code');
 const { isAllowedMeetupDate, todayInSingapore } = require('../utils/meetup-date');
 
@@ -233,6 +234,7 @@ exports.deleteMeetup = async (req, res) => {
 
         await Meetup.deleteByCode(code);
         await Vote.deleteByCode(code);
+        await Location.deleteByCode(code);
         res.status(200).json({ message: "Meetup deleted successfully" });
 
     } catch (error) {
@@ -259,6 +261,7 @@ exports.leaveMeetup = async (req, res) => {
 
         await Meetup.removeMember(code, memberId);
         await Vote.deleteByMember(code, memberId);
+        await Location.deleteOne(code, memberId);
         res.status(200).json({ message: "Left meetup successfully" });
 
     } catch (error) {

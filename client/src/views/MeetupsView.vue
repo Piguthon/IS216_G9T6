@@ -14,7 +14,7 @@ import axios from 'axios'
 import { useRouter } from 'vue-router'
 import { BASE_URL } from '../config'
 import { useAuthStore } from '../stores/auth'
-import { formatDate } from '../utils/meetup-date'
+import { formatDate, todayInSingapore } from '../utils/meetup-date'
 
 const router = useRouter()
 const auth = useAuthStore()
@@ -62,6 +62,11 @@ function meetupLink(meetup) {
     return { name: 'meetup-summary', params: { code: meetup.code } }
   }
   return { name: 'meetup-lobby', params: { code: meetup.code } }
+}
+
+// The live map only opens around the meetup, so the link shows on the day, once a point is confirmed
+function hasLiveMap(meetup) {
+  return activeTab.value === 'current' && meetup.finalStation && meetup.date === todayInSingapore()
 }
 
 onMounted(loadMeetups)
@@ -147,13 +152,25 @@ onMounted(loadMeetups)
                     <dd class="col-8 mb-1">{{ meetup.finalVenue.name }}</dd>
                   </template>
                 </dl>
-                <RouterLink
-                  class="app-btn btn-sign-outline app-btn-sm align-self-start mt-auto"
-                  :to="meetupLink(meetup)"
-                  data-testid="meetup-open"
-                >
-                  {{ activeTab === 'past' && meetup.finalStation ? 'View summary' : 'View meetup' }}
-                </RouterLink>
+                <div class="d-flex flex-wrap gap-2 mt-auto">
+                  <RouterLink
+                    class="app-btn btn-sign-outline app-btn-sm"
+                    :to="meetupLink(meetup)"
+                    data-testid="meetup-open"
+                  >
+                    {{
+                      activeTab === 'past' && meetup.finalStation ? 'View summary' : 'View meetup'
+                    }}
+                  </RouterLink>
+                  <RouterLink
+                    v-if="hasLiveMap(meetup)"
+                    class="app-btn btn-sign app-btn-sm"
+                    :to="{ name: 'meetup-live', params: { code: meetup.code } }"
+                    data-testid="meetup-live"
+                  >
+                    Live map
+                  </RouterLink>
+                </div>
               </article>
             </li>
           </ul>

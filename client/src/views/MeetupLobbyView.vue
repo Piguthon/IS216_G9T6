@@ -320,6 +320,24 @@ async function handleLeave() {
             </router-link>
           </div>
 
+          <!-- Once the host confirms a meeting point: the summary and the live map -->
+          <div v-if="isMember && meetup.finalStation" class="d-grid gap-2 d-sm-flex mb-3">
+            <router-link
+              :to="`/meetup/${code}/summary`"
+              class="app-btn btn-quiet flex-fill"
+              data-testid="lobby-summary-link"
+            >
+              See the summary
+            </router-link>
+            <router-link
+              :to="`/meetup/${code}/live`"
+              class="app-btn btn-sign flex-fill"
+              data-testid="lobby-live-link"
+            >
+              Live map
+            </router-link>
+          </div>
+
           <!-- TODO 9: Join meetup link -->
           <div v-if="!isMember" class="text-center">
             <router-link

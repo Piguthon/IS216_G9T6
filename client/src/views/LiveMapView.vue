@@ -4,19 +4,23 @@
   PURPOSE:  Live map for the meetup day: members who agree share where they are, everyone sees
             each other's live trip time to the meeting point, and you can show your own route
   ROUTE:    /meetup/:code/live
-  TALKS TO: GET /api/live/:code?memberId=, PUT and DELETE /api/live/:code/:memberId
+  TALKS TO: GET, PUT and DELETE /api/live/:code (all need a login)
             the browser's Geolocation API (navigator.geolocation)
   POLLING:  everyone's positions refresh every 10 seconds while this page is open (decided: no
             WebSockets); your own position is sent at most every 15 seconds
-  PRIVACY:  nothing is shared until you press "Share my location", and then the browser asks too.
-            Sharing only works from 1 hour before the meetup to 30 minutes after it starts.
-            Stop, or leaving this page by a link, deletes your location. Closing the tab only
-            stops sending it: your dot turns grey, is hidden once the live map closes, and
-            MongoDB deletes it within 2 hours (TTL index in models/location-model.js).
+  PRIVACY:  you must be logged in, and a member who joined with your account: guests can't use
+            this page. Nothing is shared until you press "Share my location", and then the
+            browser asks too. Sharing only works from 1 hour before the meetup to 30 minutes after
+            it starts. Stop, or leaving this page by a link, deletes your location. Closing the
+            tab or reloading only stops sending it: your dot turns grey, and when you come back
+            the page offers to remove it. It's hidden once the live map closes, and MongoDB
+            deletes it within 2 hours (TTL index in models/location-model.js).
   REVISE:   Wk 5 onMounted + Axios, computed · Wk 6 props · Wk 11 router params
   DONE WHEN:
     - [ ] before the window it says when it opens; after, that it closed
     - [ ] nothing is shared before you agree, and Stop works
+    - [ ] guests and logged-out visitors are told to log in; nobody else's location can be changed
+    - [ ] coming back after closing the tab shows you're still on the map, with a way to remove it
     - [ ] dots and trip times update without reloading
     - [ ] "My route" draws your trip from where you are
     - [ ] on a phone, the buttons stay in reach while you scroll
@@ -26,6 +30,7 @@ import { ref, computed, onMounted, onUnmounted } from 'vue'
 import axios from 'axios'
 import { useRoute } from 'vue-router'
 import { BASE_URL } from '../config'
+import { useAuthStore } from '../stores/auth'
 import { formatTime } from '../utils/meetup-date'
 import { describeStep } from '../utils/route-steps'
 import { isStale } from '../utils/live-time'
@@ -41,12 +46,13 @@ const SEND_EVERY_MS = 15000 // send yours at most every 15 seconds
 const GEO_OPTIONS = { enableHighAccuracy: true, maximumAge: 10000, timeout: 20000 }
 
 const route = useRoute()
+const auth = useAuthStore()
 const code = route.params.code
 
 // TODO 2: State
 const live = ref(null) // the latest GET /api/live answer
-const myMemberId = ref(localStorage.getItem(`fairspot-member-${code}`) || '')
 const isLoading = ref(true)
+const isNotMember = ref(false) // logged in, but this account hasn't joined the meetup
 const errorMessage = ref('') // the page couldn't load at all
 const isOffline = ref(false) // the last refresh failed; the map stays up
 const message = ref('') // a sharing problem; the rest of the page still works
@@ -61,8 +67,13 @@ const now = ref(Date.now())
 let refreshTimer = null
 let watchId = null // from watchPosition, needed to stop it
 let lastSentAt = 0
-let sending = null // the PUT in progress, so Stop can wait for it before deleting
+let sending = null // the send in progress, so Stop can wait for it before deleting
 let isUnmounted = false // you left the page while the first load was still running
+
+// The server works out which member you are from this login
+function authConfig() {
+  return { headers: { Authorization: `Bearer ${auth.token}` } }
+}
 
 function errorText(error, fallback) {
   if (error.response && error.response.data && error.response.data.error) {
@@ -72,19 +83,24 @@ function errorText(error, fallback) {
 }
 
 // TODO 3: loadLive(): GET the live map.
+//           - an expired login (401) asks you to log in; not a member (403) asks you to join
 //           - a failed first load shows errorMessage; a failed refresh only sets isOffline
 //           - if the window closes while you're sharing, stop sharing
 async function loadLive() {
   try {
-    const response = await axios.get(`${BASE_URL}/live/${code}`, {
-      params: { memberId: myMemberId.value },
-    })
+    const response = await axios.get(`${BASE_URL}/live/${code}`, authConfig())
     live.value = response.data
     isOffline.value = false
     if (shareState.value === 'on') myRoute.value = response.data.myRoute
     if (!response.data.window.isOpen) stopSharing() // does nothing if you aren't sharing
   } catch (error) {
-    if (live.value) {
+    const status = error.response ? error.response.status : null
+    if (status === 401 || status === 403) {
+      clearInterval(refreshTimer)
+      stopSharing() // does nothing if you aren't sharing
+      if (status === 401) auth.clearSession()
+      else isNotMember.value = true
+    } else if (live.value) {
       isOffline.value = true
     } else {
       errorMessage.value = errorText(error, 'Could not load the live map. Please try again.')
@@ -93,7 +109,7 @@ async function loadLive() {
   isLoading.value = false
 }
 
-// TODO 4: onMounted: without a member id the page asks you to join (nothing to load).
+// TODO 4: onMounted: when you aren't logged in the page asks you to (nothing to load).
 //         Otherwise load, then refresh every LIVE_REFRESH_MS. Each refresh also re-sends your
 //         position when it's due, because a phone standing still doesn't report new positions.
 //         A phone pauses timers while its screen is off, so refresh as soon as you come back.
@@ -108,13 +124,13 @@ function onVisibilityChange() {
 }
 
 onMounted(async () => {
-  if (!myMemberId.value) {
+  if (!auth.isLoggedIn) {
     isLoading.value = false
     return
   }
   await loadLive()
   // Left the page during the first load: starting the timer now would leave it running forever
-  if (isUnmounted || errorMessage.value) return
+  if (isUnmounted || errorMessage.value || isNotMember.value || !auth.isLoggedIn) return
   refreshTimer = setInterval(refresh, LIVE_REFRESH_MS)
   document.addEventListener('visibilitychange', onVisibilityChange)
 })
@@ -151,15 +167,14 @@ function onPosition(position) {
 
 function sendIfDue() {
   if (sending || !myPosition.value) return
-  if (Date.now() - lastSentAt >= SEND_EVERY_MS) sendLocation()
+  if (Date.now() - lastSentAt >= SEND_EVERY_MS) sending = sendLocation()
 }
 
 // TODO 7: sendLocation(): PUT your position; the answer has your trip from here.
 async function sendLocation() {
   lastSentAt = Date.now()
-  sending = axios.put(`${BASE_URL}/live/${code}/${myMemberId.value}`, myPosition.value)
   try {
-    const response = await sending
+    const response = await axios.put(`${BASE_URL}/live/${code}`, myPosition.value, authConfig())
     if (shareState.value === 'on') myRoute.value = response.data.steps
     message.value = ''
   } catch (error) {
@@ -180,26 +195,41 @@ function onPositionError(error) {
   message.value = "Can't find your location right now. Keep this page open; it will keep trying."
 }
 
-// TODO 9: stopSharing(): stop the phone, clear your dot and route, wait for a send in progress,
-//         then DELETE your location so nobody sees it any more. While it's 'stopping' the
-//         button is disabled, so a quick Share can't be wiped out by this DELETE.
-async function stopSharing() {
-  if (shareState.value === 'off' || shareState.value === 'stopping') return
-  if (watchId !== null) navigator.geolocation.clearWatch(watchId)
-  watchId = null
-  shareState.value = 'stopping'
-  myPosition.value = null
-  myRoute.value = []
-  showRoute.value = false
-  if (sending) await sending.catch(() => {}) // sendLocation already shows its error
+// TODO 9: removeLocation(): DELETE your location so nobody sees it any more, then refresh so your
+//         row goes straight away (unless you've left the page or logged out).
+async function removeLocation(config = authConfig()) {
   try {
-    await axios.delete(`${BASE_URL}/live/${code}/${myMemberId.value}`)
+    await axios.delete(`${BASE_URL}/live/${code}`, config)
   } catch (error) {
     message.value = errorText(
       error,
       "Couldn't reach the server, so your last location may show until the live map closes.",
     )
   }
+  if (!isUnmounted && auth.isLoggedIn) await loadLive()
+}
+
+// You pressed "Remove my location" after coming back: don't ask you to share straight after that
+function removeLeftBehind() {
+  consentDismissed.value = true
+  removeLocation()
+}
+
+// TODO 10: stopSharing(): stop the phone, clear your dot and route, wait for a send in progress,
+//          then remove your location. While it's 'stopping' the button is disabled, so a quick
+//          Share can't be wiped out by this DELETE. It stays 'stopping' until the refresh is back,
+//          so the page never thinks you were left on the map.
+async function stopSharing() {
+  if (shareState.value === 'off' || shareState.value === 'stopping') return
+  const config = authConfig() // read it now: logging out clears the token while this waits
+  if (watchId !== null) navigator.geolocation.clearWatch(watchId)
+  watchId = null
+  shareState.value = 'stopping'
+  myPosition.value = null
+  myRoute.value = []
+  showRoute.value = false
+  if (sending) await sending // sendLocation handles its own errors
+  await removeLocation(config)
   shareState.value = 'off'
 }
 
@@ -208,8 +238,10 @@ function toggleSharing() {
   else stopSharing()
 }
 
-// TODO 10: Computed values for the template
+// TODO 11: Computed values for the template
 const liveWindow = computed(() => (live.value ? live.value.window : null))
+
+const myMemberId = computed(() => (live.value ? live.value.myMemberId : ''))
 
 const people = computed(() => {
   if (!live.value) return []
@@ -237,11 +269,19 @@ const shareButtonText = computed(() => {
   return 'Share my location'
 })
 
+// The server still has your location but this page isn't sending it: you reloaded, or closed the
+// tab earlier. The others can still see you, so say so instead of asking you to start sharing.
+const isLeftBehind = computed(() => shareState.value === 'off' && myTrip.value !== undefined)
+
 const showConsent = computed(
-  () => liveWindow.value.isOpen && shareState.value === 'off' && !consentDismissed.value,
+  () =>
+    liveWindow.value.isOpen &&
+    shareState.value === 'off' &&
+    !consentDismissed.value &&
+    !isLeftBehind.value,
 )
 
-// TODO 11: onUnmounted: stop refreshing. Leaving the page stops sharing too (privacy).
+// TODO 12: onUnmounted: stop refreshing. Leaving the page stops sharing too (privacy).
 onUnmounted(() => {
   isUnmounted = true
   clearInterval(refreshTimer)
@@ -260,20 +300,29 @@ onUnmounted(() => {
           {{ formatTime(liveWindow.closesTime) }}
         </p>
       </div>
-      <RouterLink :to="`/meetup/${code}/summary`" class="app-btn btn-quiet app-btn-sm"
+      <RouterLink
+        :to="`/meetup/${code}/summary`"
+        class="app-btn btn-quiet app-btn-sm"
+        data-testid="live-back"
         >Back to summary</RouterLink
       >
     </header>
 
-    <div v-if="!myMemberId" class="alert alert-secondary" data-testid="live-not-member">
-      Only members of this meetup can see the live map.
-      <RouterLink to="/join">Join with the meetup code</RouterLink> first.
+    <div v-if="!auth.isLoggedIn" class="alert alert-secondary" data-testid="live-login">
+      The live map shows where people are, so it needs an account.
+      <RouterLink to="/login">Log in</RouterLink> to see it. If you joined as a guest, log in and
+      join again with the meetup code.
     </div>
 
     <div v-else-if="isLoading" class="text-center my-5" data-testid="live-loading">
       <div class="spinner-border text-sign" role="status">
         <span class="visually-hidden">Loading the live map…</span>
       </div>
+    </div>
+
+    <div v-else-if="isNotMember" class="alert alert-secondary" data-testid="live-not-member">
+      Only members who joined with their account can see the live map.
+      <RouterLink to="/join">Join with the meetup code</RouterLink> while logged in.
     </div>
 
     <div v-else-if="errorMessage" class="alert alert-danger" data-testid="live-error">
@@ -306,7 +355,10 @@ onUnmounted(() => {
               Only until {{ formatTime(liveWindow.closesTime) }}. After that nobody can see it, and
               it's deleted.
             </li>
-            <li>Stop any time. Leaving this page stops it too.</li>
+            <li>
+              Stop any time. If you close this page without pressing Stop, your last location stays
+              until you come back and remove it, or the map closes.
+            </li>
           </ul>
           <div class="d-flex flex-wrap gap-2">
             <button
@@ -317,10 +369,33 @@ onUnmounted(() => {
             >
               Share my location
             </button>
-            <button type="button" class="app-btn btn-quiet" @click="consentDismissed = true">
+            <button
+              type="button"
+              class="app-btn btn-quiet"
+              data-testid="live-consent-dismiss"
+              @click="consentDismissed = true"
+            >
               Not now
             </button>
           </div>
+        </div>
+      </div>
+
+      <div v-if="isLeftBehind" class="card app-card mb-3" data-testid="live-left-behind">
+        <div class="card-body">
+          <h2 class="h5 app-heading mb-2">You're still on this map</h2>
+          <p class="mb-3">
+            The others can see your last location from when you shared it. Remove it, or press Share
+            to carry on from where you are now.
+          </p>
+          <button
+            type="button"
+            class="app-btn btn-sign"
+            data-testid="live-remove"
+            @click="removeLeftBehind"
+          >
+            Remove my location
+          </button>
         </div>
       </div>
 
@@ -343,7 +418,11 @@ onUnmounted(() => {
           />
           <p class="small mt-2 mb-0 d-flex flex-wrap justify-content-between gap-2">
             <span>Hover or tap ★ for everyone's trip time.</span>
-            <a :href="directionsUrl" target="_blank" rel="noopener noreferrer"
+            <a
+              :href="directionsUrl"
+              target="_blank"
+              rel="noopener noreferrer"
+              data-testid="live-directions"
               >Directions in Google Maps</a
             >
           </p>

@@ -11,7 +11,8 @@
             showRoute (Boolean): draw routeSteps
   EMITS:    none
   TALKS TO: Leaflet (leafletjs.com, BSD-2-Clause) with OneMap base map tiles, as in MapView.vue
-  REVISE:   Wk 5 onMounted / onUpdated / onUnmounted · Wk 6 props
+  REVISE:   Wk 5 onMounted / onUnmounted · Wk 6 props
+            onUpdated isn't in the syllabus: see TODO 9
   DONE WHEN:
     - [ ] hovering the meeting point (tapping, on a phone) lists everyone's trip time
     - [ ] dots move without the map jumping back
@@ -273,8 +274,10 @@ onUnmounted(() => {
 }
 
 /* Leaflet adds tooltips and the star outside Vue's template, so :deep reaches them.
-   Tooltips wrap instead of running off the side of a phone screen. */
+   Tooltips wrap instead of running off the side of a phone screen. A tooltip takes its width
+   from its text, so without max-content, overflow-wrap would shrink it to one letter wide. */
 .live-map :deep(.leaflet-tooltip) {
+  width: max-content;
   max-width: 260px;
   white-space: normal;
   overflow-wrap: anywhere;

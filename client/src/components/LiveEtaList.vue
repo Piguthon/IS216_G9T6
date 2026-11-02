@@ -91,6 +91,11 @@ const rows = computed(() =>
   overflow-wrap: anywhere;
 }
 
+/* main.css makes every span in .trip-who a full-width block; this one is a small label */
+.trip-who .badge {
+  display: inline-block;
+}
+
 /* A phone that stopped updating: dimmed, so nobody trusts an old position */
 .is-stale {
   opacity: 0.55;

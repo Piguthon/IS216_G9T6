@@ -3,22 +3,24 @@
   OWNER:     S (team-written)
   PURPOSE:   live map endpoints: members share where they are, and see everyone's live trip
              time to the meeting point the host confirmed
-  FUNCTIONS: getLive       (GET /:code?memberId= → { window, destination, people, myRoute })
-             shareLocation (PUT /:code/:memberId, body { lat, lng, accuracyM }
+  FUNCTIONS: getLive       (GET /:code → { window, destination, people, myRoute, myMemberId })
+             shareLocation (PUT /:code, body { lat, lng, accuracyM }
                             → { etaMinutes, arriveAt, steps, updatedAt })
-             stopSharing   (DELETE /:code/:memberId → { message })
+             stopSharing   (DELETE /:code → { message })
   DATA:      window { isOpen, hasEnded, opensTime "HH:MM", closesTime "HH:MM" }
              destination { name, lat, lng }   (meetup.finalStation)
              people [ { memberId, name, lat, lng, accuracyM, etaMinutes, arriveAt, updatedAt } ]
              myRoute [ steps ]   (the requester's own trip, same steps as the ranking; [] if not
                                   sharing)
-  PRIVACY:   only members of the meetup can see or share, only inside the live window
+  PRIVACY:   every endpoint needs a login, and req.user decides which member you are, because
+             member ids are public (GET /api/meetups/:code). So guests can't use the live map.
+             Only members can see or share, only inside the live window
              (utils/live-window.js), and every location is deleted once the window ends
   TALKS TO:  models/meetup-model.js, models/location-model.js, services/onemap.js (getPtRoute)
   REVISE:    Wk 5 blogs-controller.js pattern (exports.fn = async (req, res) => {} with try/catch)
   DONE WHEN:
     - [ ] each endpoint works in Postman or curl
-    - [ ] a non-member gets 403, and nothing is shared outside the live window
+    - [ ] no login gets 401, a non-member gets 403, and nothing is shared outside the live window
     - [ ] OneMap failing never stops a location from saving
 */
 
@@ -36,18 +38,22 @@ const { liveWindowStatus } = require('../utils/live-window');
 const SINGAPORE = { minLat: 1.15, maxLat: 1.48, minLng: 103.6, maxLng: 104.1 };
 const TRIP_REFRESH_MS = 2 * 60 * 1000; // work the trip out again after 2 minutes...
 const TRIP_REFRESH_KM = 0.15; // ...or after moving 150 m
+const NOT_A_MEMBER = 'Only members who joined with their account can use the live map';
 
 // TODO 2: Helpers
 //           - findMember(meetup, memberId): the member with this id, or null
-//             (compare as strings: an id from the URL may not be a valid ObjectId)
+//           - findMyself(meetup, user): the member who joined with this account, or null
 //           - isInSingapore(lat, lng): both are numbers inside SINGAPORE
 //           - needsNewTrip(previous, lat, lng): no trip yet, or it's 2 minutes old,
 //             or the member has moved 150 m since
 //           - tripFromHere(lat, lng, station): getPtRoute from here, leaving now, as the fields
 //             to save; {} when OneMap fails, so the old trip is kept
 function findMember(meetup, memberId) {
-  if (!memberId) return null;
   return meetup.members.find((member) => String(member._id) === memberId) || null;
+}
+
+function findMyself(meetup, user) {
+  return meetup.members.find((member) => member.userId === String(user._id)) || null;
 }
 
 function isInSingapore(lat, lng) {
@@ -84,7 +90,7 @@ async function tripFromHere(lat, lng, station) {
 }
 
 // TODO 3: getLive
-//           - unknown code → 404; memberId (from the query) not a member → 403
+//           - unknown code → 404; the logged-in user isn't a member → 403
 //           - no confirmed meeting point → 400
 //           - outside the live window → people: []; once it has ended, delete the locations too
 //           - otherwise every shared location with the member's name (skip members who left),
@@ -95,10 +101,11 @@ exports.getLive = async (req, res) => {
     if (!meetup) {
       return res.status(404).json({ error: 'Unknown code' });
     }
-    const memberId = req.query.memberId;
-    if (!findMember(meetup, memberId)) {
-      return res.status(403).json({ error: 'Only members of this meetup can see the live map' });
+    const me = findMyself(meetup, req.user);
+    if (!me) {
+      return res.status(403).json({ error: NOT_A_MEMBER });
     }
+    const myMemberId = String(me._id);
     const station = meetup.finalStation;
     if (!station) {
       return res.status(400).json({ error: "The host hasn't confirmed a meeting point yet" });
@@ -108,7 +115,7 @@ exports.getLive = async (req, res) => {
     const destination = { name: station.name, lat: station.lat, lng: station.lng };
     if (!liveWindow.isOpen) {
       if (liveWindow.hasEnded) await Location.deleteByCode(meetup.code);
-      return res.json({ window: liveWindow, destination, people: [], myRoute: [] });
+      return res.json({ window: liveWindow, destination, people: [], myRoute: [], myMemberId });
     }
 
     const locations = await Location.findByCode(meetup.code);
@@ -127,9 +134,9 @@ exports.getLive = async (req, res) => {
         arriveAt: location.arriveAt,
         updatedAt: location.updatedAt,
       });
-      if (location.memberId === memberId) myRoute = location.steps;
+      if (location.memberId === myMemberId) myRoute = location.steps;
     }
-    res.json({ window: liveWindow, destination, people, myRoute });
+    res.json({ window: liveWindow, destination, people, myRoute, myMemberId });
   } catch (error) {
     console.error('Error getting the live map:', error);
     res.status(500).json({ error: 'Server error' });
@@ -138,26 +145,27 @@ exports.getLive = async (req, res) => {
 
 // TODO 4: shareLocation, part 1: check the request
 //           - lat and lng must be numbers inside Singapore → otherwise 400
-//           - unknown code or member → 404
+//           - unknown code → 404; the logged-in user isn't a member → 403
 //           - no confirmed meeting point → 400
 //           - outside the live window → 403
 // TODO 5: shareLocation, part 2: save the location, with a fresh trip when needsNewTrip says so,
 //         then reply with the trip
 exports.shareLocation = async (req, res) => {
   try {
-    const { code, memberId } = req.params;
     const { lat, lng, accuracyM } = req.body;
     if (!isInSingapore(lat, lng)) {
       return res.status(400).json({ error: 'Location must be a lat and lng inside Singapore' });
     }
 
-    const meetup = await Meetup.findByCode(code);
+    const meetup = await Meetup.findByCode(req.params.code);
     if (!meetup) {
       return res.status(404).json({ error: 'Unknown code' });
     }
-    if (!findMember(meetup, memberId)) {
-      return res.status(404).json({ error: 'Member not found' });
+    const me = findMyself(meetup, req.user);
+    if (!me) {
+      return res.status(403).json({ error: NOT_A_MEMBER });
     }
+    const memberId = String(me._id);
     const station = meetup.finalStation;
     if (!station) {
       return res.status(400).json({ error: "The host hasn't confirmed a meeting point yet" });
@@ -189,11 +197,19 @@ exports.shareLocation = async (req, res) => {
   }
 };
 
-// TODO 6: stopSharing: delete the member's location → 200 { message }
+// TODO 6: stopSharing: delete the logged-in member's location → 200 { message }
 //         (no 404 when there's nothing to delete: pressing Stop twice is fine)
 exports.stopSharing = async (req, res) => {
   try {
-    await Location.deleteOne(req.params.code, req.params.memberId);
+    const meetup = await Meetup.findByCode(req.params.code);
+    if (!meetup) {
+      return res.status(404).json({ error: 'Unknown code' });
+    }
+    const me = findMyself(meetup, req.user);
+    if (!me) {
+      return res.status(403).json({ error: NOT_A_MEMBER });
+    }
+    await Location.deleteOne(meetup.code, String(me._id));
     res.json({ message: 'Stopped sharing' });
   } catch (error) {
     console.error('Error stopping live sharing:', error);
