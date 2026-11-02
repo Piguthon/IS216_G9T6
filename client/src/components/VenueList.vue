@@ -21,6 +21,7 @@
 import { ref, computed, onMounted } from 'vue'
 import axios from 'axios'
 import { BASE_URL } from '../config'
+import { useFavouritesStore } from '../stores/favourites'
 import VenueCard from './VenueCard.vue'
 
 const props = defineProps({
@@ -35,6 +36,7 @@ const selectedType = ref('all') // 'all', or one category such as 'catering.cafe
 const maxDistance = ref(1000) // metres
 const showAll = ref(false)
 const firstShown = 6 // the page stays short: the rest wait behind "Show more places"
+const favourites = useFavouritesStore()
 
 // 5.1: load every type of place around the point once; the filters below work on this list
 async function loadVenues() {
@@ -56,6 +58,7 @@ async function loadVenues() {
 // 5.2: load as soon as the component is on the page
 onMounted(() => {
   loadVenues()
+  favourites.load() // once here, so each card can show whether it's saved
 })
 
 // 5.3: the venues that match both filters (recalculates whenever a filter or the list changes)

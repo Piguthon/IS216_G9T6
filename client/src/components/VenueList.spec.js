@@ -1,6 +1,7 @@
 import { describe, it, expect, vi } from 'vitest'
 import { flushPromises, mount } from '@vue/test-utils'
 import axios from 'axios'
+import { createPinia } from 'pinia'
 import VenueList from './VenueList.vue'
 
 vi.mock('axios')
@@ -17,7 +18,10 @@ async function mountList(count) {
   axios.get.mockResolvedValue({ data: venues(count) })
   const wrapper = mount(VenueList, {
     props: { lat: 1.35, lng: 103.85 },
-    global: { stubs: { VenueCard: { template: '<div class="venue-stub"></div>' } } },
+    global: {
+      plugins: [createPinia()],
+      stubs: { VenueCard: { template: '<div class="venue-stub"></div>' } },
+    },
   })
   await flushPromises()
   return wrapper
