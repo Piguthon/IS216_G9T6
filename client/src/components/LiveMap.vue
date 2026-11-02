@@ -2,7 +2,7 @@
   FILE:     src/components/LiveMap.vue
   OWNER:    S (team-written)
   PURPOSE:  The live map: the meeting point, everyone who is sharing, you, and your route.
-            Dots move in place when new positions arrive, so your zoom and pan are kept.
+            Dots glide to new positions when they arrive, so your zoom and pan are kept.
   PROPS:    destination ({ name, lat, lng })
             people (Array of { memberId, name, lat, lng, etaMinutes, arriveAt, isStale })
             me ({ lat, lng } or null): your position, straight from your phone
@@ -13,6 +13,7 @@
   TALKS TO: Leaflet (leafletjs.com, BSD-2-Clause) with OneMap base map tiles, as in MapView.vue
   REVISE:   Wk 5 onMounted / onUnmounted · Wk 6 props
             onUpdated isn't in the syllabus: see TODO 9
+            requestAnimationFrame isn't either: see glideTo in TODO 4
   DONE WHEN:
     - [ ] hovering the meeting point (tapping, on a phone) lists everyone's trip time
     - [ ] dots move without the map jumping back
@@ -51,6 +52,7 @@ const STALE_COLOUR = '#94a3b8' // light grey: no update for 2 minutes
 const WALK_COLOUR = '#64748b' // grey dashes: walking
 const BUS_COLOUR = '#0e8560' // green: bus
 const TRAIN_COLOUR = '#1d4f91' // blue: train
+const GLIDE_MS = 5000 // as long as a refresh, so a moving dot never pauses between updates
 
 const mapElement = ref(null) // the <div> in the template; Leaflet draws inside it
 // Leaflet objects are plain variables, because Vue doesn't need to track them
@@ -59,6 +61,7 @@ let destinationMarker = null
 let meMarker = null
 let routeLayer = null // a group holding the route lines, so they can be cleared together
 const markers = {} // memberId → that person's dot
+const glides = {} // memberId → { lat, lng, frame }: where that dot is heading
 let hasFitted = false
 let hadMe = false // were you on the map at the last redraw?
 let hadRoute = false // was your route showing at the last redraw?
@@ -100,9 +103,29 @@ onMounted(() => {
 })
 
 // TODO 4: drawPeople(): a dot for everyone sharing, except you.
-//           - an existing dot moves with setLatLng; a new person gets a new dot
+//           - an existing dot glides to its new position; a new person gets a new dot
 //           - someone who stopped sharing loses their dot
 //           - a stale dot is grey with a dashed edge
+//         glideTo slides a dot a little on each screen redraw, using the browser's
+//         requestAnimationFrame. The page redraws more often than positions change, so it does
+//         nothing when the dot is already heading there.
+function glideTo(memberId, lat, lng) {
+  const glide = glides[memberId]
+  if (glide && glide.lat === lat && glide.lng === lng) return
+  if (glide) cancelAnimationFrame(glide.frame)
+
+  const marker = markers[memberId]
+  const from = marker.getLatLng()
+  const startedAt = performance.now()
+  glides[memberId] = { lat, lng, frame: requestAnimationFrame(step) }
+
+  function step(time) {
+    const part = Math.min(1, (time - startedAt) / GLIDE_MS)
+    marker.setLatLng([from.lat + (lat - from.lat) * part, from.lng + (lng - from.lng) * part])
+    if (part < 1) glides[memberId].frame = requestAnimationFrame(step)
+  }
+}
+
 function drawPeople() {
   const stillSharing = {}
   for (const person of props.people) {
@@ -123,13 +146,15 @@ function drawPeople() {
         .addTo(map)
     }
     markers[person.memberId]
-      .setLatLng([person.lat, person.lng])
       .setStyle(style)
       .setTooltipContent(tooltipElement(person.name, [tripText(person)]))
+    glideTo(person.memberId, person.lat, person.lng)
   }
 
   for (const memberId of Object.keys(markers)) {
     if (stillSharing[memberId]) continue
+    cancelAnimationFrame(glides[memberId].frame)
+    delete glides[memberId]
     markers[memberId].remove()
     delete markers[memberId]
   }
@@ -227,6 +252,7 @@ function redraw() {
 onUpdated(redraw)
 
 onUnmounted(() => {
+  for (const glide of Object.values(glides)) cancelAnimationFrame(glide.frame)
   if (map) map.remove()
 })
 </script>

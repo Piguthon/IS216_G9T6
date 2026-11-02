@@ -6,7 +6,7 @@
   ROUTE:    /meetup/:code/live
   TALKS TO: GET, PUT and DELETE /api/live/:code (all need a login)
             the browser's Geolocation API (navigator.geolocation)
-  POLLING:  everyone's positions refresh every 10 seconds while this page is open (decided: no
+  POLLING:  everyone's positions refresh every 5 seconds while this page is open (decided: no
             WebSockets); your own position is sent at most every 15 seconds
   PRIVACY:  you must be logged in, and a member who joined with your account: guests can't use
             this page. Nothing is shared until you press "Share my location", and then the
@@ -40,7 +40,7 @@ import LiveEtaList from '../components/LiveEtaList.vue'
 // STEPS
 
 // TODO 1: Constants
-const LIVE_REFRESH_MS = 10000 // fetch everyone's positions every 10 seconds
+const LIVE_REFRESH_MS = 5000 // fetch everyone's positions every 5 seconds
 const SEND_EVERY_MS = 15000 // send yours at most every 15 seconds
 // enableHighAccuracy uses GPS on a phone; maximumAge lets the phone reuse a 10-second-old fix
 const GEO_OPTIONS = { enableHighAccuracy: true, maximumAge: 10000, timeout: 20000 }

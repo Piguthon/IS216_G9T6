@@ -5,6 +5,7 @@
   ROUTE:    /meetup/:code
   TALKS TO: GET /api/meetups/:code, PUT /api/meetups/:code/members/:memberId
             uses AddressSearch, MemberList
+  POLLING:  the meetup refreshes every 5 seconds while this page is open (decided: no WebSockets)
   DATA:     Meetup { code, hostName, occasion, date "YYYY-MM-DD", time "HH:MM",
                      members: [ { _id, name, start: { label, postal, lat, lng } | null } ] }
             sends { start: { label, postal, lat, lng } }
@@ -23,7 +24,7 @@
 
 // TODO 1: Imports: ref, computed, onMounted, axios, BASE_URL, useRoute.
 //         Example: route params in Week 4/wk4_example/src/components/Example10.vue
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import axios from 'axios'
 import { useRoute, useRouter } from 'vue-router'
 import { BASE_URL } from '../config'
@@ -35,6 +36,8 @@ import EditMeetupForm from '../components/EditMeetupForm.vue'
 import SavedStartPointPicker from '../components/SavedStartPointPicker.vue'
 import { useAuthStore } from '../stores/auth'
 const auth = useAuthStore()
+const MEETUP_REFRESH_MS = 5000
+let refreshTimer = null
 // TODO 2: Read the meetup code from the route params. Add refs for the meetup (null),
 //         "is loading" (true) and an error message.
 const route = useRoute()
@@ -80,11 +83,31 @@ async function loadMeetup() {
   isLoading.value = false
 }
 
+// The timer's quiet version of loadMeetup: no spinner, so the page never loses what you're typing.
+// A failed refresh keeps the last details; the next one tries again.
+async function refreshMeetup() {
+  try {
+    const response = await axios.get(`${BASE_URL}/meetups/${code}`)
+    meetup.value = response.data
+    errorMessage.value = ''
+  } catch (error) {
+    if (error.response && error.response.status === 404) {
+      clearInterval(refreshTimer) // the host deleted it
+      errorMessage.value = `No meetup with code ${code} was found.`
+    }
+  }
+}
+
 // TODO 4: In onMounted: call loadMeetup() and read "my" member id from localStorage
 //         (fairspot-member-<code>) into a ref.
 onMounted(() => {
   myMemberId.value = localStorage.getItem(`fairspot-member-${code}`)
   loadMeetup()
+  refreshTimer = setInterval(refreshMeetup, MEETUP_REFRESH_MS)
+})
+
+onUnmounted(() => {
+  clearInterval(refreshTimer)
 })
 // TODO 5: A computed that says whether "I" am a member of this meetup.
 const isMember = computed(() => {

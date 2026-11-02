@@ -4,20 +4,24 @@
   PURPOSE:  The logged-in user's meetups, in Current and Past tabs
   ROUTE:    /meetups (log in required)
   TALKS TO: GET /api/meetups/mine
-  DATA:     { current: [ Item ], past: [ Item ] }
+  POLLING:  the list refreshes every 5 seconds while this page is open (decided: no WebSockets)
+  DATA:    { current: [ Item ], past: [ Item ] }
             Item { code, occasion, date, time, hostName, memberCount, myMemberId, isHost,
                    finalStation, finalVenue }
 -->
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import axios from 'axios'
 import { useRouter } from 'vue-router'
 import { BASE_URL } from '../config'
 import { useAuthStore } from '../stores/auth'
 import { formatDate, todayInSingapore } from '../utils/meetup-date'
 
+const MEETUPS_REFRESH_MS = 5000
+
 const router = useRouter()
 const auth = useAuthStore()
+let refreshTimer = null
 
 const current = ref([])
 const past = ref([])
@@ -32,19 +36,23 @@ const tabs = computed(() => [
 
 const shownMeetups = computed(() => (activeTab.value === 'current' ? current.value : past.value))
 
+async function fetchMeetups() {
+  const response = await axios.get(`${BASE_URL}/meetups/mine`, {
+    headers: { Authorization: `Bearer ${auth.token}` },
+  })
+  current.value = response.data.current
+  past.value = response.data.past
+  // The lobby finds "me" in localStorage, so this also works on a new device
+  for (const meetup of [...current.value, ...past.value]) {
+    localStorage.setItem(`fairspot-member-${meetup.code}`, meetup.myMemberId)
+  }
+}
+
 async function loadMeetups() {
   isLoading.value = true
   errorMessage.value = ''
   try {
-    const response = await axios.get(`${BASE_URL}/meetups/mine`, {
-      headers: { Authorization: `Bearer ${auth.token}` },
-    })
-    current.value = response.data.current
-    past.value = response.data.past
-    // The lobby finds "me" in localStorage, so this also works on a new device
-    for (const meetup of [...current.value, ...past.value]) {
-      localStorage.setItem(`fairspot-member-${meetup.code}`, meetup.myMemberId)
-    }
+    await fetchMeetups()
   } catch (error) {
     if (error.response && error.response.status === 401) {
       auth.clearSession()
@@ -54,6 +62,19 @@ async function loadMeetups() {
     errorMessage.value = 'Unable to load your meetups. Please try again.'
   }
   isLoading.value = false
+}
+
+// The timer's quiet version of loadMeetups: no spinner, and a failed refresh keeps the last list
+async function refreshMeetups() {
+  try {
+    await fetchMeetups()
+    errorMessage.value = ''
+  } catch (error) {
+    if (error.response && error.response.status === 401) {
+      auth.clearSession()
+      router.push('/login')
+    }
+  }
 }
 
 // Past meetups with a confirmed meeting point open their summary; everything else, the lobby
@@ -69,7 +90,14 @@ function hasLiveMap(meetup) {
   return activeTab.value === 'current' && meetup.finalStation && meetup.date === todayInSingapore()
 }
 
-onMounted(loadMeetups)
+onMounted(() => {
+  loadMeetups()
+  refreshTimer = setInterval(refreshMeetups, MEETUPS_REFRESH_MS)
+})
+
+onUnmounted(() => {
+  clearInterval(refreshTimer)
+})
 </script>
 
 <template>

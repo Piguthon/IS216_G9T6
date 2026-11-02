@@ -4,9 +4,11 @@
   times come from GET /api/ranking/:code/leave-times, for arriving by the meetup time. The
   bus-arrival card shows the buses in the viewer's route.
   ROUTE: /meetup/:code/summary
+  POLLING: the meetup refreshes every 5 seconds while this page is open (decided: no WebSockets).
+  Leave times use OneMap, so they only reload when the meeting point or a start point changes.
 -->
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import axios from 'axios'
 import { useRoute } from 'vue-router'
 import { BASE_URL } from '../config'
@@ -16,6 +18,8 @@ import { describeStep } from '../utils/route-steps'
 import MapView from '../components/MapView.vue'
 import BusArrivalCard from '../components/BusArrivalCard.vue'
 
+const SUMMARY_REFRESH_MS = 5000
+
 const route = useRoute()
 const code = route.params.code
 
@@ -24,6 +28,12 @@ const trips = ref([])
 const myMemberId = ref(localStorage.getItem(`fairspot-member-${code}`))
 const isLoading = ref(true)
 const errorMessage = ref('')
+let refreshTimer = null
+
+async function loadTrips() {
+  const leaveTimesResponse = await axios.get(`${BASE_URL}/ranking/${code}/leave-times`)
+  trips.value = leaveTimesResponse.data.trips
+}
 
 async function loadSummary() {
   isLoading.value = true
@@ -32,8 +42,7 @@ async function loadSummary() {
     const meetupResponse = await axios.get(`${BASE_URL}/meetups/${code}`)
     meetup.value = meetupResponse.data
     if (meetup.value.finalStation) {
-      const leaveTimesResponse = await axios.get(`${BASE_URL}/ranking/${code}/leave-times`)
-      trips.value = leaveTimesResponse.data.trips
+      await loadTrips()
     }
   } catch (error) {
     if (error.response && error.response.data && error.response.data.error) {
@@ -45,8 +54,32 @@ async function loadSummary() {
   isLoading.value = false
 }
 
+// The trips depend on these, so they only need reloading when this text changes
+function tripInputs(data) {
+  return JSON.stringify([data.finalStation, data.members.map((member) => member.start)])
+}
+
+// The timer's quiet version of loadSummary: no spinner, and a failed refresh keeps the last
+// summary; the next one tries again.
+async function refreshSummary() {
+  if (isLoading.value || !meetup.value) return
+  try {
+    const response = await axios.get(`${BASE_URL}/meetups/${code}`)
+    const hasNewTrips = tripInputs(response.data) !== tripInputs(meetup.value)
+    meetup.value = response.data
+    if (hasNewTrips && response.data.finalStation) await loadTrips()
+  } catch {
+    // keep showing the last summary
+  }
+}
+
 onMounted(() => {
   loadSummary()
+  refreshTimer = setInterval(refreshSummary, SUMMARY_REFRESH_MS)
+})
+
+onUnmounted(() => {
+  clearInterval(refreshTimer)
 })
 
 // The confirmed meeting point, with everyone's trip to it
