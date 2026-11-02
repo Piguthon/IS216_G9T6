@@ -2,7 +2,7 @@
   FILE:     src/components/MeetingPointCard.vue
   OWNER:    JS (team-written)
   PURPOSE:  One ranked meeting point (MRT station or bus interchange) with every member's
-            public-transport time to it, so the group can see how fair it is
+            trip time to it by their own travel mode, so the group can see how fair it is
   PROPS:    point (Ranking item from GET /api/ranking/:code), rank, selected,
             confirmed (the host chose this one), scaleMinutes (bar length of a full bar, so
             bars compare across cards)
@@ -75,7 +75,8 @@ function barWidth(minutes) {
         data-testid="meeting-point-time"
       >
         <span class="trip-who"
-          ><strong>{{ t.name }}</strong></span
+          ><strong>{{ t.name }}</strong
+          ><span v-if="t.travelMode === 'car'" data-testid="meeting-point-car">by car</span></span
         >
         <span class="trip-track" aria-hidden="true">
           <span class="trip-fill d-block" :style="{ width: barWidth(t.minutes) }"></span>

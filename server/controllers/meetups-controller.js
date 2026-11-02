@@ -180,6 +180,33 @@ exports.setStart = async (req, res) => {
     }
 };
 
+// setTravelMode (PUT /:code/members/:memberId/mode)
+exports.setTravelMode = async (req, res) => {
+    try {
+        const code = req.params.code;
+        const memberId = req.params.memberId;
+        const { travelMode } = req.body;
+
+        // Validation
+        if (travelMode !== 'transit' && travelMode !== 'car') {
+            return res.status(400).json({ error: "Travel mode must be transit or car." });
+        }
+
+        try {
+            const updatedMember = await Meetup.setMemberMode(code, memberId, travelMode);
+            res.status(200).json(updatedMember);
+        } catch (error) {
+            if (error.message === 'Meetup not found' || error.message === 'Member not found') {
+                return res.status(404).json({ error: error.message });
+            }
+            throw error; // Let the outer catch handle unexpected errors
+        }
+    } catch (error) {
+        console.error("Error setting travel mode:", error);
+        res.status(500).json({ error: "Server error" });
+    }
+};
+
 // updateMeetup (PUT /:code)
 exports.updateMeetup = async (req, res) => {
     try {
@@ -266,6 +293,41 @@ exports.leaveMeetup = async (req, res) => {
 
     } catch (error) {
         console.error("Error leaving meetup:", error);
+        res.status(500).json({ error: "Server error" });
+    }
+};
+
+// removeMember (DELETE /:code/members/:memberId/remove): the host removes someone, so one
+// inactive member can't hold up the whole group
+exports.removeMember = async (req, res) => {
+    try {
+        const code = req.params.code;
+        const memberId = req.params.memberId;
+
+        const meetup = await Meetup.findByCode(code);
+        if (!meetup) {
+            return res.status(404).json({ error: "Unknown code" });
+        }
+
+        // Check if the requester is the host (first member)
+        const host = meetup.members[0];
+        if (!host || host.userId !== String(req.user._id)) {
+            return res.status(403).json({ error: "Only the host can remove members" });
+        }
+        if (host._id.toString() === memberId) {
+            return res.status(400).json({ error: "The host must delete the meetup instead" });
+        }
+        if (!meetup.members.id(memberId)) {
+            return res.status(404).json({ error: "Member not found" });
+        }
+
+        await Meetup.removeMember(code, memberId);
+        await Vote.deleteByMember(code, memberId);
+        await Location.deleteOne(code, memberId);
+        res.status(200).json({ message: "Member removed" });
+
+    } catch (error) {
+        console.error("Error removing member:", error);
         res.status(500).json({ error: "Server error" });
     }
 };

@@ -118,15 +118,21 @@ const selected = computed(() => {
   return null
 })
 
+const topPoints = computed(() => ranking.value.slice(0, SHORTLIST_SIZE))
+
 // Once the host confirms a meeting point, it is the only one shown
 const shownPoints = computed(() => {
-  if (!finalStation.value) return ranking.value
+  if (!finalStation.value) return topPoints.value
   const confirmed = ranking.value.filter((p) => p.stationId === finalStation.value.optionId)
-  return confirmed.length > 0 ? confirmed : ranking.value
+  return confirmed.length > 0 ? confirmed : topPoints.value
 })
 
 // Same bar scale on every card, so a longer bar always means a longer trip
-const scaleMinutes = computed(() => Math.max(0, ...ranking.value.map((p) => p.longestMinutes)))
+const scaleMinutes = computed(() => Math.max(0, ...topPoints.value.map((p) => p.longestMinutes)))
+
+const hasDrivers = computed(() =>
+  meetup.value.members.some((member) => member.travelMode === 'car'),
+)
 
 const isMember = computed(() => {
   if (!meetup.value || !myMemberId.value) return false
@@ -149,7 +155,7 @@ function countFor(kind, optionId) {
 
 // The fairest few, plus any other station someone already voted for
 const stationOptions = computed(() => {
-  const options = ranking.value.slice(0, SHORTLIST_SIZE).map((point) => ({
+  const options = topPoints.value.map((point) => ({
     optionId: point.stationId,
     name: point.name,
     lat: point.lat,
@@ -256,6 +262,11 @@ const venuePoint = computed(() => finalStation.value || selected.value)
         <p class="small text-muted mb-0" data-testid="results-time-note">
           Travel times are calculated at {{ formatTime(departure.time) }} on
           {{ formatDate(departure.date) }}.
+        </p>
+      </div>
+      <div v-if="hasDrivers" class="col-12 mt-2">
+        <p class="small text-muted mb-0" data-testid="results-car-note">
+          Car times include 10 minutes to park, but not traffic.
         </p>
       </div>
       <!-- Once the venue is confirmed the map and places go, so this column moves to the centre -->

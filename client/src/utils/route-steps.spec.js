@@ -12,6 +12,21 @@ describe('describeStep', () => {
     })
   })
 
+  it('describes the two parts of a car trip', () => {
+    const drive = { mode: 'CAR', from: 'Origin', to: 'Destination', stops: 0, minutes: 24 }
+    const park = { mode: 'PARK', from: 'Origin', to: 'Destination', stops: 0, minutes: 10 }
+    expect(describeStep(drive, 'Bishan')).toEqual({
+      label: 'Drive',
+      details: 'To Bishan',
+      minutes: 24,
+    })
+    expect(describeStep(park, 'Bishan')).toEqual({
+      label: 'Park',
+      details: 'And walk to Bishan',
+      minutes: 10,
+    })
+  })
+
   it('shows the bus number, stops and stop codes', () => {
     const step = {
       mode: 'BUS',

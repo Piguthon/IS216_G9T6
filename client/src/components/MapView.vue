@@ -45,6 +45,7 @@ const SELECTED_COLOUR = '#f59e0b' // amber: the selected station
 const WALK_COLOUR = '#64748b' // grey dashes: walking
 const BUS_COLOUR = '#0e8560' // green: bus
 const TRAIN_COLOUR = '#1d4f91' // blue: train
+const CAR_COLOUR = '#7c3aed' // purple: car
 
 const mapElement = ref(null) // the <div> in the template; Leaflet draws inside it
 let map = null // the Leaflet map: a plain variable, because Vue doesn't need to track it
@@ -60,8 +61,9 @@ onMounted(() => {
     if (!step.points) continue
     const line = decodePolyline(step.points)
     const isWalk = step.mode === 'WALK'
+    const lineColour = step.mode === 'CAR' ? CAR_COLOUR : TRAIN_COLOUR
     L.polyline(line, {
-      color: isWalk ? WALK_COLOUR : step.mode === 'BUS' ? BUS_COLOUR : TRAIN_COLOUR,
+      color: isWalk ? WALK_COLOUR : step.mode === 'BUS' ? BUS_COLOUR : lineColour,
       weight: isWalk ? 4 : 6,
       opacity: 0.9,
       dashArray: isWalk ? '4 8' : null,

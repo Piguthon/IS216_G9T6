@@ -9,14 +9,16 @@
              stopSharing   (DELETE /:code → { message })
   DATA:      window { isOpen, hasEnded, opensTime "HH:MM", closesTime "HH:MM" }
              destination { name, lat, lng }   (meetup.finalStation)
-             people [ { memberId, name, lat, lng, accuracyM, etaMinutes, arriveAt, updatedAt } ]
+             people [ { memberId, name, travelMode, lat, lng, accuracyM, etaMinutes, arriveAt,
+                        updatedAt } ]
              myRoute [ steps ]   (the requester's own trip, same steps as the ranking; [] if not
                                   sharing)
   PRIVACY:   every endpoint needs a login, and req.user decides which member you are, because
              member ids are public (GET /api/meetups/:code). So guests can't use the live map.
              Only members can see or share, only inside the live window
              (utils/live-window.js), and every location is deleted once the window ends
-  TALKS TO:  models/meetup-model.js, models/location-model.js, services/onemap.js (getPtRoute)
+  TALKS TO:  models/meetup-model.js, models/location-model.js,
+             services/onemap.js (getPtRoute, getDriveRoute)
   REVISE:    Wk 5 blogs-controller.js pattern (exports.fn = async (req, res) => {} with try/catch)
   DONE WHEN:
     - [ ] each endpoint works in Postman or curl
@@ -29,7 +31,7 @@
 // TODO 1: Require the two models, OneMap's route function, and the time and distance helpers.
 const Meetup = require('../models/meetup-model');
 const Location = require('../models/location-model');
-const { getPtRoute } = require('../services/onemap');
+const { getPtRoute, getDriveRoute } = require('../services/onemap');
 const { distanceKm } = require('../utils/fairness');
 const { msToSingapore } = require('../utils/meetup-date');
 const { liveWindowStatus } = require('../utils/live-window');
@@ -46,8 +48,9 @@ const NOT_A_MEMBER = 'Only members who joined with their account can use the liv
 //           - isInSingapore(lat, lng): both are numbers inside SINGAPORE
 //           - needsNewTrip(previous, lat, lng): no trip yet, or it's 2 minutes old,
 //             or the member has moved 150 m since
-//           - tripFromHere(lat, lng, station): getPtRoute from here, leaving now, as the fields
-//             to save; {} when OneMap fails, so the old trip is kept
+//           - tripFromHere(lat, lng, station, travelMode): the route from here by the member's
+//             travel mode, leaving now, as the fields to save; {} when OneMap fails, so the old
+//             trip is kept
 function findMember(meetup, memberId) {
   return meetup.members.find((member) => String(member._id) === memberId) || null;
 }
@@ -71,10 +74,11 @@ function needsNewTrip(previous, lat, lng) {
   return distanceKm(from, { lat, lng }) >= TRIP_REFRESH_KM;
 }
 
-async function tripFromHere(lat, lng, station) {
+async function tripFromHere(lat, lng, station, travelMode) {
   try {
     const now = msToSingapore(Date.now());
-    const route = await getPtRoute({ lat, lng }, station, now.date, now.time);
+    const getRoute = travelMode === 'car' ? getDriveRoute : getPtRoute;
+    const route = await getRoute({ lat, lng }, station, now.date, now.time);
     return {
       etaMinutes: route ? route.minutes : null, // null: OneMap found no route from here
       arriveAt: route ? route.arriveAt : '',
@@ -127,6 +131,7 @@ exports.getLive = async (req, res) => {
       people.push({
         memberId: location.memberId,
         name: member.name,
+        travelMode: member.travelMode,
         lat: location.lat,
         lng: location.lng,
         accuracyM: location.accuracyM,
@@ -178,7 +183,9 @@ exports.shareLocation = async (req, res) => {
     }
 
     const previous = await Location.findOne(meetup.code, memberId);
-    const trip = needsNewTrip(previous, lat, lng) ? await tripFromHere(lat, lng, station) : {};
+    const trip = needsNewTrip(previous, lat, lng)
+      ? await tripFromHere(lat, lng, station, me.travelMode)
+      : {};
     const saved = await Location.saveLocation(meetup.code, memberId, {
       lat,
       lng,

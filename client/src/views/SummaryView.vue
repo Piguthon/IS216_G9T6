@@ -5,7 +5,8 @@
   bus-arrival card shows the buses in the viewer's route.
   ROUTE: /meetup/:code/summary
   POLLING: the meetup refreshes every 5 seconds while this page is open (decided: no WebSockets).
-  Leave times use OneMap, so they only reload when the meeting point or a start point changes.
+  Leave times use OneMap, so they only reload when the meeting point, a start point or a travel
+  mode changes.
 -->
 <script setup>
 import { ref, computed, onMounted, onUnmounted } from 'vue'
@@ -56,7 +57,8 @@ async function loadSummary() {
 
 // The trips depend on these, so they only need reloading when this text changes
 function tripInputs(data) {
-  return JSON.stringify([data.finalStation, data.members.map((member) => member.start)])
+  const members = data.members.map((member) => [member.start, member.travelMode])
+  return JSON.stringify([data.finalStation, members])
 }
 
 // The timer's quiet version of loadSummary: no spinner, and a failed refresh keeps the last
@@ -107,6 +109,7 @@ const journeys = computed(() => {
       id: member._id,
       name: member.name,
       from: member.start ? member.start.label : 'No start point',
+      isDriving: member.travelMode === 'car',
       minutes,
       leaveAt,
     })
@@ -212,6 +215,7 @@ const starts = computed(() => {
               <div class="trip-who">
                 <strong>{{ j.name }}</strong>
                 <span>from {{ j.from }}</span>
+                <span v-if="j.isDriving" data-testid="summary-journey-car">by car</span>
                 <span v-if="j.leaveAt" data-testid="summary-journey-leave"
                   >leave by {{ formatTime(j.leaveAt) }}</span
                 >

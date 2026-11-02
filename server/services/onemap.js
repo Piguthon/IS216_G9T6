@@ -1,14 +1,18 @@
 // FILE:      services/onemap.js
 // OWNER:     I (team-written)
-// PURPOSE:   OneMap client for FairSpot: token management + public-transport routing.
+// PURPOSE:   OneMap client for FairSpot: token management + public-transport and driving routes.
 // EXPORTS:   getToken()   → a valid OneMap access token
 //            getPtRoute(start, end, date, time) → { minutes, waitMinutes, firstBusStopCode, steps,
 //                leaveAt, arriveAt } or null. steps: [ { mode, route, routeName, from, fromCode,
 //                to, toCode, stops, minutes, points } ], where points is the leg's encoded map
 //                line · start/end { lat, lng } · date "YYYY-MM-DD" · time "HH:MM"
 //            getArriveByRoute(start, end, date, time) → the same, but time is when to arrive
+//            getDriveRoute(start, end, date, time, isArrival) → the same shape for a car trip,
+//                with PARKING_MINUTES added. OneMap's driving time ignores traffic and the time of
+//                day, so date and time only work out leaveAt and arriveAt
 //            tokenStatus() → { ok, expiresAt } (used by routes/health-routes.js)
-// USED BY:   ranking (JS) via getPtRoute and getArriveByRoute · health route via tokenStatus
+// USED BY:   ranking (JS) via getPtRoute, getArriveByRoute and getDriveRoute · live map (S) via
+//            getPtRoute and getDriveRoute · health route via tokenStatus
 // REVISE:    Wk 5 Axios GET/POST, headers config, async/await, try/catch
 //
 // What this handles:
@@ -29,6 +33,9 @@ const { singaporeToMs, msToSingapore } = require('../utils/meetup-date');
 const BASE_URL = 'https://www.onemap.gov.sg';
 const TWELVE_HOURS = 12 * 60 * 60 * 1000;   // in milliseconds
 const FIVE_MINUTES = 5 * 60 * 1000;         // in milliseconds
+const ONE_MINUTE = 60 * 1000;               // in milliseconds
+// Transit times include walking and waiting, so car trips allow for parking and the walk from it
+const PARKING_MINUTES = 10;
 
 let cachedToken = null;   // { accessToken, expiresAt } kept in memory between calls
 
@@ -191,6 +198,67 @@ async function getArriveByRoute(start, end, date, time) {
   return toRoute(firstToArrive);
 }
 
+async function callDriving(start, end, token) {
+  const response = await axios.get(`${BASE_URL}/api/public/routingsvc/route`, {
+    params: {
+      start: `${start.lat},${start.lng}`,
+      end: `${end.lat},${end.lng}`,
+      routeType: 'drive'
+    },
+    headers: { Authorization: token }
+  });
+  return response.data;
+}
+
+// One part of a car trip, in the same shape as toStep
+function carStep(mode, minutes, points) {
+  return {
+    mode,                                       // CAR, PARK
+    route: '',
+    routeName: '',
+    from: 'Origin',
+    fromCode: null,
+    to: 'Destination',
+    toCode: null,
+    stops: 0,
+    minutes,
+    points
+  };
+}
+
+// isArrival: time is when to arrive, not when to leave.
+// Returns null if OneMap finds no road route (it answers 404).
+async function getDriveRoute(start, end, date, time, isArrival = false) {
+  let data;
+  try {
+    data = await callDriving(start, end, await getToken());
+  } catch (error) {
+    const status = error.response ? error.response.status : 0;
+    if (status === 404) return null;
+    if (status !== 401) throw error;
+    // token rejected: get a fresh one and try once more
+    data = await callDriving(start, end, await requestNewToken());
+  }
+  if (!data.route_summary) return null;
+
+  const driveMinutes = Math.max(1, Math.round(data.route_summary.total_time / 60));  // in seconds
+  const minutes = driveMinutes + PARKING_MINUTES;
+  const chosenTime = singaporeToMs(date, time);
+  const leavesAt = isArrival ? chosenTime - minutes * ONE_MINUTE : chosenTime;
+
+  return {
+    minutes,
+    waitMinutes: 0,
+    firstBusStopCode: null,
+    steps: [
+      carStep('CAR', driveMinutes, data.route_geometry),
+      carStep('PARK', PARKING_MINUTES, '')
+    ],
+    leaveAt: msToSingapore(leavesAt).time,
+    arriveAt: msToSingapore(leavesAt + minutes * ONE_MINUTE).time
+  };
+}
+
 async function tokenStatus() {
   try {
     await getToken();
@@ -200,4 +268,4 @@ async function tokenStatus() {
   }
 }
 
-module.exports = { getToken, getPtRoute, getArriveByRoute, tokenStatus };
+module.exports = { getToken, getPtRoute, getArriveByRoute, getDriveRoute, tokenStatus };

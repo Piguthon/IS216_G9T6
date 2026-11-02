@@ -2,7 +2,8 @@
   FILE:     src/components/LiveEtaList.vue
   OWNER:    S (team-written)
   PURPOSE:  Everyone's live trip time to the meeting point, soonest first (live map page)
-  PROPS:    people (Array of { memberId, name, etaMinutes, arriveAt, updatedAt, isStale })
+  PROPS:    people (Array of { memberId, name, travelMode, etaMinutes, arriveAt, updatedAt,
+                               isStale })
             myMemberId (String): marks your own row
             now (Number, milliseconds): keeps "updated 20s ago" current
   EMITS:    none
@@ -67,6 +68,7 @@ const rows = computed(() =>
         <strong
           >{{ row.name }}<span v-if="row.isMe" class="badge text-bg-light ms-1">You</span></strong
         >
+        <span v-if="row.travelMode === 'car'" data-testid="live-eta-car">by car</span>
         <span v-if="row.etaMinutes !== null">arrives {{ formatTime(row.arriveAt) }}</span>
         <span v-else>No route found</span>
         <span>{{ row.isStale ? 'last seen' : 'updated' }} {{ timeAgo(row.updatedAt, now) }}</span>

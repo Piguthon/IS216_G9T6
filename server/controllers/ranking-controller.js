@@ -4,24 +4,26 @@
   PURPOSE:   GET /api/ranking/:code → the fairest meeting points for a meetup
              GET /api/ranking/:code/leave-times → when each member should leave for the
              meeting point the host confirmed
-  STEPS:     1. members with a start point (at least 2)
+  STEPS:     1. every member needs a start point (at least 2 members); once the host has confirmed
+                a meeting point, anyone who joins later is just left out
              2. midpoint of their starts → the closest MRT stations and bus interchanges
-             3. each member's public-transport time to each candidate, leaving 45 minutes before
-                the meetup, or at 05:30 overnight (OneMap, one call at a time)
+             3. each member's time to each candidate by their own travel mode: public transport,
+                leaving 45 minutes before the meetup, or at 05:30 overnight, or car
+                (OneMap, one call at a time)
              4. rank with the fairness rule (utils/fairness.js)
   DATA:      { ranking: [ { stationId, name, type, lat, lng,
-                            times: [ { memberId, name, minutes, waitMinutes,
+                            times: [ { memberId, name, travelMode, minutes, waitMinutes,
                                        firstBusStopCode, steps } ],
                             longestMinutes, totalMinutes } ],   (fairest first)
                departure: { date, time } }   (the departure these travel times are for)
-             leave-times: { trips: [ { memberId, name, minutes, waitMinutes, firstBusStopCode,
-                                       steps, leaveAt, arriveAt } ] }
+             leave-times: { trips: [ { memberId, name, travelMode, minutes, waitMinutes,
+                                       firstBusStopCode, steps, leaveAt, arriveAt } ] }
   CACHE:     results are kept in memory for 30 minutes per meetup, and recalculated as soon as
-             a start point, the date or the time changes (OneMap calls are slow)
+             a start point, a travel mode, the date or the time changes (OneMap calls are slow)
 */
 const Meetup = require('../models/meetup-model');
 const Station = require('../models/station-model');
-const { getPtRoute, getArriveByRoute } = require('../services/onemap');
+const { getPtRoute, getArriveByRoute, getDriveRoute } = require('../services/onemap');
 const { findMidpoint, pickCandidates, rankCandidates } = require('../utils/fairness');
 const { tripTimeForMeetup } = require('../utils/meetup-date');
 
@@ -33,12 +35,16 @@ const leaveTimesCache = new Map(); // code → { key, result, savedAt }
 
 // OneMap sometimes answers 502/503 for a moment: wait and try once more.
 // isArrival: time is when to arrive, not when to leave.
-// Returns the route, or null when there is no route or OneMap keeps failing.
-async function routeWithRetry(start, station, date, time, isArrival = false) {
+// Returns the member's route by their own travel mode, or null when there is no route or OneMap
+// keeps failing.
+async function routeWithRetry(member, station, date, time, isArrival = false) {
   for (let attempt = 1; attempt <= 2; attempt++) {
     try {
-      if (isArrival) return await getArriveByRoute(start, station, date, time);
-      return await getPtRoute(start, station, date, time);
+      if (member.travelMode === 'car') {
+        return await getDriveRoute(member.start, station, date, time, isArrival);
+      }
+      if (isArrival) return await getArriveByRoute(member.start, station, date, time);
+      return await getPtRoute(member.start, station, date, time);
     } catch (error) {
       const status = error.response ? error.response.status : 0;
       console.warn(`OneMap route to ${station.name} failed (${status || error.message}), attempt ${attempt}`);
@@ -51,7 +57,9 @@ async function routeWithRetry(start, station, date, time, isArrival = false) {
 
 // Changes whenever anything that affects the travel times changes
 function cacheKey(meetup, ready) {
-  const starts = ready.map((m) => `${m._id}:${m.start.lat},${m.start.lng}`).join('|');
+  const starts = ready
+    .map((m) => `${m._id}:${m.start.lat},${m.start.lng}:${m.travelMode}`)
+    .join('|');
   return `${meetup.date} ${meetup.time} ${starts}`;
 }
 
@@ -65,6 +73,9 @@ exports.getRanking = async (req, res) => {
     const ready = meetup.members.filter((member) => member.start);
     if (ready.length < 2) {
       return res.status(400).json({ error: 'At least 2 members need a start point' });
+    }
+    if (!meetup.finalStation && ready.length < meetup.members.length) {
+      return res.status(400).json({ error: 'Every member needs a start point first' });
     }
 
     const key = cacheKey(meetup, ready);
@@ -82,11 +93,12 @@ exports.getRanking = async (req, res) => {
     for (const station of picked) {
       const times = [];
       for (const member of ready) {
-        const route = await routeWithRetry(member.start, station, departure.date, departure.time);
+        const route = await routeWithRetry(member, station, departure.date, departure.time);
         if (!route) break; // no route for this member: drop the candidate
         times.push({
           memberId: String(member._id),
           name: member.name,
+          travelMode: member.travelMode,
           minutes: route.minutes,
           waitMinutes: route.waitMinutes,
           firstBusStopCode: route.firstBusStopCode,
@@ -106,7 +118,7 @@ exports.getRanking = async (req, res) => {
     }
 
     if (candidates.length === 0) {
-      return res.status(502).json({ error: 'No public-transport routes found. Please try again later.' });
+      return res.status(502).json({ error: 'No routes found. Please try again later.' });
     }
 
     const result = { ranking: rankCandidates(candidates), departure };
@@ -141,15 +153,16 @@ exports.getLeaveTimes = async (req, res) => {
     const trips = [];
     for (const member of ready) {
       let route;
-      if (meetup.time < FIRST_TRIPS) {
-        route = await routeWithRetry(member.start, station, departure.date, departure.time);
+      if (meetup.time < FIRST_TRIPS && member.travelMode !== 'car') {
+        route = await routeWithRetry(member, station, departure.date, departure.time);
       } else {
-        route = await routeWithRetry(member.start, station, meetup.date, meetup.time, true);
+        route = await routeWithRetry(member, station, meetup.date, meetup.time, true);
       }
       if (!route) continue; // no route for this member: they just have no leave time
       trips.push({
         memberId: String(member._id),
         name: member.name,
+        travelMode: member.travelMode,
         minutes: route.minutes,
         waitMinutes: route.waitMinutes,
         firstBusStopCode: route.firstBusStopCode,

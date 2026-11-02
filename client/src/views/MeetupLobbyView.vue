@@ -2,19 +2,25 @@
   FILE:     src/views/MeetupLobbyView.vue
   OWNER:    reference flow, team-written (built first; the rest of the team copies this pattern).
   PURPOSE:  Meetup home: details, share code, member list; each member sets their start point
+            and how they're getting there, and the host can remove members
   ROUTE:    /meetup/:code
-  TALKS TO: GET /api/meetups/:code, PUT /api/meetups/:code/members/:memberId
-            uses AddressSearch, MemberList
+  TALKS TO: GET /api/meetups/:code, PUT /api/meetups/:code/members/:memberId,
+            PUT /api/meetups/:code/members/:memberId/mode,
+            DELETE /api/meetups/:code/members/:memberId/remove (host, logged in)
+            uses AddressSearch, MemberList, TravelModePicker
   POLLING:  the meetup refreshes every 5 seconds while this page is open (decided: no WebSockets)
   DATA:     Meetup { code, hostName, occasion, date "YYYY-MM-DD", time "HH:MM",
-                     members: [ { _id, name, start: { label, postal, lat, lng } | null } ] }
-            sends { start: { label, postal, lat, lng } }
+                     members: [ { _id, name, start: { label, postal, lat, lng } | null,
+                                  travelMode: 'transit' | 'car' } ] }
+            sends { start: { label, postal, lat, lng } } or { travelMode }
   REVISE:   Wk 4 route params · Wk 5 onMounted + Axios GET/PUT · Wk 6 props, emits, localStorage
   DONE WHEN:
     - [ ] details + code shown
     - [ ] members with start status
     - [ ] "you" can set or change your start
-    - [ ] button to results once at least 2 members have a start
+    - [ ] "you" can choose public transport (the default) or car
+    - [ ] button to results once every member (at least 2) has a start
+    - [ ] the host can remove a member who is holding up the group
     - [ ] responsive
     - [ ] testids
 -->
@@ -34,6 +40,7 @@ import AddressSearch from '../components/AddressSearch.vue'
 import MemberList from '../components/MemberList.vue'
 import EditMeetupForm from '../components/EditMeetupForm.vue'
 import SavedStartPointPicker from '../components/SavedStartPointPicker.vue'
+import TravelModePicker from '../components/TravelModePicker.vue'
 import { useAuthStore } from '../stores/auth'
 const auth = useAuthStore()
 const MEETUP_REFRESH_MS = 5000
@@ -52,6 +59,7 @@ const myMemberId = ref(null)
 
 const isEditing = ref(false)
 const showDeleteConfirm = ref(false)
+const memberToRemove = ref(null) // the member the host pressed Remove on
 
 // Use the server's { error: "..." } message if there is one, otherwise a fallback
 function getErrorText(error, fallback) {
@@ -129,15 +137,18 @@ const isMember = computed(() => {
 const hostId = computed(() => meetup.value?.members?.[0]?._id)
 const isHost = computed(() => isMember.value && myMemberId.value === hostId.value)
 
+// The ranking needs every member's start point, at least 2 of them, until a point is confirmed
 const canSeeResults = computed(() => {
   if (!meetup.value || !meetup.value.members) return false
-  const readyCount = meetup.value.members.filter((m) => m.start !== null).length
-  return readyCount >= 2
+  if (meetup.value.finalStation) return true
+  const { members } = meetup.value
+  return members.length >= 2 && members.every((m) => m.start !== null)
 })
 
-// The ranking needs two start points and leaves out anyone still without one
+// After a point is confirmed, anyone who joins later is left out of the results
 const startWarning = computed(() => {
   if (!meetup.value || !meetup.value.members) return ''
+  if (meetup.value.members.length < 2) return 'Results open once someone else joins.'
   if (!canSeeResults.value) return 'Results open once everyone has a start point.'
   const isWaiting = meetup.value.members.some((m) => m.start === null)
   return isWaiting ? 'Results leave out anyone without a start point.' : ''
@@ -160,6 +171,24 @@ const myStart = computed(() => {
   const me = meetup.value.members.find((member) => member._id === myMemberId.value)
   return me ? me.start : null
 })
+
+// This member's travel mode: public transport unless they choose otherwise
+const myMode = computed(() => {
+  if (!meetup.value) return 'transit'
+  const me = meetup.value.members.find((member) => member._id === myMemberId.value)
+  return me ? me.travelMode : 'transit'
+})
+
+async function handleSetMode(travelMode) {
+  actionError.value = ''
+  if (travelMode === myMode.value) return
+  try {
+    await axios.put(`${BASE_URL}/meetups/${code}/members/${myMemberId.value}/mode`, { travelMode })
+    await refreshMeetup()
+  } catch (err) {
+    actionError.value = getErrorText(err, 'Failed to save how you are getting there.')
+  }
+}
 
 async function handleSetStart(startPoint) {
   actionError.value = ''
@@ -205,6 +234,20 @@ async function handleDelete() {
     router.push('/')
   } catch (err) {
     actionError.value = getErrorText(err, 'Failed to delete meetup.')
+  }
+}
+
+//Host tools (Remove a member)
+async function handleRemove() {
+  actionError.value = ''
+  try {
+    await axios.delete(`${BASE_URL}/meetups/${code}/members/${memberToRemove.value._id}/remove`, {
+      headers: { Authorization: `Bearer ${auth.token}` },
+    })
+    memberToRemove.value = null
+    await refreshMeetup()
+  } catch (err) {
+    actionError.value = getErrorText(err, 'Failed to remove member.')
   }
 }
 
@@ -311,6 +354,11 @@ async function handleLeave() {
                 <AddressSearch @select="handleSetStart" />
               </SavedStartPointPicker>
               <AddressSearch v-else @select="handleSetStart" />
+              <h3 class="mt-4 mb-3">How you're getting there</h3>
+              <TravelModePicker :current-mode="myMode" @select="handleSetMode" />
+              <p v-if="myMode === 'car'" class="small text-muted mt-2 mb-0">
+                Your trip times include 10 minutes to park, but not traffic.
+              </p>
             </div>
           </div>
         </div>
@@ -325,7 +373,35 @@ async function handleLeave() {
                 :members="meetup.members"
                 :currentMemberId="myMemberId"
                 :hostId="hostId"
+                :can-remove="isHost"
+                @remove="memberToRemove = $event"
               />
+              <div
+                v-if="memberToRemove"
+                class="alert alert-secondary p-3 mt-3 mb-0"
+                data-testid="lobby-remove-prompt"
+              >
+                <p class="mb-2">
+                  Remove {{ memberToRemove.name }}? Their start point and votes are deleted too.
+                </p>
+                <div class="d-flex gap-2">
+                  <button
+                    type="button"
+                    class="btn app-btn btn-danger app-btn-sm"
+                    data-testid="lobby-remove-confirm"
+                    @click="handleRemove"
+                  >
+                    Yes, remove
+                  </button>
+                  <button
+                    type="button"
+                    class="app-btn btn-quiet app-btn-sm"
+                    @click="memberToRemove = null"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
 

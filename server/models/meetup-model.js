@@ -4,8 +4,10 @@
   PURPOSE:   Mongoose schema and CRUD functions for meetups
   FIELDS:    as the Meetup shape, plus createdAt; members are embedded sub-documents
              Meetup { code, hostName, occasion, date "YYYY-MM-DD", time "HH:MM",
-                      members: [ { _id, name, start: { label, postal, lat, lng } | null } ] }
+                      members: [ { _id, name, start: { label, postal, lat, lng } | null,
+                                   travelMode: 'transit' | 'car' } ] }
   FUNCTIONS: create, find by code, find by user, add member, update a member's start
+             or travel mode
   REVISE:    Wk 5 blog-model.js (schema + exported CRUD functions)
 */
 
@@ -38,6 +40,12 @@ const memberSchema = new mongoose.Schema(
             },
             default : null
 
+        },
+        // How this member is getting there: used for their fair timings
+        travelMode : {
+            type : String,
+            enum : ['transit', 'car'],
+            default : 'transit'
         }
     }
 )
@@ -159,6 +167,24 @@ exports.setMemberStart = async function(code, memberId, start) {
     member.start = start;
     await meetup.save();
     
+    return member;
+};
+
+// setMemberMode(code, memberId, travelMode)
+exports.setMemberMode = async function(code, memberId, travelMode) {
+    const meetup = await Meetup.findOne({ code: code });
+    if (!meetup) {
+        throw new Error('Meetup not found');
+    }
+
+    const member = meetup.members.id(memberId);
+    if (!member) {
+        throw new Error('Member not found');
+    }
+
+    member.travelMode = travelMode;
+    await meetup.save();
+
     return member;
 };
 

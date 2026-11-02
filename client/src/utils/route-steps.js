@@ -16,6 +16,8 @@ export function describeStep(step, destination) {
   const { minutes } = step
 
   if (step.mode === 'WALK') return { label: 'Walk', details: `To ${to}`, minutes }
+  if (step.mode === 'CAR') return { label: 'Drive', details: `To ${to}`, minutes }
+  if (step.mode === 'PARK') return { label: 'Park', details: `And walk to ${to}`, minutes }
 
   const label = step.mode === 'BUS' ? `Bus ${step.route}` : titleCase(step.routeName || step.mode)
   const stops = step.stops === 1 ? '1 stop' : `${step.stops} stops`

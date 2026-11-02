@@ -7,6 +7,8 @@
              GET /api/meetups/:code (get one)
              POST /api/meetups/:code/members (join)
              PUT /api/meetups/:code/members/:memberId (set start point)
+             PUT /api/meetups/:code/members/:memberId/mode (set travel mode)
+             DELETE /api/meetups/:code/members/:memberId/remove (host removes a member)
   TALKS TO:  controllers/meetups-controller.js
   REVISE:    Wk 5 Express router (blog-with-mongodb/routes)
 */
@@ -31,8 +33,10 @@ router.post("/:code/members", (req, res, next) => {
     next();
 }, meetupsController.joinMeetup);
 router.put("/:code/members/:memberId",meetupsController.setStart);
+router.put("/:code/members/:memberId/mode",meetupsController.setTravelMode);
 router.put("/:code", requireAuth, meetupsController.updateMeetup);
 router.delete("/:code",requireAuth, meetupsController.deleteMeetup);
 router.delete("/:code/members/:memberId",meetupsController.leaveMeetup);
+router.delete("/:code/members/:memberId/remove",requireAuth,meetupsController.removeMember);
 
 module.exports = router;
