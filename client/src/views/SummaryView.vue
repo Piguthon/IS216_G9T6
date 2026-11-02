@@ -1,7 +1,8 @@
 <!--
   PITCH PLACEHOLDER (demo/pitch branch only; never merge into integration or main). I replaces this.
-  The meeting point is the one the host confirmed (meetup.finalStation). Travel times come from
-  the ranking. The bus-arrival card shows the buses in the viewer's route.
+  The meeting point is the one the host confirmed (meetup.finalStation). Travel times and leave
+  times come from GET /api/ranking/:code/leave-times, for arriving by the meetup time. The
+  bus-arrival card shows the buses in the viewer's route.
   ROUTE: /meetup/:code/summary
 -->
 <script setup>
@@ -9,7 +10,7 @@ import { ref, computed, onMounted } from 'vue'
 import axios from 'axios'
 import { useRoute } from 'vue-router'
 import { BASE_URL } from '../config'
-import { formatDate } from '../utils/meetup-date'
+import { formatDate, formatTime } from '../utils/meetup-date'
 import { tripTone } from '../utils/trip-tone'
 import { describeStep } from '../utils/route-steps'
 import MapView from '../components/MapView.vue'
@@ -19,7 +20,7 @@ const route = useRoute()
 const code = route.params.code
 
 const meetup = ref(null)
-const ranking = ref([])
+const trips = ref([])
 const myMemberId = ref(localStorage.getItem(`fairspot-member-${code}`))
 const isLoading = ref(true)
 const errorMessage = ref('')
@@ -31,8 +32,8 @@ async function loadSummary() {
     const meetupResponse = await axios.get(`${BASE_URL}/meetups/${code}`)
     meetup.value = meetupResponse.data
     if (meetup.value.finalStation) {
-      const rankingResponse = await axios.get(`${BASE_URL}/ranking/${code}`)
-      ranking.value = rankingResponse.data.ranking
+      const leaveTimesResponse = await axios.get(`${BASE_URL}/ranking/${code}/leave-times`)
+      trips.value = leaveTimesResponse.data.trips
     }
   } catch (error) {
     if (error.response && error.response.data && error.response.data.error) {
@@ -48,13 +49,11 @@ onMounted(() => {
   loadSummary()
 })
 
-// The confirmed meeting point. If start points changed after the host confirmed it, it may no
-// longer be in the ranking, so it is still shown, without travel times.
+// The confirmed meeting point, with everyone's trip to it
 const point = computed(() => {
   if (!meetup.value || !meetup.value.finalStation) return null
   const { optionId, name, lat, lng } = meetup.value.finalStation
-  const ranked = ranking.value.find((p) => p.stationId === optionId)
-  return ranked || { stationId: optionId, name, lat, lng, times: [] }
+  return { stationId: optionId, name, lat, lng, times: trips.value }
 })
 
 const hasTimes = computed(() => point.value !== null && point.value.times.length > 0)
@@ -64,14 +63,19 @@ const journeys = computed(() => {
   if (!meetup.value || !point.value) return list
   for (const member of meetup.value.members) {
     let minutes = null
+    let leaveAt = null
     for (const t of point.value.times) {
-      if (t.memberId === member._id) minutes = t.minutes
+      if (t.memberId === member._id) {
+        minutes = t.minutes
+        leaveAt = t.leaveAt
+      }
     }
     list.push({
       id: member._id,
       name: member.name,
       from: member.start ? member.start.label : 'No start point',
       minutes,
+      leaveAt,
     })
   }
   return list
@@ -166,6 +170,9 @@ const starts = computed(() => {
               <div class="trip-who">
                 <strong>{{ j.name }}</strong>
                 <span>from {{ j.from }}</span>
+                <span v-if="j.leaveAt" data-testid="summary-journey-leave"
+                  >leave by {{ formatTime(j.leaveAt) }}</span
+                >
               </div>
               <div class="trip-track" aria-hidden="true">
                 <div
@@ -183,6 +190,10 @@ const starts = computed(() => {
         <div v-if="myTrip" class="card app-card" data-testid="summary-route">
           <div class="card-body">
             <h2 class="h4 app-heading mb-1">Your route</h2>
+            <p class="mb-1" data-testid="summary-leave-by">
+              <strong>Leave by {{ formatTime(myTrip.leaveAt) }}</strong> to arrive at
+              {{ formatTime(myTrip.arriveAt) }}
+            </p>
             <p class="mb-3" data-testid="summary-route-total">
               <strong>Total {{ myTrip.minutes }} min</strong
               ><span v-if="myTrip.waitMinutes > 0"
@@ -214,8 +225,7 @@ const starts = computed(() => {
           </div>
         </div>
         <p v-else-if="!hasTimes" class="alert alert-secondary mb-0" data-testid="summary-no-times">
-          Travel times aren't available because start points changed after this meeting point was
-          confirmed.
+          Travel times aren't available for this meeting point right now.
         </p>
         <p v-else-if="isMember" class="alert alert-secondary mb-0" data-testid="summary-no-route">
           Add your start point in the

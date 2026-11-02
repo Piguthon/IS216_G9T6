@@ -2,12 +2,13 @@
 // OWNER:     I (team-written)
 // PURPOSE:   OneMap client for FairSpot: token management + public-transport routing.
 // EXPORTS:   getToken()   → a valid OneMap access token
-//            getPtRoute(start, end, date, time) → { minutes, waitMinutes, firstBusStopCode, steps }
-//                or null. steps: [ { mode, route, routeName, from, fromCode, to, toCode,
-//                stops, minutes, points } ], where points is the leg's encoded map line
-//                start/end { lat, lng } · date "YYYY-MM-DD" · time "HH:MM"
+//            getPtRoute(start, end, date, time) → { minutes, waitMinutes, firstBusStopCode, steps,
+//                leaveAt, arriveAt } or null. steps: [ { mode, route, routeName, from, fromCode,
+//                to, toCode, stops, minutes, points } ], where points is the leg's encoded map
+//                line · start/end { lat, lng } · date "YYYY-MM-DD" · time "HH:MM"
+//            getArriveByRoute(start, end, date, time) → the same, but time is when to arrive
 //            tokenStatus() → { ok, expiresAt } (used by routes/health-routes.js)
-// USED BY:   ranking (JS) via getPtRoute · health route via tokenStatus
+// USED BY:   ranking (JS) via getPtRoute and getArriveByRoute · health route via tokenStatus
 // REVISE:    Wk 5 Axios GET/POST, headers config, async/await, try/catch
 //
 // What this handles:
@@ -23,9 +24,11 @@
 
 const axios = require('axios');
 const Token = require('../models/token-model');
+const { singaporeToMs, msToSingapore } = require('../utils/meetup-date');
 
 const BASE_URL = 'https://www.onemap.gov.sg';
 const TWELVE_HOURS = 12 * 60 * 60 * 1000;   // in milliseconds
+const FIVE_MINUTES = 5 * 60 * 1000;         // in milliseconds
 
 let cachedToken = null;   // { accessToken, expiresAt } kept in memory between calls
 
@@ -104,9 +107,8 @@ function toStep(leg) {
   };
 }
 
-// start/end: { lat, lng } · date "YYYY-MM-DD" · time "HH:MM"
-// returns { minutes, waitMinutes, firstBusStopCode, steps } or null if OneMap finds no route
-async function getPtRoute(start, end, date, time) {
+// The (up to 3) trips OneMap finds from date and time, or [] if there are none
+async function getItineraries(start, end, date, time) {
   let data;
   try {
     data = await callRouting(start, end, date, time, await getToken());
@@ -120,17 +122,21 @@ async function getPtRoute(start, end, date, time) {
   }
 
   const itineraries = data.plan ? data.plan.itineraries : [];
-  if (!itineraries || itineraries.length === 0) return null;
+  return itineraries || [];
+}
 
-  // pick the fastest of the (up to 3) itineraries
+function fastestOf(itineraries) {
   let fastest = itineraries[0];
   for (const itinerary of itineraries) {
     if (itinerary.duration < fastest.duration) fastest = itinerary;
   }
+  return fastest;
+}
 
+function toRoute(itinerary) {
   // the first bus leg gives the stop for live bus arrivals (null if the trip is MRT only)
   let firstBusStopCode = null;
-  for (const leg of fastest.legs) {
+  for (const leg of itinerary.legs) {
     if (leg.mode === 'BUS') {
       firstBusStopCode = leg.from.stopCode;
       break;
@@ -138,12 +144,53 @@ async function getPtRoute(start, end, date, time) {
   }
 
   return {
-    minutes: Math.round(fastest.duration / 60),   // duration is in seconds
-    waitMinutes: Math.round((fastest.waitingTime || 0) / 60),
+    minutes: Math.round(itinerary.duration / 60),   // duration is in seconds
+    waitMinutes: Math.round((itinerary.waitingTime || 0) / 60),
     firstBusStopCode: firstBusStopCode,
-    steps: fastest.legs.map(toStep)
+    steps: itinerary.legs.map(toStep),
+    leaveAt: msToSingapore(itinerary.startTime).time,
+    arriveAt: msToSingapore(itinerary.endTime).time
   };
 }
+
+// start/end: { lat, lng } · date "YYYY-MM-DD" · time "HH:MM"
+// returns the fastest trip from date and time, or null if OneMap finds no route
+async function getPtRoute(start, end, date, time) {
+  const itineraries = await getItineraries(start, end, date, time);
+  if (itineraries.length === 0) return null;
+  return toRoute(fastestOf(itineraries));
+}
+
+// Same inputs and result as getPtRoute, but time is when to arrive. OneMap ignores arriveBy, so
+// this works backwards: it searches from the arrival time minus the trip length and 5 minutes,
+// and keeps the trip that leaves latest but still arrives on time. If they are all late, it
+// searches earlier once more, then settles for the trip that arrives first.
+async function getArriveByRoute(start, end, date, time) {
+  const arriveBy = singaporeToMs(date, time);
+  const firstSearch = await getItineraries(start, end, date, time);
+  if (firstSearch.length === 0) return null;
+
+  let searchFrom = arriveBy - fastestOf(firstSearch).duration * 1000 - FIVE_MINUTES;
+  firstSearch.sort((a, b) => a.endTime - b.endTime);
+  let firstToArrive = firstSearch[0];
+  for (let attempt = 1; attempt <= 2; attempt++) {
+    const search = msToSingapore(searchFrom);
+    const itineraries = await getItineraries(start, end, search.date, search.time);
+    if (itineraries.length === 0) break;
+
+    const onTime = itineraries.filter((itinerary) => itinerary.endTime <= arriveBy);
+    if (onTime.length > 0) {
+      onTime.sort((a, b) => b.startTime - a.startTime);
+      return toRoute(onTime[0]);
+    }
+
+    itineraries.sort((a, b) => a.endTime - b.endTime);
+    firstToArrive = itineraries[0];
+    searchFrom -= firstToArrive.endTime - arriveBy + FIVE_MINUTES;
+  }
+  return toRoute(firstToArrive);
+}
+
 async function tokenStatus() {
   try {
     await getToken();
@@ -153,4 +200,4 @@ async function tokenStatus() {
   }
 }
 
-module.exports = { getToken, getPtRoute, tokenStatus };
+module.exports = { getToken, getPtRoute, getArriveByRoute, tokenStatus };
