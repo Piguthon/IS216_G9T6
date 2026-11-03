@@ -65,7 +65,7 @@ function barWidth(minutes) {
         <span class="d-block small">min longest</span>
       </span>
     </span>
-    <!-- One row per member: white name, coloured bar and minutes -->
+    <!-- One row per member: white name and travel mode pill with the minutes, then a coloured bar -->
     <span v-if="selected" class="trips point-trips mt-3 pt-3">
       <span
         v-for="t in sortedTimes"
@@ -74,9 +74,20 @@ function barWidth(minutes) {
         :class="tripTone(t.minutes, point.longestMinutes, shortestMinutes)"
         data-testid="meeting-point-time"
       >
-        <span class="trip-who"
-          ><strong>{{ t.name }}</strong
-          ><span v-if="t.travelMode === 'car'" data-testid="meeting-point-car">by car</span></span
+        <!-- A long name is cut short with "…" so the pill always stays on the same line -->
+        <span class="trip-who d-flex align-items-center gap-2"
+          ><strong class="text-truncate">{{ t.name }}</strong
+          ><span
+            v-if="t.travelMode === 'car'"
+            class="mode-pill badge rounded-pill text-uppercase bg-secondary flex-shrink-0"
+            data-testid="meeting-point-car"
+            >car</span
+          ><span
+            v-else
+            class="mode-pill badge rounded-pill text-uppercase bg-secondary flex-shrink-0"
+            data-testid="meeting-point-transit"
+            >public transport</span
+          ></span
         >
         <span class="trip-track" aria-hidden="true">
           <span class="trip-fill d-block" :style="{ width: barWidth(t.minutes) }"></span>
@@ -118,9 +129,22 @@ function barWidth(minutes) {
   border-top: 2px dashed #3a3d41;
 }
 
+/* Two lines per member, so the pill fits beside the name even on phones:
+   name and pill on the left, minutes on the right, then the bar across the full width */
 .point-trips .trip {
-  grid-template-columns: minmax(0, 76px) minmax(0, 1fr) 62px;
-  gap: 10px;
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-areas:
+    'who mins'
+    'track track';
+  gap: 6px 10px;
+}
+
+.point-trips .trip-who {
+  grid-area: who;
+}
+
+.point-trips .trip-track {
+  grid-area: track;
 }
 
 .point-trips .trip-who strong {
@@ -128,7 +152,15 @@ function barWidth(minutes) {
   font-weight: 600;
 }
 
+/* Travel mode pill: the same size as the lobby's member list (Bootstrap's badge is 12px) */
+.point-trips .trip-who .mode-pill {
+  display: inline-block;
+  font-size: 12px;
+  opacity: 1;
+}
+
 .point-trips .trip-mins {
+  grid-area: mins;
   font-size: 21px;
 }
 </style>

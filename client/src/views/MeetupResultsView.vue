@@ -6,13 +6,14 @@
             each final choice
   ROUTE:    /meetup/:code/results
   TALKS TO: GET /api/meetups/:code, GET /api/ranking/:code,
-            GET/PUT /api/votes/:code, POST /api/votes/:code/confirm (host, logged in)
+            GET/PUT /api/votes/:code, POST /api/votes/:code/confirm (host, logged in),
+            DELETE /api/meetups/:code/members/:memberId (a member leaves)
   POLLING:  vote tallies refresh every 5 seconds while this page is open (decided: no WebSockets)
 -->
 <script setup>
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import axios from 'axios'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { BASE_URL } from '../config'
 import { useAuthStore } from '../stores/auth'
 import { formatDate, formatTime } from '../utils/meetup-date'
@@ -25,6 +26,7 @@ const VOTE_REFRESH_MS = 5000
 const SHORTLIST_SIZE = 3
 
 const route = useRoute()
+const router = useRouter()
 const auth = useAuthStore()
 const code = route.params.code
 
@@ -228,6 +230,20 @@ async function confirmChoice(kind, option) {
   isVoting.value = false
 }
 
+// A member who doesn't like the confirmed meeting point leaves (the host deletes the meetup instead)
+async function leaveMeetup() {
+  isVoting.value = true
+  voteError.value = ''
+  try {
+    await axios.delete(`${BASE_URL}/meetups/${code}/members/${myMemberId.value}`)
+    localStorage.removeItem(`fairspot-member-${code}`)
+    router.push('/')
+  } catch (error) {
+    voteError.value = errorText(error, 'You could not leave the meetup. Please try again.')
+  }
+  isVoting.value = false
+}
+
 const venuePoint = computed(() => finalStation.value || selected.value)
 </script>
 
@@ -313,9 +329,11 @@ const venuePoint = computed(() => finalStation.value || selected.value)
           :is-host="isHost"
           :final="finalStation"
           :busy="isVoting"
+          :can-leave="isMember && !isHost"
           @vote="castVote('station', $event)"
           @confirm="confirmChoice('station', $event)"
           @reopen="confirmChoice('station', null)"
+          @leave="leaveMeetup"
         />
 
         <VotePanel

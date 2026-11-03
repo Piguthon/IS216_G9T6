@@ -419,22 +419,27 @@ async function handleLeave() {
             </router-link>
           </div>
 
-          <!-- Once the host confirms a meeting point: the summary and the live map -->
-          <div v-if="isMember && meetup.finalStation" class="d-grid gap-2 d-sm-flex mb-3">
-            <router-link
-              :to="`/meetup/${code}/summary`"
-              class="app-btn btn-quiet flex-fill"
-              data-testid="lobby-summary-link"
-            >
-              See the summary
-            </router-link>
-            <router-link
-              :to="`/meetup/${code}/live`"
-              class="app-btn btn-sign flex-fill"
-              data-testid="lobby-live-link"
-            >
-              Live map
-            </router-link>
+          <!-- Once the host confirms a meeting point: the summary and the live map, in two
+               equal columns from 576px up (stacked on phones) -->
+          <div v-if="isMember && meetup.finalStation" class="row g-2 mb-3">
+            <div class="col-sm-6">
+              <router-link
+                :to="`/meetup/${code}/summary`"
+                class="app-btn btn-quiet w-100"
+                data-testid="lobby-summary-link"
+              >
+                See the summary
+              </router-link>
+            </div>
+            <div class="col-sm-6">
+              <router-link
+                :to="`/meetup/${code}/live`"
+                class="app-btn btn-sign w-100"
+                data-testid="lobby-live-link"
+              >
+                Live map
+              </router-link>
+            </div>
           </div>
 
           <!-- TODO 9: Join meetup link -->
@@ -450,40 +455,45 @@ async function handleLeave() {
 
           <!-- Host tools & Leave options -->
           <div v-if="isMember">
-            <!-- Host Tools -->
-            <div v-if="isHost" class="d-flex flex-wrap gap-2">
-              <button
-                v-if="!isEditing"
-                @click="isEditing = true"
-                class="app-btn btn-sign-outline flex-fill"
-                data-testid="lobby-edit"
-              >
-                Edit Meetup Details
-              </button>
+            <!-- Host Tools: Edit and Delete in two equal columns from 576px up (stacked on
+                 phones). A button on its own, or the delete question, takes the full width. -->
+            <div v-if="isHost" class="row g-2">
+              <div v-if="!isEditing" :class="showDeleteConfirm ? 'col-12' : 'col-sm-6'">
+                <button
+                  @click="isEditing = true"
+                  class="app-btn btn-sign-outline w-100"
+                  data-testid="lobby-edit"
+                >
+                  Edit Meetup Details
+                </button>
+              </div>
 
-              <div v-if="showDeleteConfirm" class="alert alert-secondary p-3 mb-0 w-100">
-                <p class="mb-2">Are you sure? This will delete the meetup for everyone.</p>
-                <div class="d-flex gap-2">
-                  <button
-                    @click="handleDelete"
-                    class="btn app-btn btn-danger app-btn-sm"
-                    data-testid="lobby-delete-confirm"
-                  >
-                    Yes, Delete it
-                  </button>
-                  <button @click="showDeleteConfirm = false" class="app-btn btn-quiet app-btn-sm">
-                    Cancel
-                  </button>
+              <div v-if="showDeleteConfirm" class="col-12">
+                <div class="alert alert-secondary p-3 mb-0">
+                  <p class="mb-2">Are you sure? This will delete the meetup for everyone.</p>
+                  <div class="d-flex gap-2">
+                    <button
+                      @click="handleDelete"
+                      class="btn app-btn btn-danger app-btn-sm"
+                      data-testid="lobby-delete-confirm"
+                    >
+                      Yes, Delete it
+                    </button>
+                    <button @click="showDeleteConfirm = false" class="app-btn btn-quiet app-btn-sm">
+                      Cancel
+                    </button>
+                  </div>
                 </div>
               </div>
-              <button
-                v-else
-                @click="showDeleteConfirm = true"
-                class="btn app-btn btn-outline-danger flex-fill"
-                data-testid="lobby-delete"
-              >
-                Delete Meetup
-              </button>
+              <div v-else :class="isEditing ? 'col-12' : 'col-sm-6'">
+                <button
+                  @click="showDeleteConfirm = true"
+                  class="btn app-btn btn-outline-danger w-100"
+                  data-testid="lobby-delete"
+                >
+                  Delete Meetup
+                </button>
+              </div>
             </div>
 
             <!-- Non-Host Leave -->

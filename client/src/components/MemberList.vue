@@ -1,7 +1,7 @@
 <!--
   FILE:     src/components/MemberList.vue
   OWNER:    P1 (team-written)
-  PURPOSE:  Lists meetup members, whether each has set a start point, and who's driving
+  PURPOSE:  Lists meetup members, whether each has set a start point, and how each is travelling
   PROPS:    members (Array), currentMemberId (String), hostId (String),
             canRemove (Boolean): the viewer is the host, so show Remove on everyone else
   EMITS:    remove with the member
@@ -13,7 +13,7 @@
   REVISE:   Wk 5 v-for + :key · Wk 6 props/emits
   DONE WHEN:
     - [ ] each member shows name + start label or "waiting"
-    - [ ] drivers show "car"
+    - [ ] drivers show "car", everyone else "public transport"
     - [ ] the host can remove anyone but themselves
     - [ ] "you" marked
     - [ ] Bootstrap list group
@@ -65,6 +65,13 @@ const emit = defineEmits(['remove'])
             data-testid="member-car"
           >
             car
+          </span>
+          <span
+            v-else
+            class="badge rounded-pill text-uppercase bg-secondary ms-2"
+            data-testid="member-transit"
+          >
+            public transport
           </span>
         </div>
 

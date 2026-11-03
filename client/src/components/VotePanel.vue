@@ -7,8 +7,9 @@
   PROPS:    title, finalTitle (heading once the host confirms),
             options [ { optionId, name, count, ... } ], myVote (optionId or null),
             voterCount (members who can vote), canVote, isHost, final (confirmed option or null),
-            busy, emptyText (shown when there is nothing to vote on yet)
-  EMITS:    vote (option), confirm (option), reopen ()
+            busy, emptyText (shown when there is nothing to vote on yet),
+            canLeave (once confirmed, a member who doesn't like the choice can leave the meetup)
+  EMITS:    vote (option), confirm (option), reopen (), leave ()
 -->
 <script setup>
 import { computed } from 'vue'
@@ -24,8 +25,9 @@ const props = defineProps({
   final: { type: Object, default: null },
   busy: { type: Boolean, default: false },
   emptyText: { type: String, default: 'Nothing to vote on yet.' },
+  canLeave: { type: Boolean, default: false },
 })
-const emit = defineEmits(['vote', 'confirm', 'reopen'])
+const emit = defineEmits(['vote', 'confirm', 'reopen', 'leave'])
 
 const votesCast = computed(() => props.options.reduce((sum, option) => sum + option.count, 0))
 const topCount = computed(() => Math.max(0, ...props.options.map((option) => option.count)))
@@ -66,6 +68,18 @@ function share(option) {
           data-testid="vote-reopen"
         >
           Change choice
+        </button>
+
+        <!-- Members who don't like the choice can leave, like the lobby's Leave Meetup button -->
+        <button
+          v-if="canLeave"
+          type="button"
+          class="btn app-btn btn-outline-danger app-btn-sm mt-3"
+          :disabled="busy"
+          @click="emit('leave')"
+          data-testid="vote-leave"
+        >
+          Leave meetup
         </button>
       </div>
 

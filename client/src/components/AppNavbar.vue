@@ -12,14 +12,38 @@
     - [ ] collapses on phones
 -->
 <script setup>
+import { ref, onMounted, onUnmounted } from 'vue'
 import { useAuthStore } from '../stores/auth'
 
 const auth = useAuthStore()
+
+const navbar = ref(null)
+const toggler = ref(null)
+const menu = ref(null)
+
+// Small screens: a click outside the navbar, or on one of its links, closes the open menu.
+// Clicking the hamburger does what Bootstrap does, so the menu closes the same way.
+function closeMenu(event) {
+  if (!menu.value.classList.contains('show')) return
+  const clickedLink = event.target.closest('a')
+  if (!navbar.value.contains(event.target) || clickedLink) {
+    toggler.value.click()
+  }
+}
+
+onMounted(() => {
+  document.addEventListener('click', closeMenu)
+})
+
+onUnmounted(() => {
+  document.removeEventListener('click', closeMenu)
+})
 </script>
 
 <!-- Responsive Bootstrap 5 navbar (https://getbootstrap.com/docs/5.3/components/navbar/) -->
 <template>
   <nav
+    ref="navbar"
     class="navbar navbar-expand-lg app-bar app-navbar"
     data-bs-theme="dark"
     data-testid="app-navbar"
@@ -30,6 +54,7 @@ const auth = useAuthStore()
       </RouterLink>
 
       <button
+        ref="toggler"
         class="navbar-toggler"
         type="button"
         data-bs-toggle="collapse"
@@ -42,7 +67,7 @@ const auth = useAuthStore()
         <span class="navbar-toggler-icon"></span>
       </button>
 
-      <div id="mainNavbar" class="collapse navbar-collapse">
+      <div id="mainNavbar" ref="menu" class="collapse navbar-collapse">
         <ul class="navbar-nav me-auto small">
           <li class="nav-item">
             <RouterLink

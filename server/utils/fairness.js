@@ -6,8 +6,9 @@
   FUNCTIONS: rankCandidates(candidates) → the same items, sorted, with longestMinutes and
              totalMinutes filled in.
              findMidpoint(points) → { lat, lng }, the average of the group's start points
-             pickCandidates(stations, midpoint, perType) → the stations of each type
-             (mrt, interchange) closest to the midpoint, nearest first
+             pickCandidates(stations, midpoint, perType, maxKmByType) → the stations of each
+             type (mrt, interchange) closest to the midpoint, nearest first, leaving out any
+             further than maxKmByType allows for that type
              Kept pure (no database or API calls) so it's easy to check with sample data
   DATA:      Ranking [ { stationId, name, type, lat, lng, times: [ { memberId, name, minutes } ],
                          longestMinutes, totalMinutes } ]   (fairest first)
@@ -34,13 +35,16 @@ function findMidpoint(points) {
   return { lat: lat / points.length, lng: lng / points.length };
 }
 
-// perType: how many of each type to keep, e.g. { mrt: 3, interchange: 2 }
-function pickCandidates(stations, midpoint, perType) {
+// perType: how many of each type to keep, e.g. { mrt: 30, interchange: 2 }
+// maxKmByType: optional distance limit per type, e.g. { interchange: 3 }
+function pickCandidates(stations, midpoint, perType, maxKmByType = {}) {
   const picked = [];
   for (const type of Object.keys(perType)) {
+    const maxKm = maxKmByType[type] ?? Infinity;
     const ofType = stations
       .filter((station) => station.type === type)
       .map((station) => ({ station, km: distanceKm(midpoint, station) }))
+      .filter((item) => item.km <= maxKm)
       .sort((a, b) => a.km - b.km)
       .slice(0, perType[type]);
     for (const item of ofType) picked.push(item);

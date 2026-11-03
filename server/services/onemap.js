@@ -19,7 +19,8 @@
 //   1. Gets a token using the team's OneMap account (credentials in env vars, never committed)
 //   2. Stores the token in MongoDB (models/token-model.js) so a restart reuses it
 //      instead of calling getToken again (tokens last 72 h)
-//   3. Gets a new token when less than 12 hours remain
+//   3. Keeps using the token until it is about to expire. Asking for a new one any earlier
+//      doesn't help: OneMap just sends back the same token until it expires.
 //   4. If OneMap rejects the token (401), gets a new one and retries once
 //
 // Call getPtRoute one route at a time (for...of + await), not all at once.
@@ -31,7 +32,6 @@ const Token = require('../models/token-model');
 const { singaporeToMs, msToSingapore } = require('../utils/meetup-date');
 
 const BASE_URL = 'https://www.onemap.gov.sg';
-const TWELVE_HOURS = 12 * 60 * 60 * 1000;   // in milliseconds
 const FIVE_MINUTES = 5 * 60 * 1000;         // in milliseconds
 const ONE_MINUTE = 60 * 1000;               // in milliseconds
 // Transit times include walking and waiting, so car trips allow for parking and the walk from it
@@ -39,9 +39,10 @@ const PARKING_MINUTES = 10;
 
 let cachedToken = null;   // { accessToken, expiresAt } kept in memory between calls
 
+// A route call takes a few seconds at most, so a minute to spare is enough
 function hasTimeLeft(token) {
   if (!token) return false;
-  return new Date(token.expiresAt).getTime() - Date.now() > TWELVE_HOURS;
+  return new Date(token.expiresAt).getTime() - Date.now() > ONE_MINUTE;
 }
 
 async function requestNewToken() {

@@ -6,11 +6,12 @@
              meeting point the host confirmed
   STEPS:     1. every member needs a start point (at least 2 members); once the host has confirmed
                 a meeting point, anyone who joins later is just left out
-             2. midpoint of their starts → the closest MRT stations and bus interchanges
+             2. midpoint of their starts → the 30 closest MRT stations, and bus interchanges
+                within 3km
              3. each member's time to each candidate by their own travel mode: public transport,
                 leaving 45 minutes before the meetup, or at 05:30 overnight, or car
                 (OneMap, one call at a time)
-             4. rank with the fairness rule (utils/fairness.js)
+             4. rank with the fairness rule (utils/fairness.js) and keep the fairest 5
   DATA:      { ranking: [ { stationId, name, type, lat, lng,
                             times: [ { memberId, name, travelMode, minutes, waitMinutes,
                                        firstBusStopCode, steps } ],
@@ -27,7 +28,12 @@ const { getPtRoute, getArriveByRoute, getDriveRoute } = require('../services/one
 const { findMidpoint, pickCandidates, rankCandidates } = require('../utils/fairness');
 const { tripTimeForMeetup } = require('../utils/meetup-date');
 
-const CANDIDATES_PER_TYPE = { mrt: 3, interchange: 2 };
+// With every MRT station in the list, the few nearest the midpoint are often small stations,
+// so it tests the 30 nearest: the fairest is usually a well-connected one a little further out.
+// Bus interchanges only count when they are close, or they crowd out better MRT options.
+const CANDIDATES_PER_TYPE = { mrt: 30, interchange: 2 };
+const MAX_KM_BY_TYPE = { interchange: 3 };
+const RESULTS_SHOWN = 5; // the fairest few are shown and voted on
 const CACHE_MS = 30 * 60 * 1000;
 const FIRST_TRIPS = '05:30'; // no bus or train gets anyone there before this
 const cache = new Map(); // code → { key, result, savedAt }
@@ -86,7 +92,7 @@ exports.getRanking = async (req, res) => {
 
     const stations = await Station.find().lean();
     const midpoint = findMidpoint(ready.map((member) => member.start));
-    const picked = pickCandidates(stations, midpoint, CANDIDATES_PER_TYPE);
+    const picked = pickCandidates(stations, midpoint, CANDIDATES_PER_TYPE, MAX_KM_BY_TYPE);
     const departure = tripTimeForMeetup(meetup.date, meetup.time);
 
     const candidates = [];
@@ -121,7 +127,7 @@ exports.getRanking = async (req, res) => {
       return res.status(502).json({ error: 'No routes found. Please try again later.' });
     }
 
-    const result = { ranking: rankCandidates(candidates), departure };
+    const result = { ranking: rankCandidates(candidates).slice(0, RESULTS_SHOWN), departure };
     cache.set(meetup.code, { key, result, savedAt: Date.now() });
     res.json(result);
   } catch (error) {

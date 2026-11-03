@@ -290,6 +290,15 @@ h6,
   min-height: 68px;
 }
 
+/* Phones (below 768px): the navbar stays at the top while scrolling, above Leaflet's maps (1000) */
+@media (max-width: 767px) {
+  .app-navbar {
+    position: sticky;
+    top: 0;
+    z-index: 1020;
+  }
+}
+
 /* Dark tab bar along the top of the card, with the open tab in white */
 .app-tabs {
   overflow: hidden;
