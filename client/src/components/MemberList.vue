@@ -1,7 +1,8 @@
 <!--
   FILE:     src/components/MemberList.vue
   OWNER:    P1 (team-written)
-  PURPOSE:  Lists meetup members, whether each has set a start point, and how each is travelling
+  PURPOSE:  Lists meetup members, their start point, whether each has confirmed their location,
+            and how each is travelling
   PROPS:    members (Array), currentMemberId (String), hostId (String),
             canRemove (Boolean): the viewer is the host, so show Remove on everyone else
   EMITS:    remove with the member
@@ -9,10 +10,10 @@
   DATA:     Meetup members:
             Meetup { code, hostName, occasion, date "YYYY-MM-DD", time "HH:MM",
                      members: [ { _id, name, start: { label, postal, lat, lng } | null,
-                                  travelMode: 'transit' | 'car' } ] }
+                                  travelMode: 'transit' | 'car', ready } ] }
   REVISE:   Wk 5 v-for + :key · Wk 6 props/emits
   DONE WHEN:
-    - [ ] each member shows name + start label or "waiting"
+    - [ ] each member shows name + start label, and "waiting" until they confirm their location
     - [ ] drivers show "car", everyone else "public transport"
     - [ ] the host can remove anyone but themselves
     - [ ] "you" marked
@@ -81,7 +82,13 @@ const emit = defineEmits(['remove'])
             <span v-if="member.start">
               {{ member.start.label }}
             </span>
-            <span v-else class="badge rounded-pill text-uppercase bg-secondary"> waiting </span>
+            <span
+              v-if="!member.ready"
+              class="badge rounded-pill text-uppercase bg-secondary ms-1"
+              data-testid="member-waiting"
+            >
+              waiting
+            </span>
           </div>
           <button
             v-if="canRemove && member._id !== hostId"

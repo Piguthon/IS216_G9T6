@@ -3,9 +3,11 @@
   OWNER:    JS (team-written)
   PURPOSE:  The fairest meeting points for a meetup, and group voting: members vote on the
             shortlisted meeting points, then on venues near the confirmed one; the host confirms
-            each final choice
+            each final choice. Everyone sees the saved results (GET); only the host works them out
+            (POST), the first time they open this page or when they press Recalculate
   ROUTE:    /meetup/:code/results
-  TALKS TO: GET /api/meetups/:code, GET /api/ranking/:code,
+  TALKS TO: GET /api/meetups/:code, POST /api/ranking/:code (host, logged in),
+            GET /api/ranking/:code,
             GET/PUT /api/votes/:code, POST /api/votes/:code/confirm (host, logged in),
             DELETE /api/meetups/:code/members/:memberId (a member leaves)
   POLLING:  vote tallies refresh every 5 seconds while this page is open (decided: no WebSockets)
@@ -37,6 +39,8 @@ const selectedId = ref('')
 const myMemberId = ref(null)
 const isLoading = ref(true)
 const errorMessage = ref('')
+const isOutdated = ref(false) // the group changed (e.g. someone left) since these were worked out
+const isRecalculating = ref(false)
 
 const votes = ref(null)
 const voteError = ref('')
@@ -50,22 +54,63 @@ function errorText(error, fallback) {
   return fallback
 }
 
+// Only the host works the meeting points out (or gets the saved ones back if nothing changed)
+async function calculateRanking() {
+  const headers = { Authorization: `Bearer ${auth.token}` }
+  return (await axios.post(`${BASE_URL}/ranking/${code}`, {}, { headers })).data
+}
+
+// Everyone reads what the host last worked out. If nothing is saved yet, the host's visit
+// works them out for the first time.
+async function fetchRanking() {
+  try {
+    return (await axios.get(`${BASE_URL}/ranking/${code}`)).data
+  } catch (error) {
+    if (isHost.value && error.response && error.response.status === 404) {
+      return await calculateRanking()
+    }
+    throw error
+  }
+}
+
+function showRanking(data) {
+  ranking.value = data.ranking
+  departure.value = data.departure
+  isOutdated.value = data.isOutdated
+  if (ranking.value.length > 0) {
+    selectedId.value = ranking.value[0].stationId
+  }
+}
+
 async function loadResults() {
   isLoading.value = true
   errorMessage.value = ''
   try {
     const meetupResponse = await axios.get(`${BASE_URL}/meetups/${code}`)
     meetup.value = meetupResponse.data
-    const rankingResponse = await axios.get(`${BASE_URL}/ranking/${code}`)
-    ranking.value = rankingResponse.data.ranking
-    departure.value = rankingResponse.data.departure
-    if (ranking.value.length > 0) {
-      selectedId.value = ranking.value[0].stationId
-    }
+    showRanking(await fetchRanking())
   } catch (error) {
     errorMessage.value = errorText(error, 'Could not load the results. Please try again.')
   }
   isLoading.value = false
+}
+
+// The host works the meeting points out again for whoever is still in the meetup
+async function recalculate() {
+  isRecalculating.value = true
+  voteError.value = ''
+  try {
+    showRanking(await calculateRanking())
+    const meetupResponse = await axios.get(`${BASE_URL}/meetups/${code}`)
+    meetup.value = meetupResponse.data
+    await loadVotes()
+  } catch (error) {
+    voteError.value = errorText(
+      error,
+      'The meeting points were not recalculated. Please try again.',
+    )
+  }
+  isRecalculating.value = false
 }
 
 async function loadVotes() {
@@ -279,6 +324,24 @@ const venuePoint = computed(() => finalStation.value || selected.value)
           Travel times are calculated at {{ formatTime(departure.time) }} on
           {{ formatDate(departure.date) }}.
         </p>
+      </div>
+      <!-- The group changed (e.g. someone left): the host can recalculate -->
+      <div v-if="isOutdated" class="col-12">
+        <div class="alert alert-warning mb-0" role="status" data-testid="results-outdated-note">
+          <template v-if="isHost">
+            <p class="mb-2">The group has changed since you worked these out.</p>
+            <button
+              type="button"
+              class="app-btn btn-sign app-btn-sm"
+              :disabled="isRecalculating"
+              @click="recalculate"
+              data-testid="results-recalculate"
+            >
+              {{ isRecalculating ? 'Recalculating… this can take a minute' : 'Recalculate' }}
+            </button>
+          </template>
+          <template v-else>The group has changed since the host worked these out.</template>
+        </div>
       </div>
       <div v-if="hasDrivers" class="col-12 mt-2">
         <p class="small text-muted mb-0" data-testid="results-car-note">

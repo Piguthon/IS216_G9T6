@@ -5,9 +5,13 @@
   FIELDS:    as the Meetup shape, plus createdAt; members are embedded sub-documents
              Meetup { code, hostName, occasion, date "YYYY-MM-DD", time "HH:MM",
                       members: [ { _id, name, start: { label, postal, lat, lng } | null,
-                                   travelMode: 'transit' | 'car' } ] }
-  FUNCTIONS: create, find by code, find by user, add member, update a member's start
-             or travel mode
+                                   travelMode: 'transit' | 'car', ready } ],
+                      rankedAt: Date | null, leftSinceRanking: [ name ] }
+             ranking (the host's saved fair meeting points) is left out of normal reads,
+             because it is large: read it with findRanking
+  FUNCTIONS: create, find by code, find by user, add member, update a member's start,
+             travel mode or ready (locked once the host has worked out the fair meeting points),
+             save and read the ranking, note who left since
   REVISE:    Wk 5 blog-model.js (schema + exported CRUD functions)
 */
 
@@ -46,6 +50,12 @@ const memberSchema = new mongoose.Schema(
             type : String,
             enum : ['transit', 'car'],
             default : 'transit'
+        },
+        // Pressed "Confirm location": their start point and travel mode are final.
+        // Changing either one sets this back to false.
+        ready : {
+            type : Boolean,
+            default : false
         }
     }
 )
@@ -92,6 +102,24 @@ const meetupSchema = new mongoose.Schema({
             { _id : false }
         ),
         default : null
+    },
+    // The fair meeting points the host last worked out (controllers/ranking-controller.js):
+    // { key, ranking, departure }. Only the host can recalculate; members read this saved copy.
+    ranking : {
+        type : mongoose.Schema.Types.Mixed,
+        default : null,
+        select : false
+    },
+    // Set once the host works out the fair meeting points. From then on nobody can join, and
+    // members can't change their location; they can only leave.
+    rankedAt : {
+        type : Date,
+        default : null
+    },
+    // Members who left since the host last worked them out, so the host knows to recalculate
+    leftSinceRanking : {
+        type : [String],
+        default : []
     },
     createdAt : {
         type : Date,
@@ -163,8 +191,12 @@ exports.setMemberStart = async function(code, memberId, start) {
     if (!member) {
         throw new Error('Member not found');
     }
+    if (meetup.rankedAt) {
+        throw new Error('Locked');
+    }
 
     member.start = start;
+    member.ready = false;
     await meetup.save();
     
     return member;
@@ -181,11 +213,58 @@ exports.setMemberMode = async function(code, memberId, travelMode) {
     if (!member) {
         throw new Error('Member not found');
     }
+    if (meetup.rankedAt) {
+        throw new Error('Locked');
+    }
 
     member.travelMode = travelMode;
+    member.ready = false;
     await meetup.save();
 
     return member;
+};
+
+// setMemberReady(code, memberId, ready): ready can only be true once the member has a start point
+exports.setMemberReady = async function(code, memberId, ready) {
+    const meetup = await Meetup.findOne({ code: code });
+    if (!meetup) {
+        throw new Error('Meetup not found');
+    }
+
+    const member = meetup.members.id(memberId);
+    if (!member) {
+        throw new Error('Member not found');
+    }
+    if (meetup.rankedAt) {
+        throw new Error('Locked');
+    }
+    if (ready && !member.start) {
+        throw new Error('Set a start point first');
+    }
+
+    member.ready = ready;
+    await meetup.save();
+
+    return member;
+};
+
+// saveRanking(code, ranking): the host's newly worked out fair meeting points
+exports.saveRanking = async function(code, ranking) {
+    return await Meetup.findOneAndUpdate(
+        { code: code },
+        { ranking: ranking, rankedAt: new Date(), leftSinceRanking: [] },
+        { returnDocument: 'after' }
+    );
+};
+
+// noteLeaver(code, name): someone left after the host worked out the fair meeting points
+exports.noteLeaver = async function(code, name) {
+    return await Meetup.findOneAndUpdate({ code: code }, { $push: { leftSinceRanking: name } });
+};
+
+// findRanking(code): the meetup with its saved ranking included
+exports.findRanking = async function(code) {
+    return await Meetup.findOne({ code: code }).select('+ranking');
 };
 
 // updateDetails(code, fields)

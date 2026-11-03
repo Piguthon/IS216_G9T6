@@ -1,11 +1,14 @@
 /*
   FILE:      controllers/ranking-controller.js
   OWNER:     JS (team-written)
-  PURPOSE:   GET /api/ranking/:code → the fairest meeting points for a meetup
+  PURPOSE:   POST /api/ranking/:code → the host works out the fairest meeting points, which are
+             saved on the meetup (logged in, host only). From then on nobody can join and
+             locations are locked; members can only leave, and the host can recalculate
+             GET /api/ranking/:code → the saved fairest meeting points, for every member
              GET /api/ranking/:code/leave-times → when each member should leave for the
              meeting point the host confirmed
-  STEPS:     1. every member needs a start point (at least 2 members); once the host has confirmed
-                a meeting point, anyone who joins later is just left out
+  STEPS:     1. every member needs to have pressed Confirm location (at least 2 members); once the
+                host has confirmed a meeting point, anyone who hasn't is just left out
              2. midpoint of their starts → the 30 closest MRT stations, and bus interchanges
                 within 3km
              3. each member's time to each candidate by their own travel mode: public transport,
@@ -16,11 +19,15 @@
                             times: [ { memberId, name, travelMode, minutes, waitMinutes,
                                        firstBusStopCode, steps } ],
                             longestMinutes, totalMinutes } ],   (fairest first)
-               departure: { date, time } }   (the departure these travel times are for)
+               departure: { date, time },   (the departure these travel times are for)
+               rankedAt,                    (when the host worked them out)
+               isOutdated }                 (someone changed their start point, travel mode or
+                                             confirmation, or the host the date or time, since)
              leave-times: { trips: [ { memberId, name, travelMode, minutes, waitMinutes,
                                        firstBusStopCode, steps, leaveAt, arriveAt } ] }
-  CACHE:     results are kept in memory for 30 minutes per meetup, and recalculated as soon as
-             a start point, a travel mode, the date or the time changes (OneMap calls are slow)
+  SAVED:     the ranking is saved on the meetup, so members still see it after a restart. The host
+             pressing again within 30 minutes with nothing changed reuses it (OneMap calls are
+             slow). Leave times are kept in memory for 30 minutes.
 */
 const Meetup = require('../models/meetup-model');
 const Station = require('../models/station-model');
@@ -36,7 +43,6 @@ const MAX_KM_BY_TYPE = { interchange: 3 };
 const RESULTS_SHOWN = 5; // the fairest few are shown and voted on
 const CACHE_MS = 30 * 60 * 1000;
 const FIRST_TRIPS = '05:30'; // no bus or train gets anyone there before this
-const cache = new Map(); // code → { key, result, savedAt }
 const leaveTimesCache = new Map(); // code → { key, result, savedAt }
 
 // OneMap sometimes answers 502/503 for a moment: wait and try once more.
@@ -61,6 +67,21 @@ async function routeWithRetry(member, station, date, time, isArrival = false) {
   return null;
 }
 
+// Members who pressed Confirm location (which needs a start point)
+function readyMembers(meetup) {
+  return meetup.members.filter((member) => member.ready && member.start);
+}
+
+// The saved ranking as the API sends it
+function toResponse(meetup, isOutdated) {
+  return {
+    ranking: meetup.ranking.ranking,
+    departure: meetup.ranking.departure,
+    rankedAt: meetup.rankedAt,
+    isOutdated,
+  };
+}
+
 // Changes whenever anything that affects the travel times changes
 function cacheKey(meetup, ready) {
   const starts = ready
@@ -69,25 +90,50 @@ function cacheKey(meetup, ready) {
   return `${meetup.date} ${meetup.time} ${starts}`;
 }
 
+// GET: the ranking the host last worked out. Nobody but the host can start a new calculation.
 exports.getRanking = async (req, res) => {
   try {
-    const meetup = await Meetup.findByCode(req.params.code);
+    const meetup = await Meetup.findRanking(req.params.code);
+    if (!meetup) {
+      return res.status(404).json({ error: 'Unknown code' });
+    }
+    if (!meetup.ranking) {
+      return res.status(404).json({ error: "The host hasn't worked out the fair meeting points yet" });
+    }
+
+    const isOutdated = meetup.ranking.key !== cacheKey(meetup, readyMembers(meetup));
+    res.json(toResponse(meetup, isOutdated));
+  } catch (error) {
+    console.error('Error getting ranking:', error.message);
+    res.status(500).json({ error: 'Server error' });
+  }
+};
+
+// POST: the host works out the fairest meeting points, and they are saved for everyone
+exports.calculateRanking = async (req, res) => {
+  try {
+    const meetup = await Meetup.findRanking(req.params.code);
     if (!meetup) {
       return res.status(404).json({ error: 'Unknown code' });
     }
 
-    const ready = meetup.members.filter((member) => member.start);
+    const host = meetup.members[0];
+    if (!host || host.userId !== String(req.user._id)) {
+      return res.status(403).json({ error: 'Only the host can work out the fair meeting points' });
+    }
+
+    const ready = readyMembers(meetup);
     if (ready.length < 2) {
-      return res.status(400).json({ error: 'At least 2 members need a start point' });
+      return res.status(400).json({ error: 'At least 2 members need to confirm their location' });
     }
     if (!meetup.finalStation && ready.length < meetup.members.length) {
-      return res.status(400).json({ error: 'Every member needs a start point first' });
+      return res.status(400).json({ error: 'Every member needs to confirm their location first' });
     }
 
     const key = cacheKey(meetup, ready);
-    const cached = cache.get(meetup.code);
-    if (cached && cached.key === key && Date.now() - cached.savedAt < CACHE_MS) {
-      return res.json(cached.result);
+    const saved = meetup.ranking;
+    if (saved && saved.key === key && Date.now() - meetup.rankedAt.getTime() < CACHE_MS) {
+      return res.json(toResponse(meetup, false));
     }
 
     const stations = await Station.find().lean();
@@ -127,11 +173,11 @@ exports.getRanking = async (req, res) => {
       return res.status(502).json({ error: 'No routes found. Please try again later.' });
     }
 
-    const result = { ranking: rankCandidates(candidates).slice(0, RESULTS_SHOWN), departure };
-    cache.set(meetup.code, { key, result, savedAt: Date.now() });
-    res.json(result);
+    const ranking = rankCandidates(candidates).slice(0, RESULTS_SHOWN);
+    const updated = await Meetup.saveRanking(meetup.code, { key, ranking, departure });
+    res.json({ ranking, departure, rankedAt: updated.rankedAt, isOutdated: false });
   } catch (error) {
-    console.error('Error getting ranking:', error.message);
+    console.error('Error working out ranking:', error.message);
     res.status(502).json({ error: 'Could not get travel times from OneMap. Please try again.' });
   }
 };

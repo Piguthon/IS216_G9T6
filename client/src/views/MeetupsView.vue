@@ -1,11 +1,12 @@
 <!--
   FILE:     src/views/MeetupsView.vue
   OWNER:    JS (team-written)
-  PURPOSE:  The logged-in user's meetups, in Current and Past tabs
+  PURPOSE:  The logged-in user's meetups, in Current and Past tabs, and their notices (e.g. a
+            meetup deleted because everyone else left), which they can dismiss
   ROUTE:    /meetups (log in required)
-  TALKS TO: GET /api/meetups/mine
+  TALKS TO: GET /api/meetups/mine, DELETE /api/meetups/notices/:id
   POLLING:  the list refreshes every 5 seconds while this page is open (decided: no WebSockets)
-  DATA:    { current: [ Item ], past: [ Item ] }
+  DATA:    { current: [ Item ], past: [ Item ], notices: [ { _id, message, createdAt } ] }
             Item { code, occasion, date, time, hostName, memberCount, myMemberId, isHost,
                    finalStation, finalVenue }
 -->
@@ -25,6 +26,7 @@ let refreshTimer = null
 
 const current = ref([])
 const past = ref([])
+const notices = ref([])
 const activeTab = ref('current')
 const isLoading = ref(true)
 const errorMessage = ref('')
@@ -42,6 +44,7 @@ async function fetchMeetups() {
   })
   current.value = response.data.current
   past.value = response.data.past
+  notices.value = response.data.notices || []
   // The lobby finds "me" in localStorage, so this also works on a new device
   for (const meetup of [...current.value, ...past.value]) {
     localStorage.setItem(`fairspot-member-${meetup.code}`, meetup.myMemberId)
@@ -77,6 +80,17 @@ async function refreshMeetups() {
   }
 }
 
+async function dismissNotice(notice) {
+  notices.value = notices.value.filter((n) => n._id !== notice._id)
+  try {
+    await axios.delete(`${BASE_URL}/meetups/notices/${notice._id}`, {
+      headers: { Authorization: `Bearer ${auth.token}` },
+    })
+  } catch {
+    // it comes back on the next refresh, and can be dismissed again
+  }
+}
+
 // Past meetups with a confirmed meeting point open their summary; everything else, the lobby
 function meetupLink(meetup) {
   if (activeTab.value === 'past' && meetup.finalStation) {
@@ -106,6 +120,24 @@ onUnmounted(() => {
       <header class="app-page-header">
         <h1 class="app-heading mb-0">My Meetups</h1>
       </header>
+
+      <!-- Notices, e.g. a meetup that was deleted because everyone else left -->
+      <div
+        v-for="notice in notices"
+        :key="notice._id"
+        class="alert alert-warning alert-dismissible"
+        role="alert"
+        data-testid="meetups-notice"
+      >
+        {{ notice.message }}
+        <button
+          type="button"
+          class="btn-close"
+          aria-label="Dismiss"
+          @click="dismissNotice(notice)"
+          data-testid="meetups-notice-dismiss"
+        ></button>
+      </div>
 
       <div v-if="isLoading" class="text-center my-5" data-testid="meetups-loading">
         <div class="spinner-border" role="status">

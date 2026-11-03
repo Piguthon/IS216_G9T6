@@ -2,24 +2,34 @@
   FILE:     src/views/MeetupLobbyView.vue
   OWNER:    reference flow, team-written (built first; the rest of the team copies this pattern).
   PURPOSE:  Meetup home: details, share code, member list; each member sets their start point
-            and how they're getting there, and the host can remove members
+            and how they're getting there, then confirms their location. Only the host works out
+            the fair meeting points; members then get a link to vote on them. The host can
+            remove members. Once the host works them out, nobody can join and locations are locked:
+            members can only leave, and the host is told who left so they can recalculate
   ROUTE:    /meetup/:code
   TALKS TO: GET /api/meetups/:code, PUT /api/meetups/:code/members/:memberId,
             PUT /api/meetups/:code/members/:memberId/mode,
+            PUT /api/meetups/:code/members/:memberId/ready (Confirm location),
+            POST /api/ranking/:code (the host recalculates after someone leaves),
             DELETE /api/meetups/:code/members/:memberId/remove (host, logged in)
             uses AddressSearch, MemberList, TravelModePicker
   POLLING:  the meetup refreshes every 5 seconds while this page is open (decided: no WebSockets)
   DATA:     Meetup { code, hostName, occasion, date "YYYY-MM-DD", time "HH:MM",
                      members: [ { _id, name, start: { label, postal, lat, lng } | null,
-                                  travelMode: 'transit' | 'car' } ] }
-            sends { start: { label, postal, lat, lng } } or { travelMode }
+                                  travelMode: 'transit' | 'car', ready } ],
+                     rankedAt (when the host last worked out the fair meeting points, or null),
+                     leftSinceRanking [ name ] (who left since) }
+            sends { start: { label, postal, lat, lng } }, { travelMode } or { ready }
   REVISE:   Wk 4 route params · Wk 5 onMounted + Axios GET/PUT · Wk 6 props, emits, localStorage
   DONE WHEN:
     - [ ] details + code shown
     - [ ] members with start status
     - [ ] "you" can set or change your start
     - [ ] "you" can choose public transport (the default) or car
-    - [ ] button to results once every member (at least 2) has a start
+    - [ ] "you" confirm your location once your start and travel mode are set
+    - [ ] the host's button to results once every member (at least 2) has confirmed
+    - [ ] members' button to vote once the host has worked out the results
+    - [ ] after that, no joining or location changes; the host sees who left and can recalculate
     - [ ] the host can remove a member who is holding up the group
     - [ ] responsive
     - [ ] testids
@@ -100,7 +110,12 @@ async function refreshMeetup() {
     errorMessage.value = ''
   } catch (error) {
     if (error.response && error.response.status === 404) {
-      clearInterval(refreshTimer) // the host deleted it
+      clearInterval(refreshTimer) // the host deleted it, or everyone else left
+      // The host is told why on their My Meetups page
+      if (isHost.value && auth.isLoggedIn) {
+        router.push('/meetups')
+        return
+      }
       errorMessage.value = `No meetup with code ${code} was found.`
     }
   }
@@ -137,21 +152,45 @@ const isMember = computed(() => {
 const hostId = computed(() => meetup.value?.members?.[0]?._id)
 const isHost = computed(() => isMember.value && myMemberId.value === hostId.value)
 
-// The ranking needs every member's start point, at least 2 of them, until a point is confirmed
-const canSeeResults = computed(() => {
+// Only the host works out the fair meeting points: once every member (at least 2) has confirmed
+// their location, or, after a point is confirmed, with whoever has
+const canCalculate = computed(() => {
   if (!meetup.value || !meetup.value.members) return false
-  if (meetup.value.finalStation) return true
   const { members } = meetup.value
-  return members.length >= 2 && members.every((m) => m.start !== null)
+  const confirmed = members.filter((m) => m.ready)
+  if (meetup.value.finalStation) return confirmed.length >= 2
+  return members.length >= 2 && confirmed.length === members.length
 })
 
-// After a point is confirmed, anyone who joins later is left out of the results
+// Once the host has worked out the fair meeting points, nobody can join and locations are locked
+const isLocked = computed(() => Boolean(meetup.value && meetup.value.rankedAt))
+
+// Who left after the host worked out the fair meeting points, e.g. "Wei Jie and Marcus"
+const leftNames = computed(() => {
+  const names = (meetup.value && meetup.value.leftSinceRanking) || []
+  if (names.length <= 1) return names.join('')
+  return `${names.slice(0, -1).join(', ')} and ${names[names.length - 1]}`
+})
+
+// Members can vote once the host has worked out the fair meeting points
+const canVote = computed(() => isMember.value && !isHost.value && meetup.value.rankedAt !== null)
+
 const startWarning = computed(() => {
-  if (!meetup.value || !meetup.value.members) return ''
-  if (meetup.value.members.length < 2) return 'Results open once someone else joins.'
-  if (!canSeeResults.value) return 'Results open once everyone has a start point.'
-  const isWaiting = meetup.value.members.some((m) => m.start === null)
-  return isWaiting ? 'Results leave out anyone without a start point.' : ''
+  if (!meetup.value || !meetup.value.members || !isMember.value) return ''
+  const { members } = meetup.value
+  if (members.length < 2) return 'Results open once someone else joins.'
+  if (isHost.value) {
+    if (!canCalculate.value) {
+      return 'You can work out the fair meeting points once everyone has confirmed their location.'
+    }
+    // After a point is confirmed, anyone who joins later is left out of the results
+    const isWaiting = members.some((m) => !m.ready)
+    return isWaiting ? "Results leave out anyone who hasn't confirmed their location." : ''
+  }
+  if (!meetup.value.rankedAt) {
+    return 'The host will work out the fair meeting points once everyone has confirmed their location.'
+  }
+  return ''
 })
 //Set start point
 const copyLabel = ref('Copy code')
@@ -170,6 +209,13 @@ const myStart = computed(() => {
   if (!meetup.value) return null
   const me = meetup.value.members.find((member) => member._id === myMemberId.value)
   return me ? me.start : null
+})
+
+// Whether this member has pressed Confirm location (changing the start or mode undoes it)
+const myReady = computed(() => {
+  if (!meetup.value) return false
+  const me = meetup.value.members.find((member) => member._id === myMemberId.value)
+  return me ? me.ready : false
 })
 
 // This member's travel mode: public transport unless they choose otherwise
@@ -200,6 +246,35 @@ async function handleSetStart(startPoint) {
   } catch (err) {
     actionError.value = getErrorText(err, 'Failed to set start point.')
   }
+}
+async function handleConfirmLocation() {
+  actionError.value = ''
+  try {
+    await axios.put(`${BASE_URL}/meetups/${code}/members/${myMemberId.value}/ready`, {
+      ready: true,
+    })
+    await refreshMeetup()
+  } catch (err) {
+    actionError.value = getErrorText(err, 'Failed to confirm your location.')
+  }
+}
+// The host works the fair meeting points out again without whoever left, then opens them
+const isRecalculating = ref(false)
+
+async function handleRecalculate() {
+  actionError.value = ''
+  isRecalculating.value = true
+  try {
+    await axios.post(
+      `${BASE_URL}/ranking/${code}`,
+      {},
+      { headers: { Authorization: `Bearer ${auth.token}` } },
+    )
+    router.push(`/meetup/${code}/results`)
+  } catch (err) {
+    actionError.value = getErrorText(err, 'Failed to recalculate the fair meeting points.')
+  }
+  isRecalculating.value = false
 }
 //Host tools (edit)
 async function handleEdit(details) {
@@ -284,6 +359,25 @@ async function handleLeave() {
 
     <!-- Meetup Content -->
     <div v-else-if="meetup">
+      <!-- Tells the host who left after the fair meeting points were worked out -->
+      <div
+        v-if="isHost && leftNames"
+        class="alert alert-warning d-flex flex-wrap justify-content-between align-items-center gap-2"
+        data-testid="lobby-left-notice"
+      >
+        <p class="mb-0">
+          {{ leftNames }} left the meetup after you worked out the fair meeting points.
+        </p>
+        <button
+          type="button"
+          class="app-btn btn-sign app-btn-sm"
+          :disabled="isRecalculating"
+          @click="handleRecalculate"
+          data-testid="lobby-recalculate"
+        >
+          {{ isRecalculating ? 'Recalculating… this can take a minute' : 'Recalculate' }}
+        </button>
+      </div>
       <div
         v-if="actionError"
         class="alert alert-danger alert-dismissible"
@@ -345,20 +439,37 @@ async function handleLeave() {
           <div v-if="isMember" class="card app-card" data-testid="lobby-set-start">
             <div class="card-body">
               <h3 class="mb-3">Your start point</h3>
-              <SavedStartPointPicker
-                v-if="auth.isLoggedIn"
-                :key="auth.token"
-                :current-start="myStart"
-                @select="handleSetStart"
-              >
-                <AddressSearch @select="handleSetStart" />
-              </SavedStartPointPicker>
-              <AddressSearch v-else @select="handleSetStart" />
-              <h3 class="mt-4 mb-3">How you're getting there</h3>
-              <TravelModePicker :current-mode="myMode" @select="handleSetMode" />
-              <p v-if="myMode === 'car'" class="small text-muted mt-2 mb-0">
-                Your trip times include 10 minutes to park, but not traffic.
-              </p>
+              <!-- Locked once the host has worked out the fair meeting points -->
+              <template v-if="isLocked">
+                <p class="mb-0" data-testid="lobby-locked-start">
+                  {{ myStart ? myStart.label : 'No start point' }}
+                </p>
+                <h3 class="mt-4 mb-3">How you're getting there</h3>
+                <p class="mb-0">{{ myMode === 'car' ? 'Car' : 'Public transport' }}</p>
+                <p v-if="isHost" class="small text-muted mt-3 mb-0">
+                  Locked because you have worked out the fair meeting points.
+                </p>
+                <p v-else class="small text-muted mt-3 mb-0">
+                  Locked because the host has worked out the fair meeting points. You can still
+                  leave the meetup.
+                </p>
+              </template>
+              <template v-else>
+                <SavedStartPointPicker
+                  v-if="auth.isLoggedIn"
+                  :key="auth.token"
+                  :current-start="myStart"
+                  @select="handleSetStart"
+                >
+                  <AddressSearch @select="handleSetStart" />
+                </SavedStartPointPicker>
+                <AddressSearch v-else @select="handleSetStart" />
+                <h3 class="mt-4 mb-3">How you're getting there</h3>
+                <TravelModePicker :current-mode="myMode" @select="handleSetMode" />
+                <p v-if="myMode === 'car'" class="small text-muted mt-2 mb-0">
+                  Your trip times include 10 minutes to park, but not traffic.
+                </p>
+              </template>
             </div>
           </div>
         </div>
@@ -405,17 +516,49 @@ async function handleLeave() {
             </div>
           </div>
 
-          <!-- "See fair meeting points" link -->
+          <!-- Confirm location: tells the host this member's start and travel mode are final -->
+          <div v-if="isMember" class="mb-3">
+            <p v-if="myReady" class="alert alert-success mb-0" data-testid="lobby-confirmed">
+              Location confirmed.
+              <template v-if="!isLocked">
+                Changing your start point or travel mode undoes this.
+              </template>
+            </p>
+            <button
+              v-else-if="!isLocked"
+              type="button"
+              class="app-btn btn-sign w-100"
+              :disabled="!myStart"
+              @click="handleConfirmLocation"
+              data-testid="lobby-confirm-location"
+            >
+              Confirm location
+            </button>
+            <p v-if="!myStart && !isLocked" class="small text-muted mt-2 mb-0">
+              Choose a start point first.
+            </p>
+          </div>
+
+          <!-- The host's "See fair meeting points" works them out; members then open them to vote -->
           <div v-if="startWarning" class="alert alert-warning" data-testid="lobby-start-warning">
             {{ startWarning }}
           </div>
-          <div v-if="canSeeResults" class="mb-3">
+          <div v-if="isHost && canCalculate" class="mb-3">
             <router-link
               :to="`/meetup/${code}/results`"
               class="app-btn app-btn-lg btn-sign w-100"
               data-testid="lobby-results-link"
             >
               See fair meeting points
+            </router-link>
+          </div>
+          <div v-else-if="canVote" class="mb-3">
+            <router-link
+              :to="`/meetup/${code}/results`"
+              class="app-btn app-btn-lg btn-sign w-100"
+              data-testid="lobby-vote-link"
+            >
+              {{ meetup.finalStation ? 'View meeting points' : 'Vote on meeting points' }}
             </router-link>
           </div>
 
@@ -443,7 +586,11 @@ async function handleLeave() {
           </div>
 
           <!-- TODO 9: Join meetup link -->
-          <div v-if="!isMember" class="text-center">
+          <p v-if="!isMember && isLocked" class="alert alert-secondary" data-testid="lobby-closed">
+            This meetup is closed to new members because the host has worked out the fair meeting
+            points.
+          </p>
+          <div v-else-if="!isMember" class="text-center">
             <router-link
               to="/join"
               class="app-btn app-btn-lg btn-sign w-100"

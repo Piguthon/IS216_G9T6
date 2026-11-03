@@ -5,7 +5,8 @@
              status codes (201 created, 400 bad input, 404 unknown code)
   FUNCTIONS: createMeetup (body { hostName, occasion, date, time } → 201 Meetup)
              getMeetup (:code → Meetup)
-             joinMeetup (body { name } → 201 { _id, name, start: null })
+             joinMeetup (body { name } → 201 { _id, name, start: null }, or 200 with the existing
+                         member when a logged-in user or a guest with the same name rejoins)
              setStart (body { start: { label, postal, lat, lng } } → updated member)
   DATA:      Meetup { code, hostName, occasion, date "YYYY-MM-DD", time "HH:MM",
                       members: [ { _id, name, start: { label, postal, lat, lng } | null } ] }
@@ -25,6 +26,7 @@
 const Meetup = require('../models/meetup-model');
 const Vote = require('../models/vote-model');
 const Location = require('../models/location-model');
+const Notice = require('../models/notice-model');
 const {getUniqueCode} = require('../utils/generate-code');
 const { isAllowedMeetupDate, todayInSingapore } = require('../utils/meetup-date');
 
@@ -85,7 +87,22 @@ exports.getMeetup = async (req,res) => {
         res.status(500).json({ error: "Server error" });
     }
 };
-// getMyMeetups (GET /mine): the logged-in user's meetups, split into current and past.
+// dismissNotice (DELETE /notices/:id): the logged-in user closes one of their notices
+exports.dismissNotice = async (req, res) => {
+    try {
+        const notice = await Notice.deleteForUser(req.params.id, String(req.user._id));
+        if (!notice) {
+            return res.status(404).json({ error: "Notice not found" });
+        }
+        res.status(200).json({ message: "Notice dismissed" });
+    } catch (error) {
+        console.error('Error dismissing notice:', error);
+        res.status(500).json({ error: "Server error" });
+    }
+};
+
+// getMyMeetups (GET /mine): the logged-in user's meetups, split into current and past, plus
+// their notices (e.g. a meetup that was deleted because everyone else left).
 // A meetup stays current through its whole day in Singapore. Only list details are sent,
 // not other members' start points.
 exports.getMyMeetups = async (req, res) => {
@@ -113,11 +130,16 @@ exports.getMyMeetups = async (req, res) => {
             if (meetup.date >= today) current.push(item);
             else past.push(item);
         }
+        const notices = (await Notice.findByUser(userId)).map(notice => ({
+            _id: String(notice._id),
+            message: notice.message,
+            createdAt: notice.createdAt,
+        }));
 
         const when = (meetup) => `${meetup.date} ${meetup.time}`;
         current.sort((a, b) => when(a).localeCompare(when(b))); // soonest first
         past.sort((a, b) => when(b).localeCompare(when(a))); // most recent first
-        res.json({ current, past });
+        res.json({ current, past, notices });
     } catch (error) {
         console.error('Error getting my meetups:', error);
         res.status(500).json({ error: "Server error" });
@@ -143,6 +165,17 @@ exports.joinMeetup = async (req,res) => {
         if (userId) {
             const existing = check.members.find(member => member.userId === userId);
             if (existing) return res.status(200).json(existing);
+        } else {
+            // A guest who closed the tab gets back in with the same code and name (any capitals),
+            // even after the meetup has closed to new members
+            const sameName = name.trim().toLowerCase();
+            const existing = check.members.find(member =>
+                !member.userId && member.name.toLowerCase() === sameName);
+            if (existing) return res.status(200).json(existing);
+        }
+        // Closed once the host has worked out the fair meeting points
+        if (check.rankedAt) {
+            return res.status(403).json({ error: "This meetup is closed to new members because the host has worked out the fair meeting points." });
         }
         let result = await Meetup.addMember(code,name,userId);
         res.status(201).json(result);
@@ -172,6 +205,9 @@ exports.setStart = async (req, res) => {
             if (error.message === 'Meetup not found' || error.message === 'Member not found') {
                 return res.status(404).json({ error: error.message });
             }
+            if (error.message === 'Locked') {
+                return res.status(403).json({ error: "Locations are locked because the host has worked out the fair meeting points. You can still leave the meetup." });
+            }
             throw error; // Let the outer catch handle unexpected errors
         }
     } catch (error) {
@@ -199,10 +235,46 @@ exports.setTravelMode = async (req, res) => {
             if (error.message === 'Meetup not found' || error.message === 'Member not found') {
                 return res.status(404).json({ error: error.message });
             }
+            if (error.message === 'Locked') {
+                return res.status(403).json({ error: "Locations are locked because the host has worked out the fair meeting points. You can still leave the meetup." });
+            }
             throw error; // Let the outer catch handle unexpected errors
         }
     } catch (error) {
         console.error("Error setting travel mode:", error);
+        res.status(500).json({ error: "Server error" });
+    }
+};
+
+// setReady (PUT /:code/members/:memberId/ready): "Confirm location", or undo it with ready false
+exports.setReady = async (req, res) => {
+    try {
+        const code = req.params.code;
+        const memberId = req.params.memberId;
+        const { ready } = req.body;
+
+        // Validation
+        if (typeof ready !== 'boolean') {
+            return res.status(400).json({ error: "Ready must be true or false." });
+        }
+
+        try {
+            const updatedMember = await Meetup.setMemberReady(code, memberId, ready);
+            res.status(200).json(updatedMember);
+        } catch (error) {
+            if (error.message === 'Meetup not found' || error.message === 'Member not found') {
+                return res.status(404).json({ error: error.message });
+            }
+            if (error.message === 'Locked') {
+                return res.status(403).json({ error: "Locations are locked because the host has worked out the fair meeting points. You can still leave the meetup." });
+            }
+            if (error.message === 'Set a start point first') {
+                return res.status(400).json({ error: error.message });
+            }
+            throw error; // Let the outer catch handle unexpected errors
+        }
+    } catch (error) {
+        console.error("Error confirming location:", error);
         res.status(500).json({ error: "Server error" });
     }
 };
@@ -286,9 +358,32 @@ exports.leaveMeetup = async (req, res) => {
             return res.status(400).json({ error: "The host must delete the meetup instead" });
         }
 
+        const leaver = meetup.members.id(memberId);
         await Meetup.removeMember(code, memberId);
         await Vote.deleteByMember(code, memberId);
         await Location.deleteOne(code, memberId);
+
+        // Once the fair meeting points are worked out nobody new can join, so if only the host is
+        // left the meetup is over: delete it and tell the host on their My Meetups page
+        const host = meetup.members[0];
+        if (leaver && meetup.rankedAt && meetup.members.length - 1 === 1) {
+            await Meetup.deleteByCode(code);
+            await Vote.deleteByCode(code);
+            await Location.deleteByCode(code);
+            if (host.userId) {
+                const date = meetup.date.split('-').reverse().join('-');   // "06-11-2026"
+                await Notice.createNotice(
+                    host.userId,
+                    `${meetup.occasion} on ${date} was deleted because ${leaver.name} left and you were the only one left.`
+                );
+            }
+            return res.status(200).json({ message: "Left meetup successfully", meetupDeleted: true });
+        }
+
+        // Tell the host, so they can recalculate without this member
+        if (leaver && meetup.rankedAt) {
+            await Meetup.noteLeaver(code, leaver.name);
+        }
         res.status(200).json({ message: "Left meetup successfully" });
 
     } catch (error) {

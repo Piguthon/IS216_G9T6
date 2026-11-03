@@ -4,12 +4,14 @@
   PURPOSE:  A friend joins with the meetup code and their name (no account needed)
   ROUTE:    /join
   TALKS TO: GET /api/meetups/:code, POST /api/meetups/:code/members
-  DATA:     sends { name } → receives { _id, name, start: null }
+  DATA:     sends { name } → receives { _id, name, start: null }; a guest who uses the same
+            name again gets their existing member back
             this member's _id is remembered in localStorage so the lobby knows who "you" are
   REVISE:   Wk 5 Axios GET/POST · Wk 6 localStorage
   DONE WHEN:
     - [ ] unknown-code message
     - [ ] successful join goes to /meetup/:code
+    - [ ] a guest who closed the tab gets back in with the same code and name
     - [ ] responsive
     - [ ] testids
 -->
@@ -121,7 +123,11 @@ async function joinMeetup() {
                 v-model.trim="name"
                 data-testid="join-name"
                 placeholder="What should we call you?"
+                aria-describedby="name-help"
               />
+              <p id="name-help" class="form-text mb-0">
+                Closed the tab? Join again with the same code and name to get back in.
+              </p>
             </div>
             <div v-if="errorMessage" class="alert alert-danger" data-testid="join-error">
               {{ errorMessage }}
