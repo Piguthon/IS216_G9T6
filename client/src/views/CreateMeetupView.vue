@@ -1,10 +1,12 @@
 <!--
   FILE:     src/views/CreateMeetupView.vue
   OWNER:    reference flow, team-written (built first; the rest of the team copies this pattern).
-  PURPOSE:  Host creates a meetup and gets a shareable code
+  PURPOSE:  Host creates a meetup and gets a shareable code. They can also tick people they often
+            meet, who are added to the meetup straight away (anyone else joins with the code).
   ROUTE:    /create
-  TALKS TO: POST /api/meetups
-  DATA:     sends { hostName, occasion, date, time } → receives Meetup
+  TALKS TO: GET /api/meetups/frequent, POST /api/meetups
+  DATA:     GET /frequent → [ { userId, name, count } ] (count = meetups shared with me)
+            sends { occasion, date, time, memberUserIds: [ userId ] } → receives Meetup
             Meetup { code, hostName, occasion, date "YYYY-MM-DD", time "HH:MM",
                      members: [ { _id, name, start: { label, postal, lat, lng } | null } ] }
   REVISE:   Wk 4 v-model, useRouter().push · Wk 5 Axios POST, async/await, try/catch, v-model modifiers
@@ -12,6 +14,7 @@
     - [ ] required fields validated with a message
     - [ ] success shows the code and a "Go to meetup" button to /meetup/:code
     - [ ] error message on failure
+    - [ ] "Add people you often meet" lists them most frequent first, and is hidden when empty
     - [ ] responsive
     - [ ] testids on inputs, buttons, result
 -->
@@ -21,7 +24,7 @@
 
 // TODO 1: Imports: ref from vue, axios, BASE_URL from ../config.js, useRouter.
 //         Example: Week 6/Code_Along/client/src/App.vue (TODOs 1-2)
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import axios from 'axios'
 import { BASE_URL } from '../config'
 import { useRouter } from 'vue-router'
@@ -40,7 +43,37 @@ const errorMessage = ref('')
 const meetup = ref(null)
 const isSaving = ref(false)
 const copyLabel = ref('Copy code')
+const frequentPeople = ref([]) // [ { userId, name, count } ], most shared meetups first
+const pickedIds = ref([]) // the userIds ticked under "Add people you often meet"
 const previewOccasion = computed(() => occasion.value || '[Occasion]')
+
+// The people added straight away: everyone after the host
+const addedNames = computed(() => {
+  if (!meetup.value) return ''
+  return meetup.value.members
+    .slice(1)
+    .map((member) => member.name)
+    .join(', ')
+})
+
+// The accounts I've shared the most meetups with. If this fails the section just stays hidden,
+// and creating a meetup still works.
+async function loadFrequentPeople() {
+  try {
+    const response = await axios.get(`${BASE_URL}/meetups/frequent`, {
+      headers: { Authorization: `Bearer ${auth.token}` },
+    })
+    frequentPeople.value = response.data
+  } catch {
+    frequentPeople.value = []
+  }
+}
+
+function sharedLabel(count) {
+  return count === 1 ? '1 meetup together' : `${count} meetups together`
+}
+
+onMounted(loadFrequentPeople)
 // TODO 3: async function createMeetup()
 //           - show a message if a required field is empty
 //           - otherwise axios.post to ${BASE_URL}/meetups with the four fields, inside try/catch
@@ -72,6 +105,7 @@ async function createMeetup() {
         occasion: occasion.value,
         date: date.value,
         time: time.value,
+        memberUserIds: pickedIds.value,
       },
       { headers: { Authorization: `Bearer ${auth.token}` } },
     )
@@ -163,6 +197,45 @@ async function copyCode() {
                 </div>
               </div>
 
+              <!-- People I've shared meetups with: anyone ticked is added straight away -->
+              <fieldset
+                v-if="frequentPeople.length > 0"
+                class="mb-3"
+                data-testid="create-frequent-list"
+              >
+                <legend class="form-label fw-bold fs-6 mb-1">Add people you often meet</legend>
+                <p class="small text-muted mb-2">
+                  They're added straight away and get a notice in My Meetups. Anyone else can still
+                  join with the code.
+                </p>
+                <div class="row row-cols-1 row-cols-sm-2 g-2">
+                  <div
+                    v-for="person in frequentPeople"
+                    :key="person.userId"
+                    class="col"
+                    data-testid="create-frequent-person"
+                  >
+                    <div class="form-check mb-0">
+                      <input
+                        :id="`frequent-${person.userId}`"
+                        v-model="pickedIds"
+                        type="checkbox"
+                        :value="person.userId"
+                        class="form-check-input app-check"
+                        :disabled="isSaving"
+                        data-testid="create-frequent-checkbox"
+                      />
+                      <label :for="`frequent-${person.userId}`" class="form-check-label text-break">
+                        <span class="fw-bold">{{ person.name }}</span>
+                        <span class="d-block small text-muted">{{
+                          sharedLabel(person.count)
+                        }}</span>
+                      </label>
+                    </div>
+                  </div>
+                </div>
+              </fieldset>
+
               <!-- TODO 6: Error alert (alert alert-danger) shown only when there is a message. -->
               <div v-if="errorMessage" class="alert alert-danger" data-testid="create-error">
                 {{ errorMessage }}
@@ -207,6 +280,9 @@ async function copyCode() {
                 >{{ meetup.occasion }}, {{ formatDate(meetup.date) }}, {{ meetup.time }}</span
               >
             </div>
+            <p v-if="addedNames" class="mb-4" data-testid="create-added">
+              Added {{ addedNames }}. They'll find it in My Meetups.
+            </p>
             <div class="d-flex flex-wrap gap-3">
               <button
                 type="button"

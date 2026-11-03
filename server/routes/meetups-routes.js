@@ -2,8 +2,9 @@
   FILE:      routes/meetups-routes.js
   OWNER:     reference flow, team-written (built first; the rest of the team copies this pattern).
   PURPOSE:   Express router for /api/meetups (mounted in server.js)
-  ENDPOINTS: POST /api/meetups (create)
+  ENDPOINTS: POST /api/meetups (create, optionally adding people from my frequent list)
              GET /api/meetups/mine (the logged-in user's current and past meetups, and notices)
+             GET /api/meetups/frequent (the accounts I've shared the most meetups with)
              DELETE /api/meetups/notices/:id (dismiss one of my notices)
              GET /api/meetups/:code (get one)
              POST /api/meetups/:code/members (join)
@@ -29,6 +30,7 @@ const { requireAuth } = require('../middleware/auth');
 //         then PUT /:code/members/:memberId later.
 router.post("/", requireAuth, meetupsController.createMeetup);
 router.get("/mine", requireAuth, meetupsController.getMyMeetups); // must stay above /:code
+router.get("/frequent", requireAuth, meetupsController.getFrequentPeople); // must stay above /:code
 router.delete("/notices/:id", requireAuth, meetupsController.dismissNotice);
 router.get("/:code", meetupsController.getMeetup);
 router.post("/:code/members", (req, res, next) => {

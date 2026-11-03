@@ -3,14 +3,18 @@
   OWNER:     reference flow, team-written (built first; the rest of the team copies this pattern).
   PURPOSE:   handles the meetup endpoints; validates input and returns JSON with proper
              status codes (201 created, 400 bad input, 404 unknown code)
-  FUNCTIONS: createMeetup (body { hostName, occasion, date, time } → 201 Meetup)
+  FUNCTIONS: createMeetup (body { occasion, date, time, memberUserIds? } → 201 Meetup; the host
+                           is the logged-in user, and each ticked frequent person is added
+                           after them and gets a notice)
+             getFrequentPeople (→ [ { userId, name, count } ], the accounts I meet most often)
              getMeetup (:code → Meetup)
              joinMeetup (body { name } → 201 { _id, name, start: null }, or 200 with the existing
                          member when a logged-in user or a guest with the same name rejoins)
              setStart (body { start: { label, postal, lat, lng } } → updated member)
   DATA:      Meetup { code, hostName, occasion, date "YYYY-MM-DD", time "HH:MM",
-                      members: [ { _id, name, start: { label, postal, lat, lng } | null } ] }
-  TALKS TO:  models/meetup-model.js
+                      members: [ { _id, userId | null, name, start: { label, postal, lat, lng } | null,
+                                   travelMode, ready } ] }
+  TALKS TO:  models/meetup-model.js, models/notice-model.js, models/user-model.js
   REVISE:    Wk 5 blogs-controller.js pattern (exports.fn = async (req, res) => {} with try/catch)
   DONE WHEN:
     - [ ] each endpoint works in Postman
@@ -27,8 +31,42 @@ const Meetup = require('../models/meetup-model');
 const Vote = require('../models/vote-model');
 const Location = require('../models/location-model');
 const Notice = require('../models/notice-model');
+const User = require('../models/user-model');
 const {getUniqueCode} = require('../utils/generate-code');
 const { isAllowedMeetupDate, todayInSingapore } = require('../utils/meetup-date');
+
+// How many people "Add people you often meet" lists on Create Meetup
+const FREQUENT_PEOPLE_SHOWN = 10;
+
+// findFrequentPeople(userId): the other accounts this user has shared meetups with, as
+// [ { userId, name, count } ], most shared meetups first (ties by name), at most 10.
+// count is meetups, not visits, so each meetup counts once per person. Guests are left out
+// because they have no account, and so are accounts that have since been deleted.
+async function findFrequentPeople(userId) {
+    const meetups = await Meetup.findByUser(userId);
+    const counts = {};   // userId → number of meetups shared with me
+
+    for (const meetup of meetups) {
+        const countedHere = [];
+        for (const member of meetup.members) {
+            const otherId = member.userId;
+            if (!otherId || otherId === userId || countedHere.includes(otherId)) continue;
+            countedHere.push(otherId);
+            counts[otherId] = (counts[otherId] || 0) + 1;
+        }
+    }
+    if (Object.keys(counts).length === 0) return [];
+
+    // Each person's current account name, in case they renamed it since
+    const users = await User.find({ _id: { $in: Object.keys(counts) } }).select('name');
+    const people = users.map(user => ({
+        userId: String(user._id),
+        name: user.name,
+        count: counts[String(user._id)],
+    }));
+    people.sort((a, b) => b.count - a.count || a.name.localeCompare(b.name));
+    return people.slice(0, FREQUENT_PEOPLE_SHOWN);
+}
 
 // TODO 2: Write every handler as exports.name = async (req, res) => { ... } with try/catch.
 //         In catch, log the error and reply 500 with JSON { error: "Server error" }.
@@ -41,30 +79,63 @@ const { isAllowedMeetupDate, todayInSingapore } = require('../utils/meetup-date'
 //           - creates a short, readable meetup code (e.g. 6 characters; your choice of how)
 //             and makes sure it isn't already used
 //           - saves the meetup with the host as its first member (suggested)
+//           - adds the people the host ticked (memberUserIds, optional) after the host, and
+//             sends each of them a notice
 //           - replies 201 with the saved meetup
 exports.createMeetup = async (req,res) => {
     try {
         const hostName = req.user.name;
+        const hostId = String(req.user._id);
         const occasion = req.body.occasion;
         const date = req.body.date;
         const time = req.body.time;
+        const memberUserIds = req.body.memberUserIds || [];
         if (!hostName || !occasion || !date || !time) {
             return res.status(400).json({ error: "Field cannot be empty" });
         }
         if (!isAllowedMeetupDate(date)) {
             return res.status(400).json({ error: 'Choose a valid date that is today or later (Singapore time).' });
         }
+        if (!Array.isArray(memberUserIds)) {
+            return res.status(400).json({ error: "memberUserIds must be a list of user ids." });
+        }
+
+        // Only people from the host's frequent list can be added, so a host can't add any account
+        // by its id. That list never has the host or a guest in it, and has each person once, so
+        // duplicate ids and the host's own id are ignored too.
+        let added = [];
+        if (memberUserIds.length > 0) {
+            const frequent = await findFrequentPeople(hostId);
+            added = frequent.filter(person => memberUserIds.includes(person.userId));
+        }
+
         const code = await getUniqueCode();
-        
+        const members = [{name : hostName, userId: hostId}];
+        for (const person of added) {
+            // They still choose their own start point and travel mode, then confirm their location
+            members.push({ name: person.name, userId: person.userId, start: null, travelMode: 'transit', ready: false });
+        }
+
         const meetup = {
             code : code,
             hostName : hostName,
             occasion : occasion,
             date : date,
             time : time,
-            members : [{name : hostName, userId: String(req.user._id)}]
+            members : members
         }
         let result = await Meetup.createMeetup(meetup);
+
+        // The meetup is already in each added person's My Meetups; this notice tells them why
+        try {
+            const shownDate = date.split('-').reverse().join('-');   // "06-11-2026"
+            for (const person of added) {
+                await Notice.createNotice(person.userId, `${hostName} added you to ${occasion} on ${shownDate}.`);
+            }
+        } catch (error) {
+            // The meetup and its members are saved, so still reply 201
+            console.error("Error sending added-you notices:", error);
+        }
         res.status(201).json(result);
 
     }catch(error) {
@@ -87,6 +158,18 @@ exports.getMeetup = async (req,res) => {
         res.status(500).json({ error: "Server error" });
     }
 };
+// getFrequentPeople (GET /frequent): the other accounts the logged-in user meets most often,
+// for "Add people you often meet" on Create Meetup → [ { userId, name, count } ]
+exports.getFrequentPeople = async (req, res) => {
+    try {
+        const people = await findFrequentPeople(String(req.user._id));
+        res.json(people);
+    } catch (error) {
+        console.error('Error getting frequent people:', error);
+        res.status(500).json({ error: "Server error" });
+    }
+};
+
 // dismissNotice (DELETE /notices/:id): the logged-in user closes one of their notices
 exports.dismissNotice = async (req, res) => {
     try {
