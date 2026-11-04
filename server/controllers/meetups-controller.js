@@ -7,14 +7,21 @@
                            is the logged-in user, and each ticked frequent person is added
                            after them and gets a notice)
              getFrequentPeople (→ [ { userId, name, count } ], the accounts I meet most often)
-             getMeetup (:code → Meetup)
-             joinMeetup (body { name } → 201 { _id, name, start: null }, or 200 with the existing
-                         member when a logged-in user or a guest with the same name rejoins)
+             getMeetup (:code → Meetup; start points' postal and lat/lng only for members)
+             joinMeetup (body { name } → 201 { _id, name, start: null, memberToken }, or 200 with
+                         the existing member when a logged-in user rejoins, or a guest rejoins
+                         with their X-Member-Token; a guest who reuses someone's name → 409)
+             setStart, setTravelMode, setReady, leaveMeetup (PUT/DELETE /:code/me): requireMember
+                         (middleware/member.js) has already worked out who req.member is
              setStart (body { start: { label, postal, lat, lng } } → updated member)
   DATA:      Meetup { code, hostName, occasion, date "YYYY-MM-DD", time "HH:MM",
                       members: [ { _id, userId | null, name, start: { label, postal, lat, lng } | null,
                                    travelMode, ready } ] }
-  TALKS TO:  models/meetup-model.js, models/notice-model.js, models/user-model.js
+  SECRETS:   memberToken is never sent back, except to the request that created that member
+             (createMeetup: the host's, joinMeetup: the new member's). Every reply with members
+             goes through toPublicMember / toPublicMeetup, which remove it.
+  TALKS TO:  models/meetup-model.js, models/notice-model.js, models/user-model.js,
+             middleware/member.js
   REVISE:    Wk 5 blogs-controller.js pattern (exports.fn = async (req, res) => {} with try/catch)
   DONE WHEN:
     - [ ] each endpoint works in Postman
@@ -34,6 +41,7 @@ const Notice = require('../models/notice-model');
 const User = require('../models/user-model');
 const {getUniqueCode} = require('../utils/generate-code');
 const { isAllowedMeetupDate, todayInSingapore } = require('../utils/meetup-date');
+const { findCaller } = require('../middleware/member');
 
 // How many people "Add people you often meet" lists on Create Meetup
 const FREQUENT_PEOPLE_SHOWN = 10;
@@ -66,6 +74,25 @@ async function findFrequentPeople(userId) {
     }));
     people.sort((a, b) => b.count - a.count || a.name.localeCompare(b.name));
     return people.slice(0, FREQUENT_PEOPLE_SHOWN);
+}
+
+// toPublicMember(member, withPlace): a member as the API sends it. memberToken is always
+// removed. Without withPlace the start point is only its label, so someone who just knows the
+// code can't see where members start from (members see each other's on the results map).
+function toPublicMember(member, withPlace) {
+    const shown = member.toObject();
+    delete shown.memberToken;
+    if (shown.start && !withPlace) {
+        shown.start = { label: shown.start.label };
+    }
+    return shown;
+}
+
+// toPublicMeetup(meetup, withPlace): the meetup with every member made public as above
+function toPublicMeetup(meetup, withPlace) {
+    const shown = meetup.toObject();
+    shown.members = meetup.members.map(member => toPublicMember(member, withPlace));
+    return shown;
 }
 
 // TODO 2: Write every handler as exports.name = async (req, res) => { ... } with try/catch.
@@ -136,7 +163,10 @@ exports.createMeetup = async (req,res) => {
             // The meetup and its members are saved, so still reply 201
             console.error("Error sending added-you notices:", error);
         }
-        res.status(201).json(result);
+        // The host's secret is sent this once; the people added are logged in, so they don't need one
+        const shown = toPublicMeetup(result, true);
+        shown.memberToken = result.members[0].memberToken;
+        res.status(201).json(shown);
 
     }catch(error) {
         console.error("Error creating meetup:",error)
@@ -152,7 +182,15 @@ exports.getMeetup = async (req,res) => {
         if (!result) {
             return res.status(404).json({ error: "Unknown code" });
         }
-        res.json(result);
+        // Members (by session or X-Member-Token) also get the start points' postal and lat/lng.
+        // A bad credential isn't an error here: they just get what everyone else gets.
+        let caller = null;
+        try {
+            caller = await findCaller(req, result);
+        } catch (error) {
+            if (error.message !== 'Invalid session') throw error;
+        }
+        res.json(toPublicMeetup(result, Boolean(caller)));
     }catch(error) {
         console.error('Error retrieving meetup: ',error)
         res.status(500).json({ error: "Server error" });
@@ -247,32 +285,42 @@ exports.joinMeetup = async (req,res) => {
         }
         if (userId) {
             const existing = check.members.find(member => member.userId === userId);
-            if (existing) return res.status(200).json(existing);
+            if (existing) return res.status(200).json(toPublicMember(existing, true));
         } else {
             // A guest who closed the tab gets back in with the same code and name (any capitals),
-            // even after the meetup has closed to new members
+            // even after the meetup has closed to new members, but only from a browser that still
+            // has their X-Member-Token. Otherwise anyone could take over a guest by typing their name.
             const sameName = name.trim().toLowerCase();
             const existing = check.members.find(member =>
                 !member.userId && member.name.toLowerCase() === sameName);
-            if (existing) return res.status(200).json(existing);
+            if (existing) {
+                const memberToken = req.get('X-Member-Token') || '';
+                if (memberToken && memberToken === existing.memberToken) {
+                    return res.status(200).json(toPublicMember(existing, true));
+                }
+                return res.status(409).json({ error: "Someone in this meetup already uses that name. Choose another name." });
+            }
         }
         // Closed once the host has worked out the fair meeting points
         if (check.rankedAt) {
             return res.status(403).json({ error: "This meetup is closed to new members because the host has worked out the fair meeting points." });
         }
         let result = await Meetup.addMember(code,name,userId);
-        res.status(201).json(result);
+        // The new member's secret is sent this once, so this browser can prove who they are
+        const shown = toPublicMember(result, true);
+        shown.memberToken = result.memberToken;
+        res.status(201).json(shown);
     }catch(error) {
         console.error('Error joining meetup: ',error);
         res.status(500).json({ error: "Server error" });
     }
 };
 
-// setStart (PUT /:code/members/:memberId)
+// setStart (PUT /:code/me)
 exports.setStart = async (req, res) => {
     try {
         const code = req.params.code;
-        const memberId = req.params.memberId;
+        const memberId = String(req.member._id);
         const { start } = req.body;
 
         // Validation
@@ -282,7 +330,7 @@ exports.setStart = async (req, res) => {
 
         try {
             const updatedMember = await Meetup.setMemberStart(code, memberId, start);
-            res.status(200).json(updatedMember);
+            res.status(200).json(toPublicMember(updatedMember, true));
         } catch (error) {
             // Check if the error was thrown by our model for missing data
             if (error.message === 'Meetup not found' || error.message === 'Member not found') {
@@ -299,11 +347,11 @@ exports.setStart = async (req, res) => {
     }
 };
 
-// setTravelMode (PUT /:code/members/:memberId/mode)
+// setTravelMode (PUT /:code/me/mode)
 exports.setTravelMode = async (req, res) => {
     try {
         const code = req.params.code;
-        const memberId = req.params.memberId;
+        const memberId = String(req.member._id);
         const { travelMode } = req.body;
 
         // Validation
@@ -313,7 +361,7 @@ exports.setTravelMode = async (req, res) => {
 
         try {
             const updatedMember = await Meetup.setMemberMode(code, memberId, travelMode);
-            res.status(200).json(updatedMember);
+            res.status(200).json(toPublicMember(updatedMember, true));
         } catch (error) {
             if (error.message === 'Meetup not found' || error.message === 'Member not found') {
                 return res.status(404).json({ error: error.message });
@@ -329,11 +377,11 @@ exports.setTravelMode = async (req, res) => {
     }
 };
 
-// setReady (PUT /:code/members/:memberId/ready): "Confirm location", or undo it with ready false
+// setReady (PUT /:code/me/ready): "Confirm location", or undo it with ready false
 exports.setReady = async (req, res) => {
     try {
         const code = req.params.code;
-        const memberId = req.params.memberId;
+        const memberId = String(req.member._id);
         const { ready } = req.body;
 
         // Validation
@@ -343,7 +391,7 @@ exports.setReady = async (req, res) => {
 
         try {
             const updatedMember = await Meetup.setMemberReady(code, memberId, ready);
-            res.status(200).json(updatedMember);
+            res.status(200).json(toPublicMember(updatedMember, true));
         } catch (error) {
             if (error.message === 'Meetup not found' || error.message === 'Member not found') {
                 return res.status(404).json({ error: error.message });
@@ -390,7 +438,7 @@ exports.updateMeetup = async (req, res) => {
         }
 
         const updatedMeetup = await Meetup.updateDetails(code, { occasion, date, time });
-        res.status(200).json(updatedMeetup);
+        res.status(200).json(toPublicMeetup(updatedMeetup, true));
 
     } catch (error) {
         console.error("Error updating meetup:", error);
@@ -425,16 +473,12 @@ exports.deleteMeetup = async (req, res) => {
     }
 };
 
-// leaveMeetup (DELETE /:code/members/:memberId)
+// leaveMeetup (DELETE /:code/me): requireMember has already loaded the meetup (404 if unknown)
 exports.leaveMeetup = async (req, res) => {
     try {
         const code = req.params.code;
-        const memberId = req.params.memberId;
-
-        const meetup = await Meetup.findByCode(code);
-        if (!meetup) {
-            return res.status(404).json({ error: "Unknown code" });
-        }
+        const memberId = String(req.member._id);
+        const meetup = req.meetup;
 
         // Check if the requester is the host (first member)
         if (meetup.members && meetup.members.length > 0 && meetup.members[0]._id.toString() === memberId) {

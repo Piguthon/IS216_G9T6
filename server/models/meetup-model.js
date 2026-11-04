@@ -5,13 +5,16 @@
   FIELDS:    as the Meetup shape, plus createdAt; members are embedded sub-documents
              Meetup { code, hostName, occasion, date "YYYY-MM-DD", time "HH:MM",
                       members: [ { _id, name, start: { label, postal, lat, lng } | null,
-                                   travelMode: 'transit' | 'car', ready } ],
+                                   travelMode: 'transit' | 'car', ready, memberToken } ],
                       rankedAt: Date | null, leftSinceRanking: [ name ] }
              ranking (the host's saved fair meeting points) is left out of normal reads,
              because it is large: read it with findRanking
   FUNCTIONS: create, find by code, find by user, add member, update a member's start,
              travel mode or ready (locked once the host has worked out the fair meeting points),
              save and read the ranking, note who left since
+  SECRET:    every new member gets a random memberToken. A guest sends it back in the
+             X-Member-Token header to prove which member they are (middleware/member.js).
+             Never send it to the client, except in the reply that created that member.
   REVISE:    Wk 5 blog-model.js (schema + exported CRUD functions)
 */
 
@@ -20,7 +23,14 @@
 
 // TODO 1: Require Mongoose.
 //         Example: Week 5/server/blog-with-mongodb/models/blog-model.js
+const crypto = require('node:crypto');
 const mongoose = require('mongoose');
+
+// newMemberToken(): a random secret for a new member, made the same way as session tokens
+// (controllers/users-controller.js)
+function newMemberToken() {
+    return crypto.randomBytes(32).toString('hex');
+}
 
 // TODO 2: Define a member sub-schema with:
 //           - name  (String, required, trimmed)
@@ -56,6 +66,11 @@ const memberSchema = new mongoose.Schema(
         ready : {
             type : Boolean,
             default : false
+        },
+        // This member's secret (see SECRET above). Members from before it was added have none.
+        memberToken : {
+            type : String,
+            default : null
         }
     }
 )
@@ -144,7 +159,8 @@ exports.createMeetup = async function(data) {
         occasion : data.occasion,
         date : data.date,
         time : data.time,
-        members : data.members
+        // members is optional (scripts/demo-live-map.js adds them afterwards with addMember)
+        members : (data.members || []).map(member => ({ ...member, memberToken : newMemberToken() }))
     };
     return await Meetup.create(newMeetup);
 };
@@ -169,7 +185,7 @@ exports.addMember = async function(code, name, userId = null) {
             const existing = meetup.members.find(member => member.userId === userId);
             if (existing) return existing;
         }
-        meetup.members.push({name : name, userId});
+        meetup.members.push({name : name, userId, memberToken : newMemberToken()});
 
         const updatedMeetup = await meetup.save();
         

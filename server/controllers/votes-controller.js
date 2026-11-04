@@ -53,19 +53,18 @@ exports.getVotes = async (req, res) => {
   }
 };
 
-// PUT /api/votes/:code  body { memberId, kind, optionId, optionName, lat?, lng?, address? }
+// PUT /api/votes/:code  body { kind, optionId, optionName, lat?, lng?, address? }
+// requireMember (middleware/member.js) has already found the meetup and which member is voting,
+// so a memberId in the body is ignored
 exports.castVote = async (req, res) => {
   try {
-    const { memberId, kind, optionId, optionName, lat, lng, address } = req.body;
+    const { kind, optionId, optionName, lat, lng, address } = req.body;
     if (!KINDS.includes(kind) || !optionId || !optionName) {
       return res.status(400).json({ error: 'kind, optionId and optionName are required' });
     }
 
-    const meetup = await Meetup.findByCode(req.params.code);
-    if (!meetup) return res.status(404).json({ error: 'Unknown code' });
-    if (!memberId || !meetup.members.id(memberId)) {
-      return res.status(403).json({ error: 'Join this meetup to vote' });
-    }
+    const meetup = req.meetup;
+    const memberId = String(req.member._id);
     if (kind === 'station' && meetup.finalStation) {
       return res.status(409).json({ error: 'The host has already confirmed the meeting point' });
     }

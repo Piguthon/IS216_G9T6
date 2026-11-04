@@ -6,12 +6,15 @@
              GET /api/meetups/mine (the logged-in user's current and past meetups, and notices)
              GET /api/meetups/frequent (the accounts I've shared the most meetups with)
              DELETE /api/meetups/notices/:id (dismiss one of my notices)
-             GET /api/meetups/:code (get one)
+             GET /api/meetups/:code (get one; start points' postal and lat/lng only for members)
              POST /api/meetups/:code/members (join)
-             PUT /api/meetups/:code/members/:memberId (set start point)
-             PUT /api/meetups/:code/members/:memberId/mode (set travel mode)
-             PUT /api/meetups/:code/members/:memberId/ready (confirm location, or undo it)
+             PUT /api/meetups/:code/me (set my start point)
+             PUT /api/meetups/:code/me/mode (set my travel mode)
+             PUT /api/meetups/:code/me/ready (confirm my location, or undo it)
+             DELETE /api/meetups/:code/me (leave)
              DELETE /api/meetups/:code/members/:memberId/remove (host removes a member)
+             The /me routes use requireMember (middleware/member.js): the server works out which
+             member "me" is from the session or the X-Member-Token header, never from the URL
   TALKS TO:  controllers/meetups-controller.js
   REVISE:    Wk 5 Express router (blog-with-mongodb/routes)
 */
@@ -25,6 +28,7 @@ const router = express.Router();
 //         Example: Week 5/server/blog-with-mongodb/routes/blogs-routes.js
 const meetupsController = require('../controllers/meetups-controller');
 const { requireAuth } = require('../middleware/auth');
+const { requireMember } = require('../middleware/member');
 // TODO 2: Register the endpoints from the header, each pointing at its controller function.
 //         Start with POST / and GET /:code, then POST /:code/members,
 //         then PUT /:code/members/:memberId later.
@@ -37,12 +41,12 @@ router.post("/:code/members", (req, res, next) => {
     if (req.get('Authorization')) return requireAuth(req, res, next);
     next();
 }, meetupsController.joinMeetup);
-router.put("/:code/members/:memberId",meetupsController.setStart);
-router.put("/:code/members/:memberId/mode",meetupsController.setTravelMode);
-router.put("/:code/members/:memberId/ready",meetupsController.setReady);
+router.put("/:code/me", requireMember, meetupsController.setStart);
+router.put("/:code/me/mode", requireMember, meetupsController.setTravelMode);
+router.put("/:code/me/ready", requireMember, meetupsController.setReady);
 router.put("/:code", requireAuth, meetupsController.updateMeetup);
 router.delete("/:code",requireAuth, meetupsController.deleteMeetup);
-router.delete("/:code/members/:memberId",meetupsController.leaveMeetup);
+router.delete("/:code/me", requireMember, meetupsController.leaveMeetup);
 router.delete("/:code/members/:memberId/remove",requireAuth,meetupsController.removeMember);
 
 module.exports = router;

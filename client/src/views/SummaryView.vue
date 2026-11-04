@@ -13,6 +13,8 @@ import { ref, computed, onMounted, onUnmounted } from 'vue'
 import axios from 'axios'
 import { useRoute } from 'vue-router'
 import { BASE_URL } from '../config'
+import { useAuthStore } from '../stores/auth'
+import { memberAuthConfig } from '../utils/member-auth'
 import { formatDate, formatTime } from '../utils/meetup-date'
 import { tripTone } from '../utils/trip-tone'
 import { describeStep } from '../utils/route-steps'
@@ -23,6 +25,7 @@ const SUMMARY_REFRESH_MS = 5000
 
 const route = useRoute()
 const code = route.params.code
+const auth = useAuthStore()
 
 const meetup = ref(null)
 const trips = ref([])
@@ -32,7 +35,12 @@ const errorMessage = ref('')
 let refreshTimer = null
 
 async function loadTrips() {
-  const leaveTimesResponse = await axios.get(`${BASE_URL}/ranking/${code}/leave-times`)
+  // As a member, each trip comes with its route and first bus stop (the server leaves them
+  // out for anyone who only knows the code, because they start at home)
+  const leaveTimesResponse = await axios.get(
+    `${BASE_URL}/ranking/${code}/leave-times`,
+    memberAuthConfig(code, auth.token),
+  )
   trips.value = leaveTimesResponse.data.trips
 }
 
@@ -40,7 +48,11 @@ async function loadSummary() {
   isLoading.value = true
   errorMessage.value = ''
   try {
-    const meetupResponse = await axios.get(`${BASE_URL}/meetups/${code}`)
+    // As a member, the start points come with lat/lng, so the map can show them
+    const meetupResponse = await axios.get(
+      `${BASE_URL}/meetups/${code}`,
+      memberAuthConfig(code, auth.token),
+    )
     meetup.value = meetupResponse.data
     if (meetup.value.finalStation) {
       await loadTrips()
@@ -66,7 +78,10 @@ function tripInputs(data) {
 async function refreshSummary() {
   if (isLoading.value || !meetup.value) return
   try {
-    const response = await axios.get(`${BASE_URL}/meetups/${code}`)
+    const response = await axios.get(
+      `${BASE_URL}/meetups/${code}`,
+      memberAuthConfig(code, auth.token),
+    )
     const hasNewTrips = tripInputs(response.data) !== tripInputs(meetup.value)
     meetup.value = response.data
     if (hasNewTrips && response.data.finalStation) await loadTrips()
@@ -117,10 +132,12 @@ const journeys = computed(() => {
   return list
 })
 
-// The trip for whoever is viewing this page, or null if they have no route to this point
+// The trip for whoever is viewing this page, or null if they have no route to this point.
+// Its steps only come to members (a browser whose member link has gone gets the trip without).
 const myTrip = computed(() => {
   if (!point.value) return null
-  return point.value.times.find((t) => t.memberId === myMemberId.value) || null
+  const trip = point.value.times.find((t) => t.memberId === myMemberId.value)
+  return trip && trip.steps ? trip : null
 })
 
 const isMember = computed(() => {

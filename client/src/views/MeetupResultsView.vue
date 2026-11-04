@@ -9,7 +9,9 @@
   TALKS TO: GET /api/meetups/:code, POST /api/ranking/:code (host, logged in),
             GET /api/ranking/:code,
             GET/PUT /api/votes/:code, POST /api/votes/:code/confirm (host, logged in),
-            DELETE /api/meetups/:code/members/:memberId (a member leaves)
+            DELETE /api/meetups/:code/me (a member leaves)
+            PUT /api/votes/:code, DELETE .../me and GET /api/meetups/:code send who I am
+            (utils/member-auth.js); the server works out which member that is
   POLLING:  vote tallies refresh every 5 seconds while this page is open (decided: no WebSockets)
 -->
 <script setup>
@@ -18,6 +20,7 @@ import axios from 'axios'
 import { useRoute, useRouter } from 'vue-router'
 import { BASE_URL } from '../config'
 import { useAuthStore } from '../stores/auth'
+import { memberAuthConfig } from '../utils/member-auth'
 import { formatDate, formatTime } from '../utils/meetup-date'
 import MeetingPointCard from '../components/MeetingPointCard.vue'
 import MapView from '../components/MapView.vue'
@@ -54,6 +57,29 @@ function errorText(error, fallback) {
   return fallback
 }
 
+// What went wrong with a vote or leaving:
+//   - 401: my login has expired (e.g. I logged in somewhere else), so log in again
+//   - 403 "not a member": this browser has nothing the server accepts for my place (e.g. a
+//     guest who joined before guests were given a secret), so forget it and stop showing
+//     the member controls. Any other 403 is just shown.
+function handleMemberError(error, fallback) {
+  const status = error.response ? error.response.status : 0
+  if (status === 401) {
+    auth.clearSession()
+    router.push('/login')
+    return
+  }
+  if (status === 403 && errorText(error, '') === 'You are not a member of this meetup.') {
+    localStorage.removeItem(`fairspot-member-${code}`)
+    localStorage.removeItem(`fairspot-member-token-${code}`)
+    myMemberId.value = null
+    voteError.value =
+      'This browser is no longer linked to your place in this meetup. Join again with the code (use a new name if you were a guest).'
+    return
+  }
+  voteError.value = errorText(error, fallback)
+}
+
 // Only the host works the meeting points out (or gets the saved ones back if nothing changed)
 async function calculateRanking() {
   const headers = { Authorization: `Bearer ${auth.token}` }
@@ -64,7 +90,9 @@ async function calculateRanking() {
 // works them out for the first time.
 async function fetchRanking() {
   try {
-    return (await axios.get(`${BASE_URL}/ranking/${code}`)).data
+    // As a member, each trip comes with its route and first bus stop (they start at home,
+    // so the server leaves them out for anyone who only knows the code)
+    return (await axios.get(`${BASE_URL}/ranking/${code}`, memberAuthConfig(code, auth.token))).data
   } catch (error) {
     if (isHost.value && error.response && error.response.status === 404) {
       return await calculateRanking()
@@ -86,7 +114,11 @@ async function loadResults() {
   isLoading.value = true
   errorMessage.value = ''
   try {
-    const meetupResponse = await axios.get(`${BASE_URL}/meetups/${code}`)
+    // As a member, the start points come with lat/lng, so the map can show them
+    const meetupResponse = await axios.get(
+      `${BASE_URL}/meetups/${code}`,
+      memberAuthConfig(code, auth.token),
+    )
     meetup.value = meetupResponse.data
     showRanking(await fetchRanking())
   } catch (error) {
@@ -101,7 +133,10 @@ async function recalculate() {
   voteError.value = ''
   try {
     showRanking(await calculateRanking())
-    const meetupResponse = await axios.get(`${BASE_URL}/meetups/${code}`)
+    const meetupResponse = await axios.get(
+      `${BASE_URL}/meetups/${code}`,
+      memberAuthConfig(code, auth.token),
+    )
     meetup.value = meetupResponse.data
     await loadVotes()
   } catch (error) {
@@ -224,18 +259,21 @@ async function castVote(kind, option) {
   isVoting.value = true
   voteError.value = ''
   try {
-    const response = await axios.put(`${BASE_URL}/votes/${code}`, {
-      memberId: myMemberId.value,
-      kind,
-      optionId: option.optionId,
-      optionName: option.name,
-      lat: option.lat,
-      lng: option.lng,
-      address: option.address,
-    })
+    const response = await axios.put(
+      `${BASE_URL}/votes/${code}`,
+      {
+        kind,
+        optionId: option.optionId,
+        optionName: option.name,
+        lat: option.lat,
+        lng: option.lng,
+        address: option.address,
+      },
+      memberAuthConfig(code, auth.token),
+    )
     applyVotes(response.data)
   } catch (error) {
-    voteError.value = errorText(error, 'Your vote was not saved. Please try again.')
+    handleMemberError(error, 'Your vote was not saved. Please try again.')
     loadVotes()
   }
   isVoting.value = false
@@ -280,11 +318,12 @@ async function leaveMeetup() {
   isVoting.value = true
   voteError.value = ''
   try {
-    await axios.delete(`${BASE_URL}/meetups/${code}/members/${myMemberId.value}`)
+    await axios.delete(`${BASE_URL}/meetups/${code}/me`, memberAuthConfig(code, auth.token))
     localStorage.removeItem(`fairspot-member-${code}`)
+    localStorage.removeItem(`fairspot-member-token-${code}`)
     router.push('/')
   } catch (error) {
-    voteError.value = errorText(error, 'You could not leave the meetup. Please try again.')
+    handleMemberError(error, 'You could not leave the meetup. Please try again.')
   }
   isVoting.value = false
 }

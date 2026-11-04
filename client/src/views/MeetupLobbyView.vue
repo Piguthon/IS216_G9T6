@@ -7,9 +7,10 @@
             remove members. Once the host works them out, nobody can join and locations are locked:
             members can only leave, and the host is told who left so they can recalculate
   ROUTE:    /meetup/:code
-  TALKS TO: GET /api/meetups/:code, PUT /api/meetups/:code/members/:memberId,
-            PUT /api/meetups/:code/members/:memberId/mode,
-            PUT /api/meetups/:code/members/:memberId/ready (Confirm location),
+  TALKS TO: GET /api/meetups/:code, PUT /api/meetups/:code/me (my start point),
+            PUT /api/meetups/:code/me/mode,
+            PUT /api/meetups/:code/me/ready (Confirm location),
+            DELETE /api/meetups/:code/me (leave),
             POST /api/ranking/:code (the host recalculates after someone leaves),
             DELETE /api/meetups/:code/members/:memberId/remove (host, logged in)
             uses AddressSearch, MemberList, TravelModePicker
@@ -52,6 +53,7 @@ import EditMeetupForm from '../components/EditMeetupForm.vue'
 import SavedStartPointPicker from '../components/SavedStartPointPicker.vue'
 import TravelModePicker from '../components/TravelModePicker.vue'
 import { useAuthStore } from '../stores/auth'
+import { memberAuthConfig } from '../utils/member-auth'
 const auth = useAuthStore()
 const MEETUP_REFRESH_MS = 5000
 let refreshTimer = null
@@ -79,6 +81,29 @@ function getErrorText(error, fallback) {
   return fallback
 }
 
+// What went wrong with one of my member actions (start point, travel mode, confirm, leave):
+//   - 401: my login has expired (e.g. I logged in somewhere else), so log in again
+//   - 403 "not a member": this browser has nothing the server accepts for my place (e.g. a
+//     guest who joined before guests were given a secret), so forget it and stop showing
+//     the member controls. Any other 403 (e.g. locked) is just shown.
+function handleMemberError(error, fallback) {
+  const status = error.response ? error.response.status : 0
+  if (status === 401) {
+    auth.clearSession()
+    router.push('/login')
+    return
+  }
+  if (status === 403 && getErrorText(error, '') === 'You are not a member of this meetup.') {
+    localStorage.removeItem(`fairspot-member-${code}`)
+    localStorage.removeItem(`fairspot-member-token-${code}`)
+    myMemberId.value = null
+    actionError.value =
+      'This browser is no longer linked to your place in this meetup. Join again with the code (use a new name if you were a guest).'
+    return
+  }
+  actionError.value = getErrorText(error, fallback)
+}
+
 // TODO 3: async function loadMeetup(): GET ${BASE_URL}/meetups/<code> in try/catch.
 //         Show "No meetup with code ..." on a 404 and a generic message otherwise.
 //         Always finish loading.
@@ -88,7 +113,11 @@ async function loadMeetup() {
   errorMessage.value = ''
 
   try {
-    const response = await axios.get(`${BASE_URL}/meetups/${code}`)
+    // As a member, the start points come with their postal code and lat/lng too
+    const response = await axios.get(
+      `${BASE_URL}/meetups/${code}`,
+      memberAuthConfig(code, auth.token),
+    )
     meetup.value = response.data
   } catch (error) {
     if (error.response && error.response.status === 404) {
@@ -105,7 +134,10 @@ async function loadMeetup() {
 // A failed refresh keeps the last details; the next one tries again.
 async function refreshMeetup() {
   try {
-    const response = await axios.get(`${BASE_URL}/meetups/${code}`)
+    const response = await axios.get(
+      `${BASE_URL}/meetups/${code}`,
+      memberAuthConfig(code, auth.token),
+    )
     meetup.value = response.data
     errorMessage.value = ''
   } catch (error) {
@@ -229,33 +261,41 @@ async function handleSetMode(travelMode) {
   actionError.value = ''
   if (travelMode === myMode.value) return
   try {
-    await axios.put(`${BASE_URL}/meetups/${code}/members/${myMemberId.value}/mode`, { travelMode })
+    await axios.put(
+      `${BASE_URL}/meetups/${code}/me/mode`,
+      { travelMode },
+      memberAuthConfig(code, auth.token),
+    )
     await refreshMeetup()
   } catch (err) {
-    actionError.value = getErrorText(err, 'Failed to save how you are getting there.')
+    handleMemberError(err, 'Failed to save how you are getting there.')
   }
 }
 
 async function handleSetStart(startPoint) {
   actionError.value = ''
   try {
-    await axios.put(`${BASE_URL}/meetups/${code}/members/${myMemberId.value}`, {
-      start: startPoint,
-    })
+    await axios.put(
+      `${BASE_URL}/meetups/${code}/me`,
+      { start: startPoint },
+      memberAuthConfig(code, auth.token),
+    )
     await loadMeetup()
   } catch (err) {
-    actionError.value = getErrorText(err, 'Failed to set start point.')
+    handleMemberError(err, 'Failed to set start point.')
   }
 }
 async function handleConfirmLocation() {
   actionError.value = ''
   try {
-    await axios.put(`${BASE_URL}/meetups/${code}/members/${myMemberId.value}/ready`, {
-      ready: true,
-    })
+    await axios.put(
+      `${BASE_URL}/meetups/${code}/me/ready`,
+      { ready: true },
+      memberAuthConfig(code, auth.token),
+    )
     await refreshMeetup()
   } catch (err) {
-    actionError.value = getErrorText(err, 'Failed to confirm your location.')
+    handleMemberError(err, 'Failed to confirm your location.')
   }
 }
 // The host works the fair meeting points out again without whoever left, then opens them
@@ -306,6 +346,7 @@ async function handleDelete() {
       headers: { Authorization: `Bearer ${auth.token}` },
     })
     localStorage.removeItem(`fairspot-member-${code}`)
+    localStorage.removeItem(`fairspot-member-token-${code}`)
     router.push('/')
   } catch (err) {
     actionError.value = getErrorText(err, 'Failed to delete meetup.')
@@ -330,11 +371,12 @@ async function handleRemove() {
 async function handleLeave() {
   actionError.value = ''
   try {
-    await axios.delete(`${BASE_URL}/meetups/${code}/members/${myMemberId.value}`)
+    await axios.delete(`${BASE_URL}/meetups/${code}/me`, memberAuthConfig(code, auth.token))
     localStorage.removeItem(`fairspot-member-${code}`)
+    localStorage.removeItem(`fairspot-member-token-${code}`)
     router.push('/')
   } catch (err) {
-    actionError.value = getErrorText(err, 'Failed to leave meetup.')
+    handleMemberError(err, 'Failed to leave meetup.')
   }
 }
 </script>

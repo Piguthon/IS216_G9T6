@@ -1,7 +1,7 @@
 {
   "info": {
     "name": "FairSpot meetups",
-    "description": "Test requests for /api/meetups (FairSpot, IS216 G9T6). Start the server first: cd server && pnpm dev.\n\nRun \"Create meetup\" first: its test script saves the new meetup code in the collection variable \"code\", which the Get, Join and Set start requests use. You can also type a code into the variable by hand.\n\nTest inputs written with AI assistance (allowed: test cases and sample inputs).",
+    "description": "Test requests for /api/meetups and voting (FairSpot, IS216 G9T6). Start the server first: cd server && pnpm dev.\n\nBefore you start, log in (POST /api/users/login) and paste the sessionToken into the collection variable \"sessionToken\". Then run the requests in order: \"Create meetup\" saves the new meetup code in \"code\", and \"Join meetup as a guest\" saves the guest's secret in \"memberToken\".\n\nWho \"me\" is: the server never takes a member id from the URL or body. A logged-in member sends Authorization: Bearer <sessionToken>; a guest sends X-Member-Token: <memberToken>.\n\nTest inputs written with AI assistance (allowed: test cases and sample inputs).",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "variable": [
@@ -11,14 +11,24 @@
       "type": "string"
     },
     {
+      "key": "sessionToken",
+      "value": "",
+      "type": "string"
+    },
+    {
       "key": "code",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "memberToken",
       "value": "",
       "type": "string"
     }
   ],
   "item": [
     {
-      "name": "1. Create meetup",
+      "name": "1. Create meetup (logged in)",
       "event": [
         {
           "listen": "test",
@@ -29,10 +39,17 @@
               "  pm.response.to.have.status(201);",
               "});",
               "",
-              "pm.test('response has a meetup code', function () {",
+              "pm.test('response has a meetup code and the host\\'s memberToken', function () {",
               "  const meetup = pm.response.json();",
               "  pm.expect(meetup.code).to.be.a('string');",
+              "  pm.expect(meetup.memberToken).to.be.a('string');",
               "  pm.collectionVariables.set('code', meetup.code);",
+              "});",
+              "",
+              "pm.test('no member carries a memberToken', function () {",
+              "  pm.response.json().members.forEach(function (member) {",
+              "    pm.expect(member).to.not.have.property('memberToken');",
+              "  });",
               "});"
             ]
           }
@@ -44,17 +61,12 @@
           {
             "key": "Content-Type",
             "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{sessionToken}}"
           }
         ],
-        "body": {
-          "mode": "raw",
-          "raw": "{\n  \"hostName\": \"Alex\",\n  \"occasion\": \"Friday dinner\",\n  \"date\": \"2026-11-06\",\n  \"time\": \"18:00\"\n}",
-          "options": {
-            "raw": {
-              "language": "json"
-            }
-          }
-        },
         "url": {
           "raw": "{{baseUrl}}/meetups",
           "host": [
@@ -64,7 +76,16 @@
             "meetups"
           ]
         },
-        "description": "Expect 201 and the saved meetup. Saves its code in the \"code\" variable."
+        "description": "Needs a login: paste a session token from POST /api/users/login into the \"sessionToken\" variable first. Expect 201 and the saved meetup with the host's memberToken (sent only this once). Saves its code in the \"code\" variable.",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"occasion\": \"Friday dinner\",\n  \"date\": \"2026-11-20\",\n  \"time\": \"18:00\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
       },
       "response": []
     },
@@ -93,17 +114,12 @@
           {
             "key": "Content-Type",
             "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{sessionToken}}"
           }
         ],
-        "body": {
-          "mode": "raw",
-          "raw": "{\n  \"hostName\": \"Alex\",\n  \"occasion\": \"Friday dinner\",\n  \"date\": \"2026-11-06\"\n}",
-          "options": {
-            "raw": {
-              "language": "json"
-            }
-          }
-        },
         "url": {
           "raw": "{{baseUrl}}/meetups",
           "host": [
@@ -113,12 +129,185 @@
             "meetups"
           ]
         },
-        "description": "The body has no \"time\". Expect 400 and { error: \"...\" }."
+        "description": "The body has no \"time\". Expect 400 and { error: \"...\" }.",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"occasion\": \"Friday dinner\",\n  \"date\": \"2026-11-20\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
       },
       "response": []
     },
     {
-      "name": "3. Get meetup",
+      "name": "3. Join meetup as a guest",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('status is 201', function () {",
+              "  pm.response.to.have.status(201);",
+              "});",
+              "",
+              "pm.test('response is the new member with an _id and a memberToken', function () {",
+              "  const member = pm.response.json();",
+              "  pm.expect(member._id).to.be.a('string');",
+              "  pm.expect(member.name).to.eql('Bea');",
+              "  pm.expect(member.memberToken).to.be.a('string');",
+              "  pm.collectionVariables.set('memberToken', member.memberToken);",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/meetups/{{code}}/members",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "meetups",
+            "{{code}}",
+            "members"
+          ]
+        },
+        "description": "Expect 201 and the new member { _id, name, start: null, memberToken }. Saves the memberToken in the \"memberToken\" variable: it is the guest's secret, and the server only sends it this once.",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"name\": \"Bea\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "4. Set my start (guest)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('status is 200', function () {",
+              "  pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test('my start point is saved', function () {",
+              "  const member = pm.response.json();",
+              "  pm.expect(member.name).to.eql('Bea');",
+              "  pm.expect(member.start.lat).to.eql(1.3562);",
+              "  pm.expect(member).to.not.have.property('memberToken');",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "PUT",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "X-Member-Token",
+            "value": "{{memberToken}}"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/meetups/{{code}}/me",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "meetups",
+            "{{code}}",
+            "me"
+          ]
+        },
+        "description": "The server works out which member \"me\" is from X-Member-Token (or a login session). Expect 200 and the updated member, without its memberToken.",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"start\": {\n    \"label\": \"Tampines MRT\",\n    \"postal\": \"529538\",\n    \"lat\": 1.3562,\n    \"lng\": 103.9546\n  }\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "5. Set start, no credential (expect 403)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('status is 403', function () {",
+              "  pm.response.to.have.status(403);",
+              "});",
+              "",
+              "pm.test('response has an error message', function () {",
+              "  pm.expect(pm.response.json().error).to.be.a('string');",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "PUT",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/meetups/{{code}}/me",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "meetups",
+            "{{code}}",
+            "me"
+          ]
+        },
+        "description": "No session and no X-Member-Token, so the server can't tell which member this is. Expect 403 { error: \"You are not a member of this meetup.\" }.",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"start\": {\n    \"label\": \"Tampines MRT\",\n    \"postal\": \"529538\",\n    \"lat\": 1.3562,\n    \"lng\": 103.9546\n  }\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "6. Get meetup (no credential)",
       "event": [
         {
           "listen": "test",
@@ -131,6 +320,17 @@
               "",
               "pm.test('meetup has the requested code', function () {",
               "  pm.expect(pm.response.json().code).to.eql(pm.collectionVariables.get('code'));",
+              "});",
+              "",
+              "pm.test('no memberToken and no start coordinates', function () {",
+              "  pm.response.json().members.forEach(function (member) {",
+              "    pm.expect(member).to.not.have.property('memberToken');",
+              "    if (member.start) {",
+              "      pm.expect(member.start).to.have.property('label');",
+              "      pm.expect(member.start).to.not.have.property('lat');",
+              "      pm.expect(member.start).to.not.have.property('postal');",
+              "    }",
+              "  });",
               "});"
             ]
           }
@@ -149,12 +349,55 @@
             "{{code}}"
           ]
         },
-        "description": "Expect 200 and the meetup with its members."
+        "description": "Anyone with the code can read it. Expect 200, no memberToken anywhere, and start points as their label only."
       },
       "response": []
     },
     {
-      "name": "4. Get unknown meetup (expect 404)",
+      "name": "7. Get meetup as a member",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('status is 200', function () {",
+              "  pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test('start points have lat/lng, and no memberToken', function () {",
+              "  const bea = pm.response.json().members.find(function (member) { return member.name === 'Bea'; });",
+              "  pm.expect(bea.start.lat).to.eql(1.3562);",
+              "  pm.expect(bea).to.not.have.property('memberToken');",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "X-Member-Token",
+            "value": "{{memberToken}}"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/meetups/{{code}}",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "meetups",
+            "{{code}}"
+          ]
+        },
+        "description": "With a member's credential the start points also have postal and lat/lng (the results map shows them to members). Still no memberToken."
+      },
+      "response": []
+    },
+    {
+      "name": "8. Get unknown meetup (expect 404)",
       "event": [
         {
           "listen": "test",
@@ -190,21 +433,131 @@
       "response": []
     },
     {
-      "name": "5. Join meetup",
+      "name": "9. Set my travel mode (guest)",
       "event": [
         {
           "listen": "test",
           "script": {
             "type": "text/javascript",
             "exec": [
-              "pm.test('status is 201', function () {",
-              "  pm.response.to.have.status(201);",
+              "pm.test('status is 200', function () {",
+              "  pm.response.to.have.status(200);",
               "});",
               "",
-              "pm.test('response is the new member with an _id', function () {",
-              "  const member = pm.response.json();",
-              "  pm.expect(member._id).to.be.a('string');",
-              "  pm.expect(member.name).to.eql('Bea');",
+              "pm.test('travel mode is car', function () {",
+              "  pm.expect(pm.response.json().travelMode).to.eql('car');",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "PUT",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "X-Member-Token",
+            "value": "{{memberToken}}"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/meetups/{{code}}/me/mode",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "meetups",
+            "{{code}}",
+            "me",
+            "mode"
+          ]
+        },
+        "description": "Expect 200 and the member travelling by car.",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"travelMode\": \"car\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "10. Confirm my location (guest)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('status is 200', function () {",
+              "  pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test('ready is true', function () {",
+              "  pm.expect(pm.response.json().ready).to.eql(true);",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "PUT",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "X-Member-Token",
+            "value": "{{memberToken}}"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/meetups/{{code}}/me/ready",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "meetups",
+            "{{code}}",
+            "me",
+            "ready"
+          ]
+        },
+        "description": "Expect 200 and ready: true (needs a start point first).",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"ready\": true\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "11. Rejoin with the same name, no memberToken (expect 409)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('status is 409', function () {",
+              "  pm.response.to.have.status(409);",
+              "});",
+              "",
+              "pm.test('response has an error message', function () {",
+              "  pm.expect(pm.response.json().error).to.be.a('string');",
               "});"
             ]
           }
@@ -218,15 +571,6 @@
             "value": "application/json"
           }
         ],
-        "body": {
-          "mode": "raw",
-          "raw": "{\n  \"name\": \"Bea\"\n}",
-          "options": {
-            "raw": {
-              "language": "json"
-            }
-          }
-        },
         "url": {
           "raw": "{{baseUrl}}/meetups/{{code}}/members",
           "host": [
@@ -238,12 +582,95 @@
             "members"
           ]
         },
-        "description": "Expect 201 and the new member { _id, name, start: null }."
+        "description": "Someone else typing Bea's name doesn't get Bea's member. Expect 409 { error: \"Someone in this meetup already uses that name. Choose another name.\" }.",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"name\": \"Bea\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
       },
       "response": []
     },
     {
-      "name": "6. Set start (later)",
+      "name": "12. Rejoin with the same name and memberToken",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('status is 200', function () {",
+              "  pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test('it is Bea again', function () {",
+              "  const member = pm.response.json();",
+              "  pm.expect(member.name).to.eql('Bea');",
+              "  pm.expect(member).to.not.have.property('memberToken');",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "X-Member-Token",
+            "value": "{{memberToken}}"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/meetups/{{code}}/members",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "meetups",
+            "{{code}}",
+            "members"
+          ]
+        },
+        "description": "The browser that has Bea's memberToken gets Bea's member back. Expect 200 and the same member, without its memberToken.",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"name\": \"Bea\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "13. Vote, no credential (expect 403)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('status is 403', function () {",
+              "  pm.response.to.have.status(403);",
+              "});",
+              "",
+              "pm.test('response has an error message', function () {",
+              "  pm.expect(pm.response.json().error).to.be.a('string');",
+              "});"
+            ]
+          }
+        }
+      ],
       "request": {
         "method": "PUT",
         "header": [
@@ -252,28 +679,155 @@
             "value": "application/json"
           }
         ],
+        "url": {
+          "raw": "{{baseUrl}}/votes/{{code}}",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "votes",
+            "{{code}}"
+          ]
+        },
+        "description": "A memberId in the body is ignored: the server decides who is voting. Expect 403.",
         "body": {
           "mode": "raw",
-          "raw": "{\n  \"start\": {\n    \"label\": \"Tampines MRT\",\n    \"postal\": \"\",\n    \"lat\": 1.3562,\n    \"lng\": 103.9546\n  }\n}",
+          "raw": "{\n  \"memberId\": \"any-member-id\",\n  \"kind\": \"station\",\n  \"optionId\": \"city-hall\",\n  \"optionName\": \"City Hall\"\n}",
           "options": {
             "raw": {
               "language": "json"
             }
           }
-        },
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "14. Vote (guest)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('status is 200', function () {",
+              "  pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test('my vote is counted', function () {",
+              "  pm.expect(pm.response.json().station.myVote).to.eql('city-hall');",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "PUT",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "X-Member-Token",
+            "value": "{{memberToken}}"
+          }
+        ],
         "url": {
-          "raw": "{{baseUrl}}/meetups/{{code}}/members/<memberId>",
+          "raw": "{{baseUrl}}/votes/{{code}}",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "votes",
+            "{{code}}"
+          ]
+        },
+        "description": "Expect 200 and the tallies, with my vote on City Hall.",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"kind\": \"station\",\n  \"optionId\": \"city-hall\",\n  \"optionName\": \"City Hall\",\n  \"lat\": 1.2932,\n  \"lng\": 103.852\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "15. Leave, no credential (expect 403)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('status is 403', function () {",
+              "  pm.response.to.have.status(403);",
+              "});",
+              "",
+              "pm.test('response has an error message', function () {",
+              "  pm.expect(pm.response.json().error).to.be.a('string');",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "DELETE",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/meetups/{{code}}/me",
           "host": [
             "{{baseUrl}}"
           ],
           "path": [
             "meetups",
             "{{code}}",
-            "members",
-            "<memberId>"
+            "me"
           ]
         },
-        "description": "For later (built with AddressSearch). Replace <memberId> in the URL with a member _id from the Create or Join response. Expect the updated member."
+        "description": "Expect 403: nobody can remove a member just by knowing the code."
+      },
+      "response": []
+    },
+    {
+      "name": "16. Leave (guest)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('status is 200', function () {",
+              "  pm.response.to.have.status(200);",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "DELETE",
+        "header": [
+          {
+            "key": "X-Member-Token",
+            "value": "{{memberToken}}"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/meetups/{{code}}/me",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "meetups",
+            "{{code}}",
+            "me"
+          ]
+        },
+        "description": "Expect 200 { message: \"Left meetup successfully\" }."
       },
       "response": []
     }

@@ -113,6 +113,8 @@ async function createMeetup() {
     const code = response.data.code
     const hostId = response.data.members[0]._id
     localStorage.setItem(`fairspot-member-${code}`, hostId)
+    // The host's secret for this meetup; the server only sends it this once
+    localStorage.setItem(`fairspot-member-token-${code}`, response.data.memberToken)
     isSaving.value = false
   } catch (error) {
     if (error.response && error.response.status === 401) {

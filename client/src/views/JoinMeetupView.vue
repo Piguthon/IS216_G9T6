@@ -4,9 +4,11 @@
   PURPOSE:  A friend joins with the meetup code and their name (no account needed)
   ROUTE:    /join
   TALKS TO: GET /api/meetups/:code, POST /api/meetups/:code/members
-  DATA:     sends { name } → receives { _id, name, start: null }; a guest who uses the same
-            name again gets their existing member back
-            this member's _id is remembered in localStorage so the lobby knows who "you" are
+  DATA:     sends { name } → receives { _id, name, start: null, memberToken }; a guest who uses
+            the same name again gets their existing member back, but only from the browser that
+            still has their memberToken (otherwise 409: choose another name)
+            this member's _id and memberToken are remembered in localStorage
+            (fairspot-member-<code>, fairspot-member-token-<code>) so the lobby knows who "you" are
   REVISE:   Wk 5 Axios GET/POST · Wk 6 localStorage
   DONE WHEN:
     - [ ] unknown-code message
@@ -25,6 +27,7 @@ import axios from 'axios'
 import { useRouter } from 'vue-router'
 import { BASE_URL } from '../config'
 import { useAuthStore } from '../stores/auth'
+import { memberAuthConfig } from '../utils/member-auth'
 
 const router = useRouter()
 const auth = useAuthStore()
@@ -65,12 +68,17 @@ async function joinMeetup() {
       {
         name: memberName,
       },
-      auth.isLoggedIn ? { headers: { Authorization: `Bearer ${auth.token}` } } : {},
+      // A guest rejoining under the same name proves it's them with the saved memberToken
+      memberAuthConfig(normalizedCode, auth.token),
     )
 
-    // Save the new member _id in localStorage
+    // Save the new member _id in localStorage, and their secret if this is a new member
+    // (the server only sends memberToken once, when the member is created)
     const newMemberId = response.data._id
     localStorage.setItem(`fairspot-member-${normalizedCode}`, newMemberId)
+    if (response.data.memberToken) {
+      localStorage.setItem(`fairspot-member-token-${normalizedCode}`, response.data.memberToken)
+    }
 
     // Navigate directly to the lobby
     router.push(`/meetup/${normalizedCode}`)
