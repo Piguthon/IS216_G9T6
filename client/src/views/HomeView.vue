@@ -7,11 +7,6 @@
   TALKS TO: links to /create, /join
   DATA:     none
   REVISE:   Wk 2 flexbox, position · Wk 3 grid, cards, buttons · Wk 4 RouterLink, v-for
-  DONE WHEN:
-    - [x] short "how it works" section
-    - [x] create/join buttons
-    - [x] responsive 375px→XL
-    - [x] keep testids home-page, home-heading
 -->
 <script setup>
 import { tripTone } from '../utils/trip-tone'

@@ -10,18 +10,8 @@
             this member's _id and memberToken are remembered in localStorage
             (fairspot-member-<code>, fairspot-member-token-<code>) so the lobby knows who "you" are
   REVISE:   Wk 5 Axios GET/POST · Wk 6 localStorage
-  DONE WHEN:
-    - [ ] unknown-code message
-    - [ ] successful join goes to /meetup/:code
-    - [ ] a guest who closed the tab gets back in with the same code and name
-    - [ ] responsive
-    - [ ] testids
 -->
 <script setup>
-// STEPS (script: TODO 1-3 · template: TODO 4-5)
-// Build this view after Create + Lobby work.
-
-// TODO 1: Same imports as Create (src/views/CreateMeetupView.vue, TODO 1).
 import { ref } from 'vue'
 import axios from 'axios'
 import { useRouter } from 'vue-router'
@@ -31,18 +21,13 @@ import { memberAuthConfig } from '../utils/member-auth'
 
 const router = useRouter()
 const auth = useAuthStore()
-// TODO 2: Refs for the code, name, error message and "is joining".
 const code = ref('')
 const name = ref('')
 const errorMessage = ref('')
 const isJoining = ref(false)
-// TODO 3: async function joinMeetup()
-//           - both fields required
-//           - normalise the code (e.g. uppercase)
-//           - axios.post to ${BASE_URL}/meetups/<code>/members with { name }, inside try/catch
-//           - 404 → "No meetup with that code"
-//           - on success, save the new member _id in localStorage (fairspot-member-<code>)
-//             and open /meetup/<code>
+
+// Joins with the code (a logged-in user joins under their account's name), remembers the new
+// member in localStorage (fairspot-member-<code>) and opens the lobby
 async function joinMeetup() {
   if (isJoining.value) return
   errorMessage.value = ''
@@ -101,7 +86,6 @@ async function joinMeetup() {
 <template>
   <div class="row justify-content-center align-items-center flex-grow-1 pt-3">
     <section class="col-md-8 col-lg-6" data-testid="join-meetup-page">
-      <!-- TODO 4: Header + form card + error alert, as in Create. -->
       <div class="card app-card">
         <div class="card-body p-4">
           <header class="app-page-header">
@@ -155,7 +139,6 @@ async function joinMeetup() {
           </form>
         </div>
       </div>
-      <!-- TODO 5: testids: join-code, join-name, join-submit, join-error -->
     </section>
   </div>
 </template>

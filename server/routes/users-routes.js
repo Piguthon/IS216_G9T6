@@ -2,9 +2,22 @@
   FILE:      routes/users-routes.js
   OWNER:     JX (team-written)
   PURPOSE:   Express router for /api/users (mounted in server.js)
-  ENDPOINTS: POST /api/users/signup
-             POST /api/users/login
-             user profile, saved locations, history and favourites endpoints (to be defined)
+  ENDPOINTS: POST   /api/users/signup                      create an account and log in
+             POST   /api/users/login                       log in
+             POST   /api/users/logout                      end this session
+             GET    /api/users/me (also /profile)          my account
+             PUT    /api/users/me                          rename my account
+             PUT    /api/users/me/password                 change my password
+             DELETE /api/users/me                          delete my account
+             GET    /api/users/me/locations                my saved start locations
+             POST   /api/users/me/locations                save a location
+             PUT    /api/users/me/locations/:id            rename a saved location
+             PUT    /api/users/me/locations/:id/default    make it my default start point
+             DELETE /api/users/me/locations/:id            delete a saved location
+             GET    /api/users/me/favourites               my favourite venues
+             POST   /api/users/me/favourites               save a favourite venue
+             DELETE /api/users/me/favourites/:venueKey     remove a favourite venue
+             Everything except signup and login needs a login (middleware/auth.js)
   TALKS TO:  controllers/users-controller.js
 */
 

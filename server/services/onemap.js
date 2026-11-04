@@ -1,8 +1,7 @@
 // FILE:      services/onemap.js
 // OWNER:     I (team-written)
 // PURPOSE:   OneMap client for FairSpot: token management + public-transport and driving routes.
-// EXPORTS:   getToken()   → a valid OneMap access token
-//            getPtRoute(start, end, date, time) → { minutes, waitMinutes, firstBusStopCode, steps,
+// EXPORTS:   getPtRoute(start, end, date, time) → { minutes, waitMinutes, firstBusStopCode, steps,
 //                leaveAt, arriveAt } or null. steps: [ { mode, route, routeName, from, fromCode,
 //                to, toCode, stops, minutes, points } ], where points is the leg's encoded map
 //                line · start/end { lat, lng } · date "YYYY-MM-DD" · time "HH:MM"
@@ -11,6 +10,7 @@
 //                with PARKING_MINUTES added. OneMap's driving time ignores traffic and the time of
 //                day, so date and time only work out leaveAt and arriveAt
 //            tokenStatus() → { ok, expiresAt } (used by routes/health-routes.js)
+//            (getToken() → a valid OneMap access token, used inside this file only)
 // USED BY:   ranking (JS) via getPtRoute, getArriveByRoute and getDriveRoute · live map (S) via
 //            getPtRoute and getDriveRoute · health route via tokenStatus
 // REVISE:    Wk 5 Axios GET/POST, headers config, async/await, try/catch
@@ -269,4 +269,4 @@ async function tokenStatus() {
   }
 }
 
-module.exports = { getToken, getPtRoute, getArriveByRoute, getDriveRoute, tokenStatus };
+module.exports = { getPtRoute, getArriveByRoute, getDriveRoute, tokenStatus };

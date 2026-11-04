@@ -2,7 +2,7 @@
   FILE:     src/components/LiveMap.vue
   OWNER:    S (team-written)
   PURPOSE:  The live map: the meeting point, everyone who is sharing, you, and your route.
-            Dots glide to new positions when they arrive, so your zoom and pan are kept.
+            Dots move to new positions on each refresh, and your zoom and pan are kept.
   PROPS:    destination ({ name, lat, lng })
             people (Array of { memberId, name, lat, lng, etaMinutes, arriveAt, isStale })
             me ({ lat, lng } or null): your position, straight from your phone
@@ -12,13 +12,7 @@
   EMITS:    none
   TALKS TO: Leaflet (leafletjs.com, BSD-2-Clause) with OneMap base map tiles, as in MapView.vue
   REVISE:   Wk 5 onMounted / onUnmounted · Wk 6 props
-            onUpdated isn't in the syllabus: see TODO 9
-            requestAnimationFrame isn't either: see glideTo in TODO 4
-  DONE WHEN:
-    - [ ] hovering the meeting point (tapping, on a phone) lists everyone's trip time
-    - [ ] dots move without the map jumping back
-    - [ ] a phone that stopped updating turns grey
-    - [ ] your route shows and hides
+            onUpdated isn't in the syllabus: see the comment above onUpdated(redraw)
 -->
 <script setup>
 // Map: Leaflet (https://leafletjs.com, BSD-2-Clause)
@@ -30,9 +24,6 @@ import { decodePolyline } from '../utils/polyline'
 import { formatTime } from '../utils/meetup-date'
 import { byTripTime } from '../utils/live-time'
 
-// STEPS
-
-// TODO 1: Declare the props from the header.
 const props = defineProps({
   destination: { type: Object, required: true },
   people: { type: Array, default: () => [] },
@@ -42,7 +33,7 @@ const props = defineProps({
   showRoute: { type: Boolean, default: false },
 })
 
-// TODO 2: Tiles, credit and colours. Tiles, credit and route colours are the same as MapView.vue.
+// Tiles, credit and route colours are the same as MapView.vue
 const ONEMAP_TILES = 'https://www.onemap.gov.sg/maps/tiles/Default/{z}/{x}/{y}.png'
 const ONEMAP_CREDIT =
   '<img src="https://www.onemap.gov.sg/web-assets/images/logo/om_logo.png" style="height:20px;width:20px;"/>&nbsp;<a href="https://www.onemap.gov.sg/" target="_blank" rel="noopener noreferrer">OneMap</a>&nbsp;&copy;&nbsp;contributors&nbsp;&#124;&nbsp;<a href="https://www.sla.gov.sg/" target="_blank" rel="noopener noreferrer">Singapore Land Authority</a>'
@@ -53,7 +44,6 @@ const WALK_COLOUR = '#64748b' // grey dashes: walking
 const BUS_COLOUR = '#0e8560' // green: bus
 const TRAIN_COLOUR = '#1d4f91' // blue: train
 const CAR_COLOUR = '#7c3aed' // purple: car
-const GLIDE_MS = 5000 // as long as a refresh, so a moving dot never pauses between updates
 
 const mapElement = ref(null) // the <div> in the template; Leaflet draws inside it
 // Leaflet objects are plain variables, because Vue doesn't need to track them
@@ -62,7 +52,6 @@ let destinationMarker = null
 let meMarker = null
 let routeLayer = null // a group holding the route lines, so they can be cleared together
 const markers = {} // memberId → that person's dot
-const glides = {} // memberId → { lat, lng, frame }: where that dot is heading
 let hasFitted = false
 let hadMe = false // were you on the map at the last redraw?
 let hadRoute = false // was your route showing at the last redraw?
@@ -87,8 +76,8 @@ function tripText(person) {
   return `${person.etaMinutes} min, arrives ${formatTime(person.arriveAt)}`
 }
 
-// TODO 3: onMounted: create the map, the layer for the route, and the meeting point marker.
-//         bindTooltip opens on hover, and on tap on a phone (Leaflet opens tooltips on click too).
+// Creates the map, the layer for the route, and the meeting point marker. bindTooltip opens on
+// hover, and on tap on a phone (Leaflet opens tooltips on click too).
 onMounted(() => {
   const { lat, lng } = props.destination
   map = L.map(mapElement.value).setView([lat, lng], 14)
@@ -103,30 +92,9 @@ onMounted(() => {
   redraw()
 })
 
-// TODO 4: drawPeople(): a dot for everyone sharing, except you.
-//           - an existing dot glides to its new position; a new person gets a new dot
-//           - someone who stopped sharing loses their dot
-//           - a stale dot is grey with a dashed edge
-//         glideTo slides a dot a little on each screen redraw, using the browser's
-//         requestAnimationFrame. The page redraws more often than positions change, so it does
-//         nothing when the dot is already heading there.
-function glideTo(memberId, lat, lng) {
-  const glide = glides[memberId]
-  if (glide && glide.lat === lat && glide.lng === lng) return
-  if (glide) cancelAnimationFrame(glide.frame)
-
-  const marker = markers[memberId]
-  const from = marker.getLatLng()
-  const startedAt = performance.now()
-  glides[memberId] = { lat, lng, frame: requestAnimationFrame(step) }
-
-  function step(time) {
-    const part = Math.min(1, (time - startedAt) / GLIDE_MS)
-    marker.setLatLng([from.lat + (lat - from.lat) * part, from.lng + (lng - from.lng) * part])
-    if (part < 1) glides[memberId].frame = requestAnimationFrame(step)
-  }
-}
-
+// A dot for everyone sharing, except you. An existing dot moves to its new position, a new
+// person gets a new dot, and someone who stopped sharing loses theirs. A stale dot is grey with
+// a dashed edge.
 function drawPeople() {
   const stillSharing = {}
   for (const person of props.people) {
@@ -149,19 +117,17 @@ function drawPeople() {
     markers[person.memberId]
       .setStyle(style)
       .setTooltipContent(tooltipElement(person.name, [tripText(person)]))
-    glideTo(person.memberId, person.lat, person.lng)
+      .setLatLng([person.lat, person.lng])
   }
 
   for (const memberId of Object.keys(markers)) {
     if (stillSharing[memberId]) continue
-    cancelAnimationFrame(glides[memberId].frame)
-    delete glides[memberId]
     markers[memberId].remove()
     delete markers[memberId]
   }
 }
 
-// TODO 5: drawMe(): your own blue dot, from your phone's position (or none when not sharing).
+// Your own blue dot, from your phone's position (or none when you're not sharing)
 function drawMe() {
   if (!props.me) {
     if (meMarker) meMarker.remove()
@@ -183,7 +149,7 @@ function drawMe() {
   meMarker.setLatLng(position)
 }
 
-// TODO 6: drawRoute(): clear the route layer, then draw each part of your trip if showRoute.
+// Clears the route layer, then draws each part of your trip if showRoute is on
 function drawRoute() {
   routeLayer.clearLayers()
   if (!props.showRoute) return
@@ -200,7 +166,7 @@ function drawRoute() {
   }
 }
 
-// TODO 7: The meeting point's tooltip: everyone's live trip time, soonest first.
+// The meeting point's tooltip: everyone's live trip time, soonest first
 function drawDestinationTooltip() {
   const lines = [...props.people].sort(byTripTime).map((person) => {
     const who = person.memberId === props.myMemberId ? `${person.name} (you)` : person.name
@@ -210,10 +176,10 @@ function drawDestinationTooltip() {
   destinationMarker.setTooltipContent(tooltipElement(props.destination.name, lines))
 }
 
-// TODO 8: Zooming. fitAll() shows the meeting point and every dot. It runs by itself only when
-//         something new happens: the first time there's someone to show, and when you start
-//         sharing. Turning on your route zooms to the route. Otherwise only the "Show everyone"
-//         button runs it, so a refresh never undoes your own zooming.
+// Zooming. fitAll() shows the meeting point and every dot. It runs by itself only when
+// something new happens: the first time there's someone to show, and when you start sharing.
+// Turning on your route zooms to the route. Otherwise only the "Show everyone" button runs it,
+// so a refresh never undoes your own zooming.
 function allPoints() {
   const points = [[props.destination.lat, props.destination.lng]]
   for (const person of props.people) points.push([person.lat, person.lng])
@@ -248,13 +214,12 @@ function redraw() {
   hadMe = props.me !== null
 }
 
-// TODO 9: onUpdated: the parent passes new props after every refresh, which re-renders this
-//         component, so redraw then. (The team doesn't use watch; onUpdated is the lifecycle
-//         hook that runs after each re-render.)
+// The parent passes new props after every refresh, which re-renders this component, so redraw
+// then. (The team doesn't use watch; onUpdated is the lifecycle hook that runs after each
+// re-render.)
 onUpdated(redraw)
 
 onUnmounted(() => {
-  for (const glide of Object.values(glides)) cancelAnimationFrame(glide.frame)
   if (map) map.remove()
 })
 </script>

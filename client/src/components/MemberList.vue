@@ -12,12 +12,6 @@
                      members: [ { _id, name, start: { label, postal, lat, lng } | null,
                                   travelMode: 'transit' | 'car', ready } ] }
   REVISE:   Wk 5 v-for + :key · Wk 6 props/emits
-  DONE WHEN:
-    - [ ] each member shows name + start label, and "waiting" until they confirm their location
-    - [ ] drivers show "car", everyone else "public transport"
-    - [ ] the host can remove anyone but themselves
-    - [ ] "you" marked
-    - [ ] Bootstrap list group
 -->
 <script setup>
 defineProps({

@@ -22,25 +22,8 @@
                      leftSinceRanking [ name ] (who left since) }
             sends { start: { label, postal, lat, lng } }, { travelMode } or { ready }
   REVISE:   Wk 4 route params · Wk 5 onMounted + Axios GET/PUT · Wk 6 props, emits, localStorage
-  DONE WHEN:
-    - [ ] details + code shown
-    - [ ] members with start status
-    - [ ] "you" can set or change your start
-    - [ ] "you" can choose public transport (the default) or car
-    - [ ] "you" confirm your location once your start and travel mode are set
-    - [ ] the host's button to results once every member (at least 2) has confirmed
-    - [ ] members' button to vote once the host has worked out the results
-    - [ ] after that, no joining or location changes; the host sees who left and can recalculate
-    - [ ] the host can remove a member who is holding up the group
-    - [ ] responsive
-    - [ ] testids
 -->
 <script setup>
-// STEPS (script: TODO 1-5 · template: TODO 6-11)
-// Course example paths are relative to ~/Desktop/IS216/
-
-// TODO 1: Imports: ref, computed, onMounted, axios, BASE_URL, useRoute.
-//         Example: route params in Week 4/wk4_example/src/components/Example10.vue
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import axios from 'axios'
 import { useRoute, useRouter } from 'vue-router'
@@ -57,8 +40,7 @@ import { memberAuthConfig } from '../utils/member-auth'
 const auth = useAuthStore()
 const MEETUP_REFRESH_MS = 5000
 let refreshTimer = null
-// TODO 2: Read the meetup code from the route params. Add refs for the meetup (null),
-//         "is loading" (true) and an error message.
+
 const route = useRoute()
 const router = useRouter()
 const code = route.params.code
@@ -104,10 +86,7 @@ function handleMemberError(error, fallback) {
   actionError.value = getErrorText(error, fallback)
 }
 
-// TODO 3: async function loadMeetup(): GET ${BASE_URL}/meetups/<code> in try/catch.
-//         Show "No meetup with code ..." on a 404 and a generic message otherwise.
-//         Always finish loading.
-//         Example: fetchStudents in Week 6/Code_Along/client/src/App.vue
+// Loads the meetup, with "No meetup with code ..." on a 404 and a generic message otherwise
 async function loadMeetup() {
   isLoading.value = true
   errorMessage.value = ''
@@ -153,8 +132,7 @@ async function refreshMeetup() {
   }
 }
 
-// TODO 4: In onMounted: call loadMeetup() and read "my" member id from localStorage
-//         (fairspot-member-<code>) into a ref.
+// "My" member id comes from localStorage (fairspot-member-<code>), saved when I created or joined
 onMounted(() => {
   myMemberId.value = localStorage.getItem(`fairspot-member-${code}`)
   loadMeetup()
@@ -164,7 +142,8 @@ onMounted(() => {
 onUnmounted(() => {
   clearInterval(refreshTimer)
 })
-// TODO 5: A computed that says whether "I" am a member of this meetup.
+
+// Whether "I" am a member of this meetup
 const isMember = computed(() => {
   if (!meetup.value || !meetup.value.members || !myMemberId.value) {
     return false
@@ -180,7 +159,7 @@ const isMember = computed(() => {
   return found
 })
 
-// Assuming the first member in the array is the creator/host
+// members[0] is the host: the server adds the host first when the meetup is created
 const hostId = computed(() => meetup.value?.members?.[0]?._id)
 const isHost = computed(() => isMember.value && myMemberId.value === hostId.value)
 
@@ -224,7 +203,7 @@ const startWarning = computed(() => {
   }
   return ''
 })
-//Set start point
+
 const copyLabel = ref('Copy code')
 
 async function copyCode() {
@@ -518,7 +497,6 @@ async function handleLeave() {
 
         <!-- Right Column: Members & Actions -->
         <div class="col-lg-5">
-          <!-- MemberList Component replacing inline code -->
           <div class="card app-card mb-3">
             <div class="card-body">
               <h3 class="mb-3">Members</h3>
@@ -627,7 +605,7 @@ async function handleLeave() {
             </div>
           </div>
 
-          <!-- TODO 9: Join meetup link -->
+          <!-- A visitor who isn't a member can join, unless the meetup is closed -->
           <p v-if="!isMember && isLocked" class="alert alert-secondary" data-testid="lobby-closed">
             This meetup is closed to new members because the host has worked out the fair meeting
             points.

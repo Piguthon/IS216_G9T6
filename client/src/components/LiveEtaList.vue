@@ -9,11 +9,6 @@
   EMITS:    none
   DATA:     etaMinutes is null when OneMap found no route; arriveAt is "HH:MM"
   REVISE:   Wk 5 computed · Wk 6 props
-  DONE WHEN:
-    - [ ] rows sorted by trip time, people without a route last
-    - [ ] your own row says "You"
-    - [ ] a phone that stopped updating shows "last seen …" in grey
-    - [ ] readable at 320px wide
 -->
 <script setup>
 import { computed } from 'vue'
@@ -21,25 +16,22 @@ import { formatTime } from '../utils/meetup-date'
 import { timeAgo, byTripTime } from '../utils/live-time'
 import { tripTone } from '../utils/trip-tone'
 
-// STEPS
-
-// TODO 1: Declare the props from the header.
 const props = defineProps({
   people: { type: Array, required: true },
   myMemberId: { type: String, default: '' },
   now: { type: Number, required: true },
 })
 
-// TODO 2: The longest and shortest known trip, for the traffic-light colours and bar widths
-//         (the same board as the summary page).
+// The longest and shortest known trip, for the traffic-light colours and bar widths (the same
+// board as the summary page)
 const knownMinutes = computed(() =>
   props.people.filter((person) => person.etaMinutes !== null).map((person) => person.etaMinutes),
 )
 const longest = computed(() => Math.max(...knownMinutes.value))
 const shortest = computed(() => Math.min(...knownMinutes.value))
 
-// TODO 3: rows: a sorted copy of people (byTripTime from utils/live-time.js), each with isMe and
-//         its colour. Tip: [...props.people] copies the array, so sort() doesn't change the prop.
+// A sorted copy of people, each with isMe and its colour. [...props.people] copies the array, so
+// sort() doesn't change the prop.
 const rows = computed(() =>
   [...props.people].sort(byTripTime).map((person) => ({
     ...person,

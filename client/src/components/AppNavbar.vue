@@ -7,9 +7,6 @@
   TALKS TO: RouterLinks
   DATA:     none
   REVISE:   Wk 3 navbar, collapse · Wk 4 RouterLink
-  DONE WHEN:
-    - [ ] links: Home, Create Meetup, Join Meetup, Log in
-    - [ ] collapses on phones
 -->
 <script setup>
 import { ref, onMounted, onUnmounted } from 'vue'

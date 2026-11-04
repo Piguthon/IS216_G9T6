@@ -1,6 +1,6 @@
 /*
   FILE:    models/vote-model.js
-  OWNER:   P4 (after the pitch) (team-written)
+  OWNER:   P4 (team-written)
   PURPOSE: votes
   FIELDS:  meetup code, memberId, kind ('station' or 'venue'), option (id, name, and where it is
            so the host can confirm it), timestamps

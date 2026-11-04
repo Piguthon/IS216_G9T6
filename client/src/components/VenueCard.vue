@@ -4,13 +4,10 @@
   PURPOSE:  One venue
   PROPS:    venue (Object)
   EMITS:    none
-  SLOT:     for actions (e.g. a vote button later)
+  SLOT:     extra buttons under the venue (the venue vote button on the results page)
   TALKS TO: none
-  DATA:     Venue { venueKey, name, address, lat, lng, category, distanceM, avgRating }
+  DATA:     Venue { venueKey, name, address, lat, lng, category, distanceM }
   REVISE:   Wk 6 props, slots · Wk 3 cards
-  DONE WHEN:
-    - [ ] name, type, address, distance
-    - [ ] Bootstrap card
 -->
 <script setup>
 import { computed } from 'vue'
@@ -28,10 +25,10 @@ const TYPE_LABELS = {
   'commercial.shopping_mall': 'Mall',
 }
 
-// 4.1: the label for this venue's category, or 'Place' for anything not in the list
+// The label for this venue's category, or 'Place' for anything not in the list
 const typeLabel = computed(() => TYPE_LABELS[props.venue.category] || 'Place')
 
-// 4.2: 350 → '350 m', 1200 → '1.2 km', '' when there's no distance
+// 350 → '350 m', 1200 → '1.2 km', '' when there's no distance
 const distanceLabel = computed(() => {
   const metres = props.venue.distanceM
   if (metres === null || metres === undefined) {

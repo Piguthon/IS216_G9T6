@@ -1,6 +1,6 @@
 <!--
   FILE:     src/views/LogoutView.vue
-  OWNER:    P1 (after the pitch) (team-written)
+  OWNER:    P1 (team-written)
   PURPOSE:  Logs the user out as soon as the page opens, then confirms it
   ROUTE:    /logout
   TALKS TO: POST /api/users/logout, through the auth store

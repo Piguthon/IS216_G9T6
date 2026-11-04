@@ -7,6 +7,8 @@
              GET /api/meetups/frequent (the accounts I've shared the most meetups with)
              DELETE /api/meetups/notices/:id (dismiss one of my notices)
              GET /api/meetups/:code (get one; start points' postal and lat/lng only for members)
+             PUT /api/meetups/:code (the host edits the details; logged in)
+             DELETE /api/meetups/:code (the host deletes the meetup; logged in)
              POST /api/meetups/:code/members (join)
              PUT /api/meetups/:code/me (set my start point)
              PUT /api/meetups/:code/me/mode (set my travel mode)
@@ -21,17 +23,10 @@
 const express = require('express');
 const router = express.Router();
 
-// STEPS
-// Course example paths are relative to ~/Desktop/IS216/
-
-// TODO 1: Require the meetups controller.
-//         Example: Week 5/server/blog-with-mongodb/routes/blogs-routes.js
 const meetupsController = require('../controllers/meetups-controller');
 const { requireAuth } = require('../middleware/auth');
 const { requireMember } = require('../middleware/member');
-// TODO 2: Register the endpoints from the header, each pointing at its controller function.
-//         Start with POST / and GET /:code, then POST /:code/members,
-//         then PUT /:code/members/:memberId later.
+
 router.post("/", requireAuth, meetupsController.createMeetup);
 router.get("/mine", requireAuth, meetupsController.getMyMeetups); // must stay above /:code
 router.get("/frequent", requireAuth, meetupsController.getFrequentPeople); // must stay above /:code

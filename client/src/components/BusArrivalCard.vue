@@ -8,10 +8,6 @@
   DATA:     Bus { stopCode, services: [ { serviceNo, nextArrivals: [ ISO time strings ] } ] }
             arrival times are ISO strings with +08:00
   REVISE:   Wk 5 onMounted + Axios GET, computed
-  DONE WHEN:
-    - [ ] shows each bus's next arrivals in minutes
-    - [ ] refresh button
-    - [ ] empty state when buses aren't running (late night)
 -->
 <script setup>
 import { ref, computed, onMounted } from 'vue'

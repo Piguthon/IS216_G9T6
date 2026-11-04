@@ -9,7 +9,7 @@
             node scripts/demo-live-map.js           set up, then press Enter to set everyone off
             node scripts/demo-live-map.js --clean   delete the demo meetup and accounts
   TALKS TO: models/meetup-model.js, models/location-model.js, models/vote-model.js,
-            models/user-model.js, services/onemap.js (getPtRoute), config/db.js
+            models/user-model.js, services/onemap.js (getPtRoute), utils/polyline.js, config/db.js
 */
 
 const path = require('node:path');
@@ -31,14 +31,15 @@ const { getPtRoute } = require('../services/onemap');
 const { distanceKm } = require('../utils/fairness');
 const { msToSingapore } = require('../utils/meetup-date');
 const { liveWindowStatus } = require('../utils/live-window');
+const { decodePolyline } = require('../utils/polyline');
 const stations = require('../data/stations.json');
 
 const DEMO_CODE = 'DEMO01'; // generated codes never contain the letter O, so this can't clash
 const MEETING_POINT = 'city-hall';
 const MINUTES_UNTIL_MEETUP = 45; // the live map stays open for 75 minutes from the start
 const TICK_MS = 2000; // how often the simulated people move
-// The longest trip takes this long, and shorter trips scale with it. Pages refresh every 5 seconds
-// and dots then take 5 seconds to glide there, so on screen the whole run takes about 30 seconds.
+// The longest trip takes this long, and shorter trips scale with it. Pages refresh every 5 seconds,
+// so on screen the whole run takes about 25 seconds.
 const LONGEST_TRIP_SECONDS = 20;
 const MINUTES_PER_KM = 3; // the trip time if OneMap is down
 const TRIP_PLAN_TIME = '10:00'; // overnight OneMap only finds walking trips, so plan a daytime one
@@ -64,7 +65,7 @@ function startPoint(stationId) {
   return { label: `${name} MRT`, postal: '', lat, lng };
 }
 
-// TODO 1: Accounts. Creates each one, or resets its password if it already exists.
+// Accounts. Creates each one, or resets its password if it already exists.
 async function setUpAccounts() {
   const passwordHash = await bcrypt.hash(process.env.DEMO_PASSWORD, 12);
   const users = [];
@@ -79,7 +80,7 @@ async function setUpAccounts() {
   return users;
 }
 
-// TODO 2: The meetup. Starts fresh each run, in the live window, with the meeting point confirmed.
+// The meetup. Starts fresh each run, in the live window, with the meeting point confirmed.
 async function setUpMeetup(users) {
   await deleteMeetup();
 
@@ -117,11 +118,9 @@ async function setUpMeetup(users) {
   return Meetup.findByCode(DEMO_CODE);
 }
 
-// TODO 3: One trip for each simulated member. If OneMap fails, they go in a straight line, so
-//         the demo still works. The decoder is the client's, loaded with import() because that
-//         file is an ES module.
+// One trip for each simulated member. If OneMap fails, they go in a straight line, so the demo
+// still works.
 async function planTrip(member, station) {
-  const { decodePolyline } = await import('../../client/src/utils/polyline.js');
   const now = msToSingapore(Date.now());
   let minutes = Math.round(distanceKm(member.start, station) * MINUTES_PER_KM);
   let path = [member.start, station];
@@ -140,7 +139,7 @@ async function planTrip(member, station) {
   return { memberId: String(member._id), minutes, path };
 }
 
-// TODO 4: pointAlong(path, fraction): where you are after that fraction of the path's distance
+// pointAlong(path, fraction): where you are after that fraction of the path's distance
 function pointAlong(path, fraction) {
   const lengths = path.slice(1).map((point, index) => distanceKm(path[index], point));
   let left = lengths.reduce((total, length) => total + length, 0) * fraction;
@@ -158,8 +157,8 @@ function pointAlong(path, fraction) {
   return path[path.length - 1];
 }
 
-// TODO 5: Save everyone's position. startedAt is null until Enter is pressed. Saving people who
-//         have arrived too keeps their dots from going grey.
+// Saves everyone's position. startedAt is null until Enter is pressed. Saving people who have
+// arrived too keeps their dots from going grey.
 async function moveEveryone(trips, startedAt) {
   const leftAt = startedAt || Date.now();
   const seconds = (Date.now() - leftAt) / 1000;
@@ -179,8 +178,8 @@ async function moveEveryone(trips, startedAt) {
   }
 }
 
-// TODO 6: Keep moving people until the live map closes, so a forgotten script stops by itself.
-//         Each Enter sends them back to their starts and sets them off again.
+// Keeps moving people until the live map closes, so a forgotten script stops by itself. Each
+// Enter sends them back to their starts and sets them off again.
 async function runDemo(meetup, trips) {
   let startedAt = null;
   const input = readline.createInterface({ input: process.stdin });

@@ -6,10 +6,6 @@
   TALKS TO: GET /api/users/me; GET/POST/PUT/DELETE /api/users/me/locations
   DATA:     { user: { _id, name, email } }
   REVISE:   Wk 5 Axios with Authorization header · Wk 6 components
-  DONE WHEN:
-    - [x] account details and saved-location CRUD
-    - [ ] redirect to /login if not logged in
-    - [ ] responsive
 -->
 <script setup>
 import { ref, computed, onMounted } from 'vue'

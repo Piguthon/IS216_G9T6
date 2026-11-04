@@ -9,7 +9,7 @@
              meeting point the host confirmed
              Both GETs send each trip's steps and firstBusStopCode to members only (by session
              or X-Member-Token, middleware/member.js): the routes start at members' homes
-  STEPS:     1. every member needs to have pressed Confirm location (at least 2 members); once the
+  METHOD:    1. every member needs to have pressed Confirm location (at least 2 members); once the
                 host has confirmed a meeting point, anyone who hasn't is just left out
              2. midpoint of their starts → the 30 closest MRT stations, and bus interchanges
                 within 3km

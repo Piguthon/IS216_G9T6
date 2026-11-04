@@ -16,14 +16,6 @@
             the page offers to remove it. It's hidden once the live map closes, and MongoDB
             deletes it within 2 hours (TTL index in models/location-model.js).
   REVISE:   Wk 5 onMounted + Axios, computed · Wk 6 props · Wk 11 router params
-  DONE WHEN:
-    - [ ] before the window it says when it opens; after, that it closed
-    - [ ] nothing is shared before you agree, and Stop works
-    - [ ] guests and logged-out visitors are told to log in; nobody else's location can be changed
-    - [ ] coming back after closing the tab shows you're still on the map, with a way to remove it
-    - [ ] dots and trip times update without reloading
-    - [ ] "My route" draws your trip from where you are
-    - [ ] on a phone, the buttons stay in reach while you scroll
 -->
 <script setup>
 import { ref, computed, onMounted, onUnmounted } from 'vue'
@@ -37,9 +29,6 @@ import { isStale } from '../utils/live-time'
 import LiveMap from '../components/LiveMap.vue'
 import LiveEtaList from '../components/LiveEtaList.vue'
 
-// STEPS
-
-// TODO 1: Constants
 const LIVE_REFRESH_MS = 5000 // fetch everyone's positions every 5 seconds
 const SEND_EVERY_MS = 15000 // send yours at most every 15 seconds
 // enableHighAccuracy uses GPS on a phone; maximumAge lets the phone reuse a 10-second-old fix
@@ -49,7 +38,6 @@ const route = useRoute()
 const auth = useAuthStore()
 const code = route.params.code
 
-// TODO 2: State
 const live = ref(null) // the latest GET /api/live answer
 const isLoading = ref(true)
 const isNotMember = ref(false) // logged in, but this account hasn't joined the meetup
@@ -82,10 +70,9 @@ function errorText(error, fallback) {
   return fallback
 }
 
-// TODO 3: loadLive(): GET the live map.
-//           - an expired login (401) asks you to log in; not a member (403) asks you to join
-//           - a failed first load shows errorMessage; a failed refresh only sets isOffline
-//           - if the window closes while you're sharing, stop sharing
+// Loads the live map. An expired login (401) asks you to log in, and not being a member (403)
+// asks you to join. A failed first load shows errorMessage; a failed refresh only sets isOffline.
+// If the window closes while you're sharing, sharing stops.
 async function loadLive() {
   try {
     const response = await axios.get(`${BASE_URL}/live/${code}`, authConfig())
@@ -109,10 +96,10 @@ async function loadLive() {
   isLoading.value = false
 }
 
-// TODO 4: onMounted: when you aren't logged in the page asks you to (nothing to load).
-//         Otherwise load, then refresh every LIVE_REFRESH_MS. Each refresh also re-sends your
-//         position when it's due, because a phone standing still doesn't report new positions.
-//         A phone pauses timers while its screen is off, so refresh as soon as you come back.
+// When you aren't logged in the page asks you to (nothing to load). Otherwise it loads, then
+// refreshes every LIVE_REFRESH_MS. Each refresh also re-sends your position when it's due,
+// because a phone standing still doesn't report new positions. A phone pauses timers while its
+// screen is off, so the page refreshes as soon as you come back.
 function refresh() {
   now.value = Date.now()
   loadLive()
@@ -135,11 +122,10 @@ onMounted(async () => {
   document.addEventListener('visibilitychange', onVisibilityChange)
 })
 
-// TODO 5: startSharing(): only ever called from a button the user pressed.
-//           - not https (or localhost), or no Geolocation API → message
-//           - otherwise navigator.geolocation.watchPosition(onPosition, onPositionError, ...)
-//         watchPosition is the browser's Geolocation API, not Vue's watch: the browser asks for
-//         permission, then calls onPosition each time the phone moves, until clearWatch.
+// Only ever called from a button the user pressed. Without https (or localhost) or the
+// Geolocation API it shows a message. watchPosition is the browser's Geolocation API, not Vue's
+// watch: the browser asks for permission, then calls onPosition each time the phone moves, until
+// clearWatch.
 function startSharing() {
   message.value = ''
   if (!window.isSecureContext) {
@@ -155,7 +141,7 @@ function startSharing() {
   watchId = navigator.geolocation.watchPosition(onPosition, onPositionError, GEO_OPTIONS)
 }
 
-// TODO 6: onPosition(position): show your dot straight away, then send it if it's due.
+// Shows your dot straight away, then sends it if it's due
 function onPosition(position) {
   // Stopped while the phone was still finding you
   if (shareState.value !== 'starting' && shareState.value !== 'on') return
@@ -170,7 +156,7 @@ function sendIfDue() {
   if (Date.now() - lastSentAt >= SEND_EVERY_MS) sending = sendLocation()
 }
 
-// TODO 7: sendLocation(): PUT your position; the answer has your trip from here.
+// Sends your position; the answer has your trip from here
 async function sendLocation() {
   lastSentAt = Date.now()
   try {
@@ -183,8 +169,8 @@ async function sendLocation() {
   sending = null
 }
 
-// TODO 8: onPositionError(error): permission denied → stop, and say how to allow it;
-//         anything else → say so (the browser keeps trying by itself)
+// Permission denied stops sharing and says how to allow it; any other error is only shown,
+// because the browser keeps trying by itself
 function onPositionError(error) {
   if (error.code === error.PERMISSION_DENIED) {
     stopSharing()
@@ -195,8 +181,8 @@ function onPositionError(error) {
   message.value = "Can't find your location right now. Keep this page open; it will keep trying."
 }
 
-// TODO 9: removeLocation(): DELETE your location so nobody sees it any more, then refresh so your
-//         row goes straight away (unless you've left the page or logged out).
+// Deletes your location so nobody sees it any more, then refreshes so your row goes straight
+// away (unless you've left the page or logged out)
 async function removeLocation(config = authConfig()) {
   try {
     await axios.delete(`${BASE_URL}/live/${code}`, config)
@@ -215,10 +201,10 @@ function removeLeftBehind() {
   removeLocation()
 }
 
-// TODO 10: stopSharing(): stop the phone, clear your dot and route, wait for a send in progress,
-//          then remove your location. While it's 'stopping' the button is disabled, so a quick
-//          Share can't be wiped out by this DELETE. It stays 'stopping' until the refresh is back,
-//          so the page never thinks you were left on the map.
+// Stops the phone, clears your dot and route, waits for a send in progress, then removes your
+// location. While it's 'stopping' the button is disabled, so a quick Share can't be wiped out by
+// this DELETE. It stays 'stopping' until the refresh is back, so the page never thinks you were
+// left on the map.
 async function stopSharing() {
   if (shareState.value === 'off' || shareState.value === 'stopping') return
   const config = authConfig() // read it now: logging out clears the token while this waits
@@ -238,7 +224,6 @@ function toggleSharing() {
   else stopSharing()
 }
 
-// TODO 11: Computed values for the template
 const liveWindow = computed(() => (live.value ? live.value.window : null))
 
 const myMemberId = computed(() => (live.value ? live.value.myMemberId : ''))
@@ -281,7 +266,7 @@ const showConsent = computed(
     !isLeftBehind.value,
 )
 
-// TODO 12: onUnmounted: stop refreshing. Leaving the page stops sharing too (privacy).
+// Stops refreshing. Leaving the page stops sharing too (privacy).
 onUnmounted(() => {
   isUnmounted = true
   clearInterval(refreshTimer)

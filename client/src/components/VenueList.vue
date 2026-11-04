@@ -2,20 +2,14 @@
   FILE:     src/components/VenueList.vue
   OWNER:    S (team-written)
   PURPOSE:  Venues near the selected meeting point with type and distance filters
-            (rating filter later: decision D6)
   PROPS:    lat, lng (Number)
   EMITS:    none
   SLOTS:    venue-actions ({ venue }): extra buttons inside each card
   TALKS TO: GET /api/venues?lat=&lng=&category=
             uses VenueCard
   DATA:     array of Venue:
-            Venue { venueKey, name, address, lat, lng, category, distanceM, avgRating }
+            Venue { venueKey, name, address, lat, lng, category, distanceM }
   REVISE:   Wk 5 Axios GET + params, computed (filters), v-for
-  DONE WHEN:
-    - [ ] loads venues for the given point
-    - [ ] filter by type and distance
-    - [ ] empty state
-    - [ ] testids
 -->
 <script setup>
 import { ref, computed, onMounted } from 'vue'
@@ -38,7 +32,7 @@ const showAll = ref(false)
 const firstShown = 6 // the page stays short: the rest wait behind "Show more places"
 const favourites = useFavouritesStore()
 
-// 5.1: load every type of place around the point once; the filters below work on this list
+// Loads every type of place around the point once; the filters below work on this list
 async function loadVenues() {
   isLoading.value = true
   errorMessage.value = ''
@@ -55,13 +49,13 @@ async function loadVenues() {
   isLoading.value = false
 }
 
-// 5.2: load as soon as the component is on the page
+// Load as soon as the component is on the page
 onMounted(() => {
   loadVenues()
   favourites.load() // once here, so each card can show whether it's saved
 })
 
-// 5.3: the venues that match both filters (recalculates whenever a filter or the list changes)
+// The venues that match both filters (recalculates whenever a filter or the list changes)
 const filteredVenues = computed(() => {
   const result = []
   for (const venue of venues.value) {

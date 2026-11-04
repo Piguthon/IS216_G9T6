@@ -14,13 +14,9 @@
 const express = require('express');
 const router = express.Router();
 
-// STEPS
-
-// TODO 1: Require the live controller and the login check.
 const liveController = require('../controllers/live-controller');
 const { requireAuth } = require('../middleware/auth');
 
-// TODO 2: Register the endpoints from the header, each pointing at its controller function.
 router.get('/:code', requireAuth, liveController.getLive);
 router.put('/:code', requireAuth, liveController.shareLocation);
 router.delete('/:code', requireAuth, liveController.stopSharing);

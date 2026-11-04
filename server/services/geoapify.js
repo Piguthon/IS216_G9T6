@@ -16,7 +16,7 @@ const API_KEY = process.env.GEOAPIFY_API_KEY;
 
 exports.searchPlaces = async function (latitude, longitude, category, radiusMetres) {
   try {
-    // TODO 1.1: build the params object: categories, filter, bias, limit, apiKey
+    // filter and bias take lon,lat (Geoapify's order); bias puts the nearest places first
     const params = {
       categories : category, 
       filter : `circle:${longitude},${latitude},${radiusMetres}`, 
@@ -24,9 +24,7 @@ exports.searchPlaces = async function (latitude, longitude, category, radiusMetr
       limit : 20, 
       apiKey : API_KEY
     };
-    // TODO 1.2: send it: const response = await axios.get(PLACES_URL, { params: ... })
     const response = await axios.get(PLACES_URL, {params : params });
-    // TODO 1.3: return the places: response.data.features
     return response.data.features;
   } catch (error) {
     console.error('Geoapify request failed:', error.message);

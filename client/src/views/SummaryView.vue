@@ -1,12 +1,22 @@
 <!--
-  PITCH PLACEHOLDER (demo/pitch branch only; never merge into integration or main). I replaces this.
-  The meeting point is the one the host confirmed (meetup.finalStation). Travel times and leave
-  times come from GET /api/ranking/:code/leave-times, for arriving by the meetup time. The
-  bus-arrival card shows the buses in the viewer's route.
-  ROUTE: /meetup/:code/summary
-  POLLING: the meetup refreshes every 5 seconds while this page is open (decided: no WebSockets).
-  Leave times use OneMap, so they only reload when the meeting point, a start point or a travel
-  mode changes.
+  FILE:     src/views/SummaryView.vue
+  OWNER:    I (team-written)
+  PURPOSE:  The meetup summary once the host has confirmed the meeting point
+            (meetup.finalStation): everyone's journey time and when to leave to arrive by the
+            meetup time, your own route step by step, live arrivals for the buses in your route,
+            and a map of the start points, the meeting point and your route
+  ROUTE:    /meetup/:code/summary
+  TALKS TO: GET /api/meetups/:code, GET /api/ranking/:code/leave-times
+            both send who I am (utils/member-auth.js), so members get start points' lat/lng
+            and their trip's route; uses BusArrivalCard and MapView
+  POLLING:  the meetup refreshes every 5 seconds while this page is open (decided: no
+            WebSockets). Leave times use OneMap, so they only reload when the meeting point, a
+            start point or a travel mode changes
+  DATA:     Meetup { code, occasion, date, time, finalStation { optionId, name, lat, lng } | null,
+                     members: [ { _id, name, start, travelMode } ] }
+            leave-times → { trips: [ { memberId, name, travelMode, minutes, waitMinutes, leaveAt,
+                                       arriveAt, steps (members only) } ] }
+  REVISE:   Wk 4 route params · Wk 5 onMounted + Axios GET, computed · Wk 6 props, components
 -->
 <script setup>
 import { ref, computed, onMounted, onUnmounted } from 'vue'

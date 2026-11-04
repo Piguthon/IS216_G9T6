@@ -6,10 +6,6 @@
   TALKS TO: POST /api/users/signup
   DATA:     sends { name, email, password } → receives { token, user }
   REVISE:   Wk 3 forms · Wk 5 Axios POST
-  DONE WHEN:
-    - [ ] validation messages
-    - [ ] redirect after sign-up
-    - [ ] responsive
 -->
 <script setup>
 import { ref, computed } from 'vue'

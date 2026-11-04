@@ -18,11 +18,6 @@
   REVISE:    Wk 5 blog-model.js (schema + exported CRUD functions)
 */
 
-// STEPS
-// Course example paths are relative to ~/Desktop/IS216/
-
-// TODO 1: Require Mongoose.
-//         Example: Week 5/server/blog-with-mongodb/models/blog-model.js
 const crypto = require('node:crypto');
 const mongoose = require('mongoose');
 
@@ -32,11 +27,8 @@ function newMemberToken() {
     return crypto.randomBytes(32).toString('hex');
 }
 
-// TODO 2: Define a member sub-schema with:
-//           - name  (String, required, trimmed)
-//           - start (an object { label, postal, lat, lng }, default null)
-//         Tip: Mongoose gives every sub-document its own _id; that's the member id the
-//         frontend stores.
+// A member of a meetup. Mongoose gives every sub-document its own _id; that's the member id the
+// frontend stores.
 const memberSchema = new mongoose.Schema(
     {
         userId: { type: String, default: null },
@@ -75,11 +67,6 @@ const memberSchema = new mongoose.Schema(
     }
 )
 
-// TODO 3: Define the meetup schema:
-//           - code (String, required, unique)
-//           - hostName, occasion, date ("YYYY-MM-DD"), time ("HH:MM"): all Strings, required
-//           - members (an array of the member sub-schema)
-//           - createdAt (Date, defaults to now)
 const meetupSchema = new mongoose.Schema({
     code : {
         type : String,
@@ -142,16 +129,8 @@ const meetupSchema = new mongoose.Schema({
     }
 })
 
-// TODO 4: Create the model on the meetups collection, the same way blog-model.js creates
-//         Blog on blogs.
 const Meetup = mongoose.model('Meetup', meetupSchema,'meetups');
 
-// TODO 5: Export these CRUD functions in the course style (exports.name = function ...),
-//         each returning the Mongoose result:
-//           - createMeetup(data)
-//           - findByCode(code)
-//           - addMember(code, name)
-//           - setMemberStart(code, memberId, start)   (this one later)
 exports.createMeetup = async function(data) {
     const newMeetup = {
         code : data.code,

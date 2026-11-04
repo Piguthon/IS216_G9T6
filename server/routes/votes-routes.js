@@ -1,6 +1,6 @@
 /*
   FILE:      routes/votes-routes.js
-  OWNER:     P4 (after the pitch) (team-written)
+  OWNER:     P4 (team-written)
   PURPOSE:   Express router for /api/votes (mounted in server.js)
   ENDPOINTS: GET  /api/votes/:code?memberId=   tallies, my votes and the confirmed choices
              PUT  /api/votes/:code             cast or move my vote (a member: session or

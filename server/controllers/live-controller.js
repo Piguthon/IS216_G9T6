@@ -20,15 +20,8 @@
   TALKS TO:  models/meetup-model.js, models/location-model.js,
              services/onemap.js (getPtRoute, getDriveRoute)
   REVISE:    Wk 5 blogs-controller.js pattern (exports.fn = async (req, res) => {} with try/catch)
-  DONE WHEN:
-    - [ ] each endpoint works in Postman or curl
-    - [ ] no login gets 401, a non-member gets 403, and nothing is shared outside the live window
-    - [ ] OneMap failing never stops a location from saving
 */
 
-// STEPS
-
-// TODO 1: Require the two models, OneMap's route function, and the time and distance helpers.
 const Meetup = require('../models/meetup-model');
 const Location = require('../models/location-model');
 const { getPtRoute, getDriveRoute } = require('../services/onemap');
@@ -42,15 +35,14 @@ const TRIP_REFRESH_MS = 2 * 60 * 1000; // work the trip out again after 2 minute
 const TRIP_REFRESH_KM = 0.15; // ...or after moving 150 m
 const NOT_A_MEMBER = 'Only members who joined with their account can use the live map';
 
-// TODO 2: Helpers
-//           - findMember(meetup, memberId): the member with this id, or null
-//           - findMyself(meetup, user): the member who joined with this account, or null
-//           - isInSingapore(lat, lng): both are numbers inside SINGAPORE
-//           - needsNewTrip(previous, lat, lng): no trip yet, or it's 2 minutes old,
-//             or the member has moved 150 m since
-//           - tripFromHere(lat, lng, station, travelMode): the route from here by the member's
-//             travel mode, leaving now, as the fields to save; {} when OneMap fails, so the old
-//             trip is kept
+// Helpers
+//   - findMember(meetup, memberId): the member with this id, or null
+//   - findMyself(meetup, user): the member who joined with this account, or null
+//   - isInSingapore(lat, lng): both are numbers inside SINGAPORE
+//   - needsNewTrip(previous, lat, lng): no trip yet, or it's 2 minutes old, or the member has
+//     moved 150 m since
+//   - tripFromHere(lat, lng, station, travelMode): the route from here by the member's travel
+//     mode, leaving now, as the fields to save; {} when OneMap fails, so the old trip is kept
 function findMember(meetup, memberId) {
   return meetup.members.find((member) => String(member._id) === memberId) || null;
 }
@@ -93,12 +85,12 @@ async function tripFromHere(lat, lng, station, travelMode) {
   }
 }
 
-// TODO 3: getLive
-//           - unknown code → 404; the logged-in user isn't a member → 403
-//           - no confirmed meeting point → 400
-//           - outside the live window → people: []; once it has ended, delete the locations too
-//           - otherwise every shared location with the member's name (skip members who left),
-//             and the requester's own steps as myRoute
+// getLive
+//   - unknown code → 404; the logged-in user isn't a member → 403
+//   - no confirmed meeting point → 400
+//   - outside the live window → people: []; once it has ended, the locations are deleted too
+//   - otherwise every shared location with the member's name (skipping members who left), and
+//     the requester's own steps as myRoute
 exports.getLive = async (req, res) => {
   try {
     const meetup = await Meetup.findByCode(req.params.code);
@@ -148,13 +140,13 @@ exports.getLive = async (req, res) => {
   }
 };
 
-// TODO 4: shareLocation, part 1: check the request
-//           - lat and lng must be numbers inside Singapore → otherwise 400
-//           - unknown code → 404; the logged-in user isn't a member → 403
-//           - no confirmed meeting point → 400
-//           - outside the live window → 403
-// TODO 5: shareLocation, part 2: save the location, with a fresh trip when needsNewTrip says so,
-//         then reply with the trip
+// shareLocation
+//   - lat and lng must be numbers inside Singapore → otherwise 400
+//   - unknown code → 404; the logged-in user isn't a member → 403
+//   - no confirmed meeting point → 400
+//   - outside the live window → 403
+//   - otherwise saves the location, with a fresh trip when needsNewTrip says so, and replies
+//     with the trip
 exports.shareLocation = async (req, res) => {
   try {
     const { lat, lng, accuracyM } = req.body;
@@ -204,8 +196,8 @@ exports.shareLocation = async (req, res) => {
   }
 };
 
-// TODO 6: stopSharing: delete the logged-in member's location → 200 { message }
-//         (no 404 when there's nothing to delete: pressing Stop twice is fine)
+// stopSharing: deletes the logged-in member's location → 200 { message }
+// (no 404 when there's nothing to delete: pressing Stop twice is fine)
 exports.stopSharing = async (req, res) => {
   try {
     const meetup = await Meetup.findByCode(req.params.code);

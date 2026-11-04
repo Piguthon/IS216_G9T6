@@ -10,20 +10,8 @@
             Meetup { code, hostName, occasion, date "YYYY-MM-DD", time "HH:MM",
                      members: [ { _id, name, start: { label, postal, lat, lng } | null } ] }
   REVISE:   Wk 4 v-model, useRouter().push · Wk 5 Axios POST, async/await, try/catch, v-model modifiers
-  DONE WHEN:
-    - [ ] required fields validated with a message
-    - [ ] success shows the code and a "Go to meetup" button to /meetup/:code
-    - [ ] error message on failure
-    - [ ] "Add people you often meet" lists them most frequent first, and is hidden when empty
-    - [ ] responsive
-    - [ ] testids on inputs, buttons, result
 -->
 <script setup>
-// STEPS (script: TODO 1-4 · template: TODO 5-9)
-// Course example paths are relative to ~/Desktop/IS216/
-
-// TODO 1: Imports: ref from vue, axios, BASE_URL from ../config.js, useRouter.
-//         Example: Week 6/Code_Along/client/src/App.vue (TODOs 1-2)
 import { ref, computed, onMounted } from 'vue'
 import axios from 'axios'
 import { BASE_URL } from '../config'
@@ -34,8 +22,8 @@ import { todayInSingapore, formatDate } from '../utils/meetup-date'
 const router = useRouter()
 const auth = useAuthStore()
 const today = ref(todayInSingapore())
-// TODO 2: Refs for the four inputs (host name, occasion, date, time), an error message,
-//         the created meetup (starts null), and an "is saving" flag.
+// The form's inputs, its error message, the created meetup (null until it exists) and whether
+// it's being saved
 const occasion = ref('')
 const date = ref('')
 const time = ref('')
@@ -74,15 +62,9 @@ function sharedLabel(count) {
 }
 
 onMounted(loadFrequentPeople)
-// TODO 3: async function createMeetup()
-//           - show a message if a required field is empty
-//           - otherwise axios.post to ${BASE_URL}/meetups with the four fields, inside try/catch
-//           - on success, keep response.data and remember the host's member _id in
-//             localStorage under the key fairspot-member-<code>
-//           - on failure, show the server's error message if there is one, otherwise a
-//             friendly generic one
-//         Examples: Week 6/Code_Along/client/src/App.vue (addStudent);
-//                   localStorage in Week 6/wk6_example/src/views/Example7View.vue
+
+// Checks the form, creates the meetup and remembers the host's member _id in localStorage
+// (fairspot-member-<code>), so the lobby knows the host is "you"
 async function createMeetup() {
   if (isSaving.value) return
   errorMessage.value = ''
@@ -126,14 +108,16 @@ async function createMeetup() {
     } else {
       errorMessage.value = 'Failed to create meetup. Please try again.'
     }
-    isSaving.value = false // Added to the catch block
+    isSaving.value = false
   }
 }
+
 function goToMeetup() {
   if (meetup.value && meetup.value.code) {
     router.push(`/meetup/${meetup.value.code}`)
   }
 }
+
 // Clipboard API (browser built-in, https://developer.mozilla.org/docs/Web/API/Clipboard/writeText)
 async function copyCode() {
   try {
@@ -143,8 +127,6 @@ async function copyCode() {
     copyLabel.value = 'Select and copy the code'
   }
 }
-// TODO 4: function goToMeetup() uses the router to open /meetup/<code>.
-//         Example: Week 4/wk4_example/src/components/Example11.vue
 </script>
 
 <template>
@@ -152,12 +134,6 @@ async function copyCode() {
     <header v-if="!meetup" class="app-page-header">
       <h1 class="app-heading mb-0">Create Meetup</h1>
     </header>
-    <!-- TODO 5: Page header (app-page-header) and a form inside "card app-card", with Bootstrap
-               form controls bound with v-model:
-                 - .trim on the text inputs
-                 - type="date" and type="time" for date and time
-                 - submit with @submit.prevent
-                 - button disabled while saving -->
     <div v-if="!meetup" class="row g-4">
       <div class="col-lg-7">
         <div class="card app-card">
@@ -238,7 +214,6 @@ async function copyCode() {
                 </div>
               </fieldset>
 
-              <!-- TODO 6: Error alert (alert alert-danger) shown only when there is a message. -->
               <div v-if="errorMessage" class="alert alert-danger" data-testid="create-error">
                 {{ errorMessage }}
               </div>
@@ -268,8 +243,7 @@ async function copyCode() {
         </aside>
       </div>
     </div>
-    <!-- TODO 7: Success panel shown once the meetup exists: the code in app-code, a short
-               "share this code" line, and a "Go to meetup" button. -->
+    <!-- Once the meetup exists: its code to share and a button to the lobby -->
     <div v-else class="row justify-content-center">
       <div class="col-md-8 col-lg-6">
         <div class="card app-card" data-testid="create-result">
@@ -306,11 +280,6 @@ async function copyCode() {
         </div>
       </div>
     </div>
-    <!-- TODO 8: Use these testids:
-               create-host-name, create-occasion, create-date, create-time, create-submit,
-               create-error, create-result, create-code, create-go-to-meetup -->
-
-    <!-- TODO 9: Check it at 375px and XL in DevTools. -->
   </section>
 </template>
 

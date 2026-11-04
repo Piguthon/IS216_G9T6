@@ -11,7 +11,6 @@
 const express = require('express');
 const router = express.Router();
 
-// TODO (P3): register the routes listed above
 const rankingController = require('../controllers/ranking-controller');
 const { requireAuth } = require('../middleware/auth');
 router.get('/:code', rankingController.getRanking);

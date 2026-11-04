@@ -24,7 +24,6 @@ const rankingRoutes = require('./routes/ranking-routes');
 const venuesRoutes = require('./routes/venues-routes');
 const busRoutes = require('./routes/bus-routes');
 const usersRoutes = require('./routes/users-routes');
-const reviewsRoutes = require('./routes/reviews-routes');
 const votesRoutes = require('./routes/votes-routes');
 const liveRoutes = require('./routes/live-routes');
 
@@ -43,7 +42,6 @@ app.use('/api/ranking', rankingRoutes);
 app.use('/api/venues', venuesRoutes);
 app.use('/api/bus-arrival', busRoutes);
 app.use('/api/users', usersRoutes);
-app.use('/api/reviews', reviewsRoutes);
 app.use('/api/votes', votesRoutes);
 app.use('/api/live', liveRoutes);
 

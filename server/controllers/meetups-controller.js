@@ -23,17 +23,8 @@
   TALKS TO:  models/meetup-model.js, models/notice-model.js, models/user-model.js,
              middleware/member.js
   REVISE:    Wk 5 blogs-controller.js pattern (exports.fn = async (req, res) => {} with try/catch)
-  DONE WHEN:
-    - [ ] each endpoint works in Postman
-    - [ ] errors return JSON messages
-    - [ ] meetup codes are short, readable and unique
 */
 
-// STEPS
-// Course example paths are relative to ~/Desktop/IS216/
-
-// TODO 1: Require the meetup model.
-//         Example: Week 5/server/blog-with-mongodb/controllers/blogs-controller.js
 const Meetup = require('../models/meetup-model');
 const Vote = require('../models/vote-model');
 const Location = require('../models/location-model');
@@ -95,20 +86,9 @@ function toPublicMeetup(meetup, withPlace) {
     return shown;
 }
 
-// TODO 2: Write every handler as exports.name = async (req, res) => { ... } with try/catch.
-//         In catch, log the error and reply 500 with JSON { error: "Server error" }.
-//         Always reply with JSON, never res.send text.
-
-
-// TODO 3: createMeetup
-//           - reads hostName, occasion, date, time from req.body
-//           - any missing → 400 { error: "..." }
-//           - creates a short, readable meetup code (e.g. 6 characters; your choice of how)
-//             and makes sure it isn't already used
-//           - saves the meetup with the host as its first member (suggested)
-//           - adds the people the host ticked (memberUserIds, optional) after the host, and
-//             sends each of them a notice
-//           - replies 201 with the saved meetup
+// createMeetup (POST /): the logged-in user hosts a new meetup with a unique 6-character code.
+// The host is the first member, then the people they ticked (memberUserIds, optional), who each
+// get a notice. Any missing field → 400; replies 201 with the saved meetup.
 exports.createMeetup = async (req,res) => {
     try {
         const hostName = req.user.name;
@@ -173,8 +153,7 @@ exports.createMeetup = async (req,res) => {
         res.status(500).json({ error: "Server error" });
     }
 };
-// TODO 4: getMeetup
-//           - code from req.params → 404 { error } if not found, otherwise the meetup
+// getMeetup (GET /:code): the meetup, or 404 { error } for an unknown code
 exports.getMeetup = async (req,res) => {
     try {
         const code = req.params.code;
@@ -267,10 +246,8 @@ exports.getMyMeetups = async (req, res) => {
     }
 };
 
-// TODO 5: joinMeetup
-//           - name from the body (required → 400)
-//           - unknown code → 404
-//           - adds the member, replies 201 with the new member (including its _id)
+// joinMeetup (POST /:code/members): name from the body (required → 400), unknown code → 404.
+// Adds the member and replies 201 with the new member (including its _id).
 exports.joinMeetup = async (req,res) => {
     try {
         const name = req.user ? req.user.name : req.body.name;

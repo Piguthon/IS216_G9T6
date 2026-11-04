@@ -11,17 +11,9 @@
   REVISE:  Wk 5 blog-model.js (schema + exported CRUD functions) · vote-model.js (upsert)
 */
 
-// STEPS
-
-// TODO 1: Require Mongoose.
 const mongoose = require('mongoose');
 
-// TODO 2: Define the location schema, with { timestamps: true }:
-//           - code, memberId (Strings, required)
-//           - lat, lng (Numbers, required), accuracyM (Number, default null)
-//           - etaMinutes (Number, default null), arriveAt (String, default ''),
-//             steps (Array, default []): the trip from here to the meeting point
-//           - etaFromLat, etaFromLng (Numbers, default null), etaUpdatedAt (Date, default null)
+// steps is the trip from here to the meeting point
 const locationSchema = new mongoose.Schema(
   {
     code: { type: String, required: true },
@@ -39,21 +31,17 @@ const locationSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-// TODO 3: Add two indexes:
-//           - one location per member per meetup (unique, like vote-model.js)
-//           - a TTL index on updatedAt, so MongoDB deletes a location 2 hours after it stops
-//             updating (https://www.mongodb.com/docs/manual/core/index-ttl/)
+// Two indexes:
+//   - one location per member per meetup (unique, like vote-model.js)
+//   - a TTL index on updatedAt, so MongoDB deletes a location 2 hours after it stops updating
+//     (https://www.mongodb.com/docs/manual/core/index-ttl/)
 const TWO_HOURS_IN_SECONDS = 2 * 60 * 60;
 locationSchema.index({ code: 1, memberId: 1 }, { unique: true });
 locationSchema.index({ updatedAt: 1 }, { expireAfterSeconds: TWO_HOURS_IN_SECONDS });
 
-// TODO 4: Create the model on the locations collection.
 const Location = mongoose.model('Location', locationSchema, 'locations');
 
-// TODO 5: Export these functions, each returning the Mongoose result:
-//           - saveLocation(code, memberId, fields): creates the member's location, or updates it
-//           - findByCode(code), findOne(code, memberId)
-//           - deleteOne(code, memberId), deleteByCode(code)
+// saveLocation creates the member's location, or updates it
 exports.saveLocation = async function (code, memberId, fields) {
   return await Location.findOneAndUpdate(
     { code, memberId },

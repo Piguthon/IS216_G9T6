@@ -5,10 +5,6 @@
   FUNCTIONS: getBusArrival (:stopCode → Bus)
   DATA:      Bus { stopCode, services: [ { serviceNo, nextArrivals: [ ISO time strings ] } ] }
   TALKS TO:  services/lta.js
-  DONE WHEN:
-    - [ ] works in Postman
-    - [ ] 400 for a non-5-digit code
-    - [ ] an empty services list (not an error) when buses aren't running
 */
 
 const lta = require('../services/lta');

@@ -11,11 +11,6 @@
             both must be credited in a comment and on the slides
   DATA:     coordinates are numbers
   REVISE:   Wk 5 onMounted (the map needs the DOM rendered first) · Wk 6 props/emits
-  DONE WHEN:
-    - [ ] markers for starts and candidates, visually different
-    - [ ] clicking a candidate emits select
-    - [ ] selected candidate highlighted
-    - [ ] fits phone width
 -->
 <script setup>
 // Map: Leaflet (https://leafletjs.com, BSD-2-Clause)
@@ -71,7 +66,7 @@ onMounted(() => {
     points.push(...line)
   }
 
-  // 6.1: a grey dot for each member's start point
+  // A grey dot for each member's start point
   for (const start of props.starts) {
     if (typeof start.lat !== 'number' || typeof start.lng !== 'number') {
       continue // a member without a start yet
@@ -87,7 +82,7 @@ onMounted(() => {
     points.push([start.lat, start.lng])
   }
 
-  // 6.2 + 6.3: a teal dot for each candidate station; the selected one is bigger and amber
+  // A teal dot for each candidate station; the selected one is bigger and amber
   for (const candidate of props.candidates) {
     const isSelected = candidate.stationId === props.selectedId
     const colour = isSelected ? SELECTED_COLOUR : CANDIDATE_COLOUR
@@ -104,7 +99,7 @@ onMounted(() => {
     points.push([candidate.lat, candidate.lng])
   }
 
-  // 6.4: zoom so every dot fits, with a little space around the edges
+  // Zoom so every dot fits, with a little space around the edges
   if (points.length > 0) {
     map.fitBounds(L.latLngBounds(points), { padding: [24, 24] })
   }

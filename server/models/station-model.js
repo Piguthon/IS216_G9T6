@@ -1,7 +1,8 @@
 /*
   FILE:    models/station-model.js
   OWNER:   P3 (team-written)
-  PURPOSE: candidate meeting points (MRT stations, and later bus interchanges)
+  PURPOSE: candidate meeting points: MRT stations and bus interchanges (seeded from
+           data/stations.json by scripts/seed-stations.js)
   FIELDS:  stationId, name, type (mrt or interchange), lat, lng
 */
 

@@ -1,12 +1,11 @@
 /*
   FILE:     scripts/seed-stations.js
   OWNER:    P3 (team-written)
-  PURPOSE:  one-off script that loads candidate meeting points into MongoDB.
-            Pitch: 10–15 central MRT stations from data/stations.json (P3 creates that file).
-            Later: all MRT stations, plus bus interchanges found via LTA Bus Stops
-            (descriptions containing "Int")
+  PURPOSE:  one-off script that loads the candidate meeting points in data/stations.json (MRT
+            stations and bus interchanges) into MongoDB. A station that's already there is
+            updated, so it's safe to run again after the file changes.
   RUN:      node scripts/seed-stations.js from server/
-  TALKS TO: models/station-model.js, config/db.js, optionally services/onemap.js (coordinates)
+  TALKS TO: models/station-model.js, config/db.js
 */
 
 const path = require('node:path');
