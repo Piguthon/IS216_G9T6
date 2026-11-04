@@ -26,6 +26,7 @@ import MeetingPointCard from '../components/MeetingPointCard.vue'
 import MapView from '../components/MapView.vue'
 import VenueList from '../components/VenueList.vue'
 import VotePanel from '../components/VotePanel.vue'
+import PlatformScene from '../components/PlatformScene.vue'
 
 const VOTE_REFRESH_MS = 5000
 const SHORTLIST_SIZE = 3
@@ -332,7 +333,7 @@ const venuePoint = computed(() => finalStation.value || selected.value)
 </script>
 
 <template>
-  <section data-testid="meetup-results-page">
+  <section class="flex-grow-1 d-flex flex-column" data-testid="meetup-results-page">
     <header class="app-page-header d-flex flex-wrap justify-content-between align-items-end gap-2">
       <h1 class="app-heading mb-0">Fair meeting points</h1>
       <RouterLink :to="`/meetup/${code}`" class="app-btn btn-quiet app-btn-sm"
@@ -340,11 +341,15 @@ const venuePoint = computed(() => finalStation.value || selected.value)
       >
     </header>
 
-    <div v-if="isLoading" class="text-center my-5" data-testid="results-loading">
-      <div class="spinner-border text-sign" role="status"></div>
-      <p class="text-muted mt-3 mb-0" role="status">
-        Getting everyone's travel times from OneMap. This can take up to a minute.
-      </p>
+    <!-- While loading, a train passes along the bottom of the page. It goes once the results arrive. -->
+    <div v-if="isLoading" class="flex-grow-1 d-flex flex-column" data-testid="results-loading">
+      <div class="text-center my-5">
+        <div class="spinner-border text-sign" role="status"></div>
+        <p class="text-muted mt-3 mb-0" role="status">
+          Getting everyone's travel times from OneMap. This can take up to a minute.
+        </p>
+      </div>
+      <PlatformScene class="loading-platform mt-auto" />
     </div>
 
     <div v-else-if="errorMessage" class="alert alert-danger" data-testid="results-error">
@@ -510,3 +515,12 @@ const venuePoint = computed(() => finalStation.value || selected.value)
     </div>
   </section>
 </template>
+
+<style scoped>
+/* The loading train runs the full width of the screen and sits on the footer
+   (-44px cancels the bottom padding of .page-body) */
+.loading-platform {
+  margin-inline: calc(50% - 50vw);
+  margin-bottom: -44px;
+}
+</style>

@@ -231,6 +231,7 @@ h6,
 
 /* 6. Page: the tiled working space */
 .page-body {
+  overflow-x: clip; /* full-width scenes (e.g. the loading train) never cause a side scroll */
   padding: 24px 0 44px;
   background-color: #efe9dc;
   background-image:

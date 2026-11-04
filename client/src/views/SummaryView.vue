@@ -30,6 +30,7 @@ import { tripTone } from '../utils/trip-tone'
 import { describeStep } from '../utils/route-steps'
 import MapView from '../components/MapView.vue'
 import BusArrivalCard from '../components/BusArrivalCard.vue'
+import PlatformScene from '../components/PlatformScene.vue'
 
 const SUMMARY_REFRESH_MS = 5000
 
@@ -186,7 +187,7 @@ const starts = computed(() => {
 </script>
 
 <template>
-  <section data-testid="summary-page">
+  <section class="flex-grow-1 d-flex flex-column" data-testid="summary-page">
     <header class="app-page-header d-flex flex-wrap justify-content-between align-items-end gap-3">
       <h1 class="app-heading mb-0">Meetup summary</h1>
       <div class="d-flex flex-wrap gap-2">
@@ -203,10 +204,14 @@ const starts = computed(() => {
       </div>
     </header>
 
-    <div v-if="isLoading" class="text-center my-5" data-testid="summary-loading">
-      <div class="spinner-border text-sign" role="status">
-        <span class="visually-hidden">Loading summary…</span>
+    <!-- While loading, a train passes along the bottom of the page. It goes once the summary arrives. -->
+    <div v-if="isLoading" class="flex-grow-1 d-flex flex-column" data-testid="summary-loading">
+      <div class="text-center my-5">
+        <div class="spinner-border text-sign" role="status">
+          <span class="visually-hidden">Loading summary…</span>
+        </div>
       </div>
+      <PlatformScene class="loading-platform mt-auto" />
     </div>
 
     <div v-else-if="errorMessage" class="alert alert-danger" data-testid="summary-error">
@@ -320,6 +325,13 @@ const starts = computed(() => {
 </template>
 
 <style scoped>
+/* The loading train runs the full width of the screen and sits on the footer
+   (-44px cancels the bottom padding of .page-body) */
+.loading-platform {
+  margin-inline: calc(50% - 50vw);
+  margin-bottom: -44px;
+}
+
 .summary-place {
   font-size: clamp(34px, 5vw, 46px);
   line-height: 1;

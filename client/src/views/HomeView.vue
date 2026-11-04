@@ -10,6 +10,7 @@
 -->
 <script setup>
 import { tripTone } from '../utils/trip-tone'
+import PlatformScene from '../components/PlatformScene.vue'
 
 // Example group for the hero: travel times to Bishan MRT from four corners of Singapore.
 // Illustrative numbers only; the real ranking comes from the results page.
@@ -269,11 +270,7 @@ const steps = [
             </div>
           </div>
         </div>
-        <div class="platform" aria-hidden="true">
-          <img class="pf-train" src="../assets/scene/mrt-train.svg" alt="" />
-          <div class="platform-doors"></div>
-        </div>
-        <div class="floor" aria-hidden="true"></div>
+        <PlatformScene />
       </section>
     </div>
   </section>
@@ -731,42 +728,6 @@ const steps = [
   text-shadow: 0 0 12px rgba(242, 194, 48, 0.5);
 }
 
-.platform {
-  position: relative;
-  overflow: hidden;
-  height: 150px;
-  background-color: #14161a;
-}
-
-.pf-train {
-  position: absolute;
-  bottom: 8px;
-  left: -2500px;
-  height: 100px;
-  max-width: none;
-  animation: pf-pass 13s linear infinite;
-}
-
-.platform-doors {
-  position: absolute;
-  inset: 0;
-  background: url('../assets/scene/platform-doors.svg') repeat-x center bottom / auto 100%;
-}
-
-.floor {
-  height: 46px;
-  border-top: 6px solid #6b737a;
-  background-color: #b9b4a8;
-}
-
-.floor::before {
-  content: '';
-  display: block;
-  height: 10px;
-  margin-top: 8px;
-  background-color: #f2c230;
-}
-
 @keyframes bob {
   from {
     transform: translateY(-8px);
@@ -809,15 +770,6 @@ const steps = [
   }
   to {
     left: 103%;
-  }
-}
-
-@keyframes pf-pass {
-  from {
-    left: -2500px;
-  }
-  to {
-    left: 100%;
   }
 }
 
@@ -964,8 +916,7 @@ const steps = [
   .footpath,
   .bus,
   .car,
-  .taxi,
-  .pf-train {
+  .taxi {
     animation: none;
   }
 
@@ -983,10 +934,6 @@ const steps = [
 
   .taxi {
     left: 74%;
-  }
-
-  .pf-train {
-    left: 5%;
   }
 }
 </style>
