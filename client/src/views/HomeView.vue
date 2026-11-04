@@ -182,7 +182,7 @@ const steps = [
           </div>
           <div class="row g-3 pb-3">
             <div class="col-md-4">
-              <article class="poster h-100">
+              <article class="poster h-100" data-testid="home-mode-card">
                 <div class="d-flex justify-content-between align-items-center mb-1">
                   <svg viewBox="0 0 48 48" aria-hidden="true">
                     <rect x="10" y="4" width="28" height="32" rx="7" fill="#1d4f91" />
@@ -196,7 +196,11 @@ const steps = [
                       stroke-linecap="round"
                     />
                   </svg>
-                  <span class="badge rounded-pill text-uppercase text-bg-success">Live</span>
+                  <span
+                    class="badge rounded-pill text-uppercase text-bg-success"
+                    data-testid="home-mode-badge"
+                    >Live</span
+                  >
                 </div>
                 <h3>MRT</h3>
                 <p class="mb-0">
@@ -206,7 +210,7 @@ const steps = [
               </article>
             </div>
             <div class="col-md-4">
-              <article class="poster h-100">
+              <article class="poster h-100" data-testid="home-mode-card">
                 <div class="d-flex justify-content-between align-items-center mb-1">
                   <svg viewBox="0 0 48 48" aria-hidden="true">
                     <rect x="6" y="6" width="36" height="32" rx="6" fill="#1d4f91" />
@@ -216,7 +220,11 @@ const steps = [
                     <rect x="10" y="38" width="6" height="6" rx="1.5" fill="#1d4f91" />
                     <rect x="32" y="38" width="6" height="6" rx="1.5" fill="#1d4f91" />
                   </svg>
-                  <span class="badge rounded-pill text-uppercase text-bg-success">Live</span>
+                  <span
+                    class="badge rounded-pill text-uppercase text-bg-success"
+                    data-testid="home-mode-badge"
+                    >Live</span
+                  >
                 </div>
                 <h3>Bus</h3>
                 <p class="mb-0">
@@ -225,21 +233,23 @@ const steps = [
               </article>
             </div>
             <div class="col-md-4">
-              <article class="poster h-100">
+              <article class="poster h-100" data-testid="home-mode-card">
                 <div class="d-flex justify-content-between align-items-center mb-1">
                   <svg viewBox="0 0 48 48" aria-hidden="true">
-                    <path d="M8 30l4-12c1-3 3-4 6-4h12c3 0 5 1 6 4l4 12v8H8z" fill="#6b737a" />
+                    <path d="M8 30l4-12c1-3 3-4 6-4h12c3 0 5 1 6 4l4 12v8H8z" fill="#1d4f91" />
                     <rect x="14" y="18" width="20" height="8" rx="2" fill="#fff" />
                     <circle cx="15" cy="38" r="4" fill="#3a3d41" />
                     <circle cx="33" cy="38" r="4" fill="#3a3d41" />
                   </svg>
-                  <span class="badge rounded-pill text-uppercase text-bg-danger">
-                    Coming soon
-                  </span>
+                  <span
+                    class="badge rounded-pill text-uppercase text-bg-success"
+                    data-testid="home-mode-badge"
+                    >Live</span
+                  >
                 </div>
                 <h3>Car</h3>
                 <p class="mb-0">
-                  For groups where someone drives, so their trip counts fairly too.
+                  Drivers get road times with 10 minutes to park, so their trip counts fairly too.
                 </p>
               </article>
             </div>

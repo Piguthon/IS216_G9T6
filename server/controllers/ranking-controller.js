@@ -4,9 +4,11 @@
   PURPOSE:   POST /api/ranking/:code → the host works out the fairest meeting points, which are
              saved on the meetup (logged in, host only). From then on nobody can join and
              locations are locked; members can only leave, and the host can recalculate
-             GET /api/ranking/:code → the saved fairest meeting points, for every member
+             GET /api/ranking/:code → the saved fairest meeting points, for anyone with the code
              GET /api/ranking/:code/leave-times → when each member should leave for the
              meeting point the host confirmed
+             Both GETs send each trip's steps and firstBusStopCode to members only (by session
+             or X-Member-Token, middleware/member.js): the routes start at members' homes
   STEPS:     1. every member needs to have pressed Confirm location (at least 2 members); once the
                 host has confirmed a meeting point, anyone who hasn't is just left out
              2. midpoint of their starts → the 30 closest MRT stations, and bus interchanges
@@ -34,6 +36,8 @@ const Station = require('../models/station-model');
 const { getPtRoute, getArriveByRoute, getDriveRoute } = require('../services/onemap');
 const { findMidpoint, pickCandidates, rankCandidates } = require('../utils/fairness');
 const { tripTimeForMeetup } = require('../utils/meetup-date');
+const { rankingWithoutRoutes, tripsWithoutRoutes } = require('../utils/route-privacy');
+const { findCaller } = require('../middleware/member');
 
 // With every MRT station in the list, the few nearest the midpoint are often small stations,
 // so it tests the 30 nearest: the fairest is usually a well-connected one a little further out.
@@ -72,14 +76,32 @@ function readyMembers(meetup) {
   return meetup.members.filter((member) => member.ready && member.start);
 }
 
-// The saved ranking as the API sends it
-function toResponse(meetup, isOutdated) {
+// Whether the request comes from a member (by session or X-Member-Token). A bad credential
+// isn't an error on the GETs: the caller just counts as someone who only knows the code.
+async function isCallerMember(req, meetup) {
+  try {
+    return Boolean(await findCaller(req, meetup));
+  } catch (error) {
+    if (error.message !== 'Invalid session') throw error;
+    return false;
+  }
+}
+
+// The saved ranking as the API sends it. Without routes, only the travel times are sent
+// (utils/route-privacy.js): the routes start at members' homes.
+function toResponse(meetup, isOutdated, withRoutes = true) {
+  const ranking = meetup.ranking.ranking;
   return {
-    ranking: meetup.ranking.ranking,
+    ranking: withRoutes ? ranking : rankingWithoutRoutes(ranking),
     departure: meetup.ranking.departure,
     rankedAt: meetup.rankedAt,
     isOutdated,
   };
+}
+
+// The leave times as the API sends them: without routes for someone who isn't a member
+function leaveTimesResponse(result, withRoutes) {
+  return withRoutes ? result : { trips: tripsWithoutRoutes(result.trips) };
 }
 
 // Changes whenever anything that affects the travel times changes
@@ -102,7 +124,8 @@ exports.getRanking = async (req, res) => {
     }
 
     const isOutdated = meetup.ranking.key !== cacheKey(meetup, readyMembers(meetup));
-    res.json(toResponse(meetup, isOutdated));
+    const isMember = await isCallerMember(req, meetup);
+    res.json(toResponse(meetup, isOutdated, isMember));
   } catch (error) {
     console.error('Error getting ranking:', error.message);
     res.status(500).json({ error: 'Server error' });
@@ -194,11 +217,14 @@ exports.getLeaveTimes = async (req, res) => {
       return res.status(400).json({ error: "The host hasn't confirmed a meeting point yet" });
     }
 
+    // Routes go to members only; the cache keeps the full trips
+    const isMember = await isCallerMember(req, meetup);
+
     const ready = meetup.members.filter((member) => member.start);
     const key = `${station.optionId} ${cacheKey(meetup, ready)}`;
     const cached = leaveTimesCache.get(meetup.code);
     if (cached && cached.key === key && Date.now() - cached.savedAt < CACHE_MS) {
-      return res.json(cached.result);
+      return res.json(leaveTimesResponse(cached.result, isMember));
     }
 
     const departure = tripTimeForMeetup(meetup.date, meetup.time);
@@ -228,7 +254,7 @@ exports.getLeaveTimes = async (req, res) => {
     if (trips.length > 0) {
       leaveTimesCache.set(meetup.code, { key, result, savedAt: Date.now() });
     }
-    res.json(result);
+    res.json(leaveTimesResponse(result, isMember));
   } catch (error) {
     console.error('Error getting leave times:', error.message);
     res.status(502).json({ error: 'Could not get travel times from OneMap. Please try again.' });
