@@ -1,6 +1,11 @@
+/* route-steps.spec.js
+ Unit tests for utils/route-steps.js (labels for each step of a member's route) and
+ utils/polyline.js (decoding OneMap's route lines into map points).
+*/
+
 import { describe, it, expect } from 'vitest'
-import { describeStep } from './route-steps'
-import { decodePolyline } from './polyline'
+import { describeStep } from '../route-steps'
+import { decodePolyline } from '../polyline'
 
 describe('describeStep', () => {
   it('names the meeting point on the last walk', () => {

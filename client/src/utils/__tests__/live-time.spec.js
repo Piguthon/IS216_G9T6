@@ -1,5 +1,10 @@
+/* live-time.spec.js
+ Unit tests for utils/live-time.js ("time ago" labels and stale live locations on the live map).
+ Every test passes a fixed NOW, so the results never depend on the real clock.
+*/
+
 import { describe, it, expect } from 'vitest'
-import { STALE_AFTER_MS, timeAgo, isStale, byTripTime } from './live-time'
+import { STALE_AFTER_MS, timeAgo, isStale, byTripTime } from '../live-time'
 
 const NOW = new Date('2026-11-02T12:00:00Z').getTime()
 

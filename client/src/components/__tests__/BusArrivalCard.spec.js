@@ -2,7 +2,7 @@
 import { describe, it, expect, vi, afterEach } from 'vitest'
 import { mount, flushPromises } from '@vue/test-utils'
 import axios from 'axios'
-import BusArrivalCard from './BusArrivalCard.vue'
+import BusArrivalCard from '../BusArrivalCard.vue'
 
 vi.mock('axios', () => ({ default: { get: vi.fn() } }))
 

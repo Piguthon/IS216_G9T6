@@ -1,5 +1,9 @@
+/* trip-tone.spec.js
+ Unit tests for utils/trip-tone.js: the longest trip is red, the shortest green, the rest amber.
+*/
+
 import { describe, it, expect } from 'vitest'
-import { tripTone } from './trip-tone'
+import { tripTone } from '../trip-tone'
 
 describe('tripTone', () => {
   it('marks the longest trip red, the shortest green and the rest amber', () => {

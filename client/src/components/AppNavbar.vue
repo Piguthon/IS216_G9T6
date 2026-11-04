@@ -9,62 +9,49 @@
   REVISE:   Wk 3 navbar, collapse · Wk 4 RouterLink
 -->
 <script setup>
-import { ref, onMounted, onUnmounted } from 'vue'
+import { ref } from 'vue'
 import { useAuthStore } from '../stores/auth'
 
 const auth = useAuthStore()
 
-const navbar = ref(null)
-const toggler = ref(null)
-const menu = ref(null)
-
-// Small screens: a click outside the navbar, or on one of its links, closes the open menu.
-// Clicking the hamburger does what Bootstrap does, so the menu closes the same way.
-function closeMenu(event) {
-  if (!menu.value.classList.contains('show')) return
-  const clickedLink = event.target.closest('a')
-  if (!navbar.value.contains(event.target) || clickedLink) {
-    toggler.value.click()
-  }
-}
-
-onMounted(() => {
-  document.addEventListener('click', closeMenu)
-})
-
-onUnmounted(() => {
-  document.removeEventListener('click', closeMenu)
-})
+// Small screens: the hamburger opens and closes the menu. Clicking a link, or anywhere
+// outside the navbar (the backdrop below), closes it again.
+const isMenuOpen = ref(false)
 </script>
 
 <!-- Responsive Bootstrap 5 navbar (https://getbootstrap.com/docs/5.3/components/navbar/) -->
 <template>
+  <!-- Transparent layer behind the navbar that catches a tap outside the open menu -->
+  <div v-if="isMenuOpen" class="nav-backdrop" aria-hidden="true" @click="isMenuOpen = false"></div>
+
   <nav
-    ref="navbar"
     class="navbar navbar-expand-lg app-bar app-navbar"
     data-bs-theme="dark"
     data-testid="app-navbar"
   >
     <div class="container">
-      <RouterLink class="navbar-brand app-logo" :to="{ name: 'home' }" data-testid="nav-brand">
+      <RouterLink
+        class="navbar-brand app-logo"
+        :to="{ name: 'home' }"
+        data-testid="nav-brand"
+        @click="isMenuOpen = false"
+      >
         FairSpot
       </RouterLink>
 
       <button
-        ref="toggler"
         class="navbar-toggler"
         type="button"
-        data-bs-toggle="collapse"
-        data-bs-target="#mainNavbar"
         aria-controls="mainNavbar"
-        aria-expanded="false"
+        :aria-expanded="isMenuOpen"
         aria-label="Toggle navigation"
         data-testid="nav-toggler"
+        @click="isMenuOpen = !isMenuOpen"
       >
         <span class="navbar-toggler-icon"></span>
       </button>
 
-      <div id="mainNavbar" ref="menu" class="collapse navbar-collapse">
+      <div id="mainNavbar" class="collapse navbar-collapse" :class="{ show: isMenuOpen }">
         <ul class="navbar-nav me-auto small">
           <li class="nav-item">
             <RouterLink
@@ -72,6 +59,7 @@ onUnmounted(() => {
               class="nav-link text-uppercase fw-bold"
               :to="{ name: 'home' }"
               data-testid="nav-home"
+              @click="isMenuOpen = false"
             >
               Home
             </RouterLink>
@@ -82,6 +70,7 @@ onUnmounted(() => {
               class="nav-link text-uppercase fw-bold"
               :to="{ name: 'meetups' }"
               data-testid="nav-meetups"
+              @click="isMenuOpen = false"
             >
               My Meetups
             </RouterLink>
@@ -92,6 +81,7 @@ onUnmounted(() => {
               class="nav-link text-uppercase fw-bold"
               :to="{ name: 'create-meetup' }"
               data-testid="nav-create"
+              @click="isMenuOpen = false"
             >
               Create Meetup
             </RouterLink>
@@ -102,6 +92,7 @@ onUnmounted(() => {
               class="nav-link text-uppercase fw-bold"
               :to="{ name: 'join-meetup' }"
               data-testid="nav-join"
+              @click="isMenuOpen = false"
             >
               Join Meetup
             </RouterLink>
@@ -115,6 +106,7 @@ onUnmounted(() => {
                 class="nav-link text-uppercase fw-bold"
                 to="/login"
                 data-testid="nav-login"
+                @click="isMenuOpen = false"
               >
                 Log in
               </RouterLink>
@@ -124,6 +116,7 @@ onUnmounted(() => {
                 class="app-btn btn-quiet app-btn-sm text-uppercase my-2 my-lg-0"
                 to="/signup"
                 data-testid="nav-signup"
+                @click="isMenuOpen = false"
               >
                 Sign up
               </RouterLink>
@@ -137,6 +130,7 @@ onUnmounted(() => {
                 class="nav-link text-uppercase fw-bold"
                 to="/profile"
                 data-testid="nav-profile"
+                @click="isMenuOpen = false"
               >
                 Profile
               </RouterLink>
@@ -147,6 +141,7 @@ onUnmounted(() => {
                 class="nav-link text-uppercase fw-bold"
                 to="/logout"
                 data-testid="nav-logout"
+                @click="isMenuOpen = false"
               >
                 Log out
               </RouterLink>
@@ -157,3 +152,27 @@ onUnmounted(() => {
     </div>
   </nav>
 </template>
+
+<style scoped>
+/* Covers the page while the menu is open, just under the navbar (1020) */
+.nav-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1019;
+}
+
+/* Tablets: the navbar isn't sticky here, so lift it above the backdrop */
+@media (min-width: 768px) and (max-width: 991.98px) {
+  .app-navbar {
+    position: relative;
+    z-index: 1020;
+  }
+}
+
+/* lg and up: the menu is always shown, so the backdrop is never needed */
+@media (min-width: 992px) {
+  .nav-backdrop {
+    display: none;
+  }
+}
+</style>
