@@ -1,6 +1,6 @@
 <!-- OWNER: JX. Account forms use refs/computed, Axios PUT and props/emits. -->
 <script setup>
-import { ref, computed, nextTick } from 'vue'
+import { ref, computed } from 'vue'
 import axios from 'axios'
 import { useRouter } from 'vue-router'
 import { BASE_URL } from '../config'
@@ -13,7 +13,6 @@ const router = useRouter()
 const name = ref(props.user.name)
 const accountMessage = ref('')
 const accountError = ref(false)
-const messageBanner = ref(null)
 const savingName = ref(false)
 const currentPassword = ref('')
 const newPassword = ref('')
@@ -51,16 +50,11 @@ function errorText(error) {
   return 'Unable to save changes. Please try again.'
 }
 
-// Every update shows in one banner at the top of the card, scrolled into view on small screens
-async function showMessage(text, isError) {
+// Every update shows in one banner at the top of the card
+function showMessage(text, isError) {
   accountMessage.value = text
   accountError.value = isError
-  await nextTick()
-  messageBanner.value?.scrollIntoView({ block: 'nearest' })
 }
-
-// The parent's delete-account form shows its errors in this banner too
-defineExpose({ showMessage })
 
 async function saveName() {
   if (savingName.value || !name.value.trim()) return
@@ -75,9 +69,9 @@ async function saveName() {
       },
     )
     emit('updated', response.data.user)
-    await showMessage('Name updated.', false)
+    showMessage('Name updated.', false)
   } catch (error) {
-    await showMessage(errorText(error), true)
+    showMessage(errorText(error), true)
   } finally {
     savingName.value = false
   }
@@ -101,7 +95,7 @@ async function savePassword() {
     passwordChanged.value = true
     router.push('/login')
   } catch (error) {
-    await showMessage(errorText(error), true)
+    showMessage(errorText(error), true)
   } finally {
     currentPassword.value = ''
     newPassword.value = ''
@@ -120,7 +114,6 @@ async function savePassword() {
   <template v-else>
     <p
       v-if="accountMessage"
-      ref="messageBanner"
       :class="accountError ? 'alert alert-danger' : 'alert alert-success'"
       :role="accountError ? 'alert' : 'status'"
       data-testid="account-message"

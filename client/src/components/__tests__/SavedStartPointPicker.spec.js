@@ -1,10 +1,16 @@
+/* SavedStartPointPicker.spec.js
+ Component tests for SavedStartPointPicker.vue (a logged-in member's saved locations in the lobby).
+ axios is mocked, so the saved locations are fixed. The tests verify that each saved location is a
+ button that emits it as the start point, and when the address search (the slot) is shown.
+*/
+
 import { describe, it, expect, vi } from 'vitest'
 import { mount, flushPromises } from '@vue/test-utils'
 import axios from 'axios'
-import SavedStartPointPicker from './SavedStartPointPicker.vue'
+import SavedStartPointPicker from '../SavedStartPointPicker.vue'
 
 vi.mock('axios', () => ({ default: { get: vi.fn() } }))
-vi.mock('../stores/auth', () => ({ useAuthStore: () => ({ token: 'test-token' }) }))
+vi.mock('../../stores/auth', () => ({ useAuthStore: () => ({ token: 'test-token' }) }))
 
 const savedLocations = [
   {

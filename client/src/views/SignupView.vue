@@ -95,6 +95,7 @@ async function submitSignup() {
               placeholder="Enter your name"
               autocomplete="name"
               required
+              data-testid="signup-name"
             />
           </div>
           <div class="col-sm-6">
@@ -107,6 +108,7 @@ async function submitSignup() {
               placeholder="Enter your email"
               autocomplete="email"
               required
+              data-testid="signup-email"
             />
           </div>
         </div>
@@ -124,6 +126,7 @@ async function submitSignup() {
               minlength="8"
               aria-describedby="password-rules"
               required
+              data-testid="signup-password"
             />
             <button
               type="button"
@@ -168,6 +171,7 @@ async function submitSignup() {
               autocomplete="new-password"
               placeholder="Re-enter your password"
               required
+              data-testid="signup-confirm"
             />
             <button
               type="button"
@@ -196,7 +200,7 @@ async function submitSignup() {
           </p>
         </div>
 
-        <p v-if="message" class="alert alert-danger" role="alert">
+        <p v-if="message" class="alert alert-danger" role="alert" data-testid="signup-error">
           {{ message }}
         </p>
 
@@ -204,6 +208,7 @@ async function submitSignup() {
           type="submit"
           class="app-btn app-btn-lg btn-sign w-100"
           :disabled="isSigningUp || !passwordValid || !passwordsMatch"
+          data-testid="signup-submit"
         >
           {{ isSigningUp ? 'Creating account...' : 'Create account' }}
         </button>

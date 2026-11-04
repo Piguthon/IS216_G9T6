@@ -34,7 +34,7 @@ const searchKey = ref(0)
 const locationsListKey = ref(0)
 const showDeleteAccount = ref(false)
 const deletionPassword = ref('')
-const accountSettings = ref(null)
+const deleteError = ref('')
 const isDeletingAccount = ref(false)
 const showFinalDeleteConfirm = ref(false)
 const activeTab = ref('locations')
@@ -69,6 +69,7 @@ async function deleteAccount() {
     return
   showFinalDeleteConfirm.value = false
   isDeletingAccount.value = true
+  deleteError.value = ''
   try {
     await axios.delete(`${BASE_URL}/users/me`, {
       headers: { Authorization: `Bearer ${auth.token}` },
@@ -85,7 +86,7 @@ async function deleteAccount() {
     if (error.response && error.response.data && error.response.data.error) {
       text = error.response.data.error
     }
-    accountSettings.value?.showMessage(text, true)
+    deleteError.value = text
   } finally {
     deletionPassword.value = ''
     isDeletingAccount.value = false
@@ -292,6 +293,7 @@ onMounted(loadProfile)
             v-if="locationMessage && locationMessageTarget === 'list'"
             :class="locationError ? 'alert alert-danger' : 'alert alert-success'"
             :role="locationError ? 'alert' : 'status'"
+            data-testid="location-message"
           >
             {{ locationMessage }}
           </p>
@@ -327,6 +329,7 @@ onMounted(loadProfile)
                 placeholder="e.g. Home, School or Work"
                 maxlength="60"
                 required
+                data-testid="location-nickname"
               />
               <p class="form-label fw-bold mb-2">Search address or postal code</p>
               <AddressSearch
@@ -339,6 +342,7 @@ onMounted(loadProfile)
                   type="submit"
                   class="app-btn btn-sign"
                   :disabled="isSaving || !nickname || !selectedAddress"
+                  data-testid="location-save"
                 >
                   {{ isSaving ? 'Saving...' : 'Save location' }}
                 </button>
@@ -352,6 +356,7 @@ onMounted(loadProfile)
               class="alert mt-3 mb-0"
               :class="locationError ? 'alert-danger' : 'alert-success'"
               :role="locationError ? 'alert' : 'status'"
+              data-testid="location-message"
             >
               {{ locationMessage }}
             </p>
@@ -363,13 +368,13 @@ onMounted(loadProfile)
         </div>
 
         <div v-show="activeTab === 'account'" class="card-body p-3 p-md-4" role="tabpanel">
-          <AccountSettings ref="accountSettings" :user="user" @updated="user = $event">
+          <AccountSettings :user="user" @updated="user = $event">
             <div class="border-top pt-3 mt-4">
               <button
                 v-if="!showDeleteAccount"
                 type="button"
                 class="btn app-btn btn-outline-danger"
-                @click="showDeleteAccount = true"
+                @click="((showDeleteAccount = true), (deleteError = ''))"
               >
                 Delete my account
               </button>
@@ -386,6 +391,14 @@ onMounted(loadProfile)
                   required
                   :disabled="isDeletingAccount || showFinalDeleteConfirm"
                 />
+                <p
+                  v-if="deleteError"
+                  class="alert alert-danger"
+                  role="alert"
+                  data-testid="delete-account-error"
+                >
+                  {{ deleteError }}
+                </p>
                 <div class="d-flex flex-wrap gap-2">
                   <button
                     type="submit"
@@ -403,7 +416,8 @@ onMounted(loadProfile)
                     @click="
                       ((showDeleteAccount = false),
                       (showFinalDeleteConfirm = false),
-                      (deletionPassword = ''))
+                      (deletionPassword = ''),
+                      (deleteError = ''))
                     "
                   >
                     Cancel

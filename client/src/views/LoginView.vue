@@ -67,6 +67,7 @@ async function submitLogin() {
             placeholder="Enter your email"
             autocomplete="username"
             required
+            data-testid="login-email"
           />
         </div>
 
@@ -80,14 +81,20 @@ async function submitLogin() {
             placeholder="Enter your password"
             autocomplete="current-password"
             required
+            data-testid="login-password"
           />
         </div>
 
-        <p v-if="message" class="alert alert-danger" role="alert">
+        <p v-if="message" class="alert alert-danger" role="alert" data-testid="login-error">
           {{ message }}
         </p>
 
-        <button type="submit" class="app-btn app-btn-lg btn-sign w-100" :disabled="isLoggingIn">
+        <button
+          type="submit"
+          class="app-btn app-btn-lg btn-sign w-100"
+          :disabled="isLoggingIn"
+          data-testid="login-submit"
+        >
           {{ isLoggingIn ? 'Logging in…' : 'Log in' }}
         </button>
         <p class="mt-3 mb-0 text-center">

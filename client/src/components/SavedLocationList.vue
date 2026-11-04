@@ -22,7 +22,12 @@ function edit(location) {
     No saved locations yet. Add Home, School or Work to keep your usual starting points handy.
   </p>
   <ul v-else class="list-group list-group-flush">
-    <li v-for="location in locations" :key="location._id" class="list-group-item px-0 py-2">
+    <li
+      v-for="location in locations"
+      :key="location._id"
+      class="list-group-item px-0 py-2"
+      data-testid="saved-location"
+    >
       <form
         v-if="editingId === location._id"
         @submit.prevent="emit('rename', location._id, nickname, replacementAddress)"
@@ -36,6 +41,7 @@ function edit(location) {
           maxlength="60"
           required
           :disabled="busy"
+          data-testid="location-rename-input"
         />
         <p class="small text-muted">Current address: {{ location.address }}</p>
         <fieldset :disabled="busy">
@@ -50,7 +56,11 @@ function edit(location) {
           New address: {{ replacementAddress.label }}
         </p>
         <div class="d-flex align-items-center gap-2 mt-2">
-          <button class="app-btn btn-sign app-btn-sm" :disabled="busy || !nickname">
+          <button
+            class="app-btn btn-sign app-btn-sm"
+            :disabled="busy || !nickname"
+            data-testid="location-rename-save"
+          >
             Save changes
           </button>
           <button
@@ -65,7 +75,10 @@ function edit(location) {
       </form>
       <div v-else class="d-flex flex-wrap align-items-center gap-2">
         <span class="app-street-sign">{{ location.label }}</span>
-        <span v-if="location.isDefault" class="badge rounded-pill text-uppercase text-bg-dark"
+        <span
+          v-if="location.isDefault"
+          class="badge rounded-pill text-uppercase text-bg-dark"
+          data-testid="location-default-badge"
           >Default</span
         >
         <span class="small flex-grow-1 me-2">
@@ -78,6 +91,7 @@ function edit(location) {
             class="app-btn btn-quiet app-btn-sm"
             :disabled="busy"
             @click="emit('default', location._id)"
+            data-testid="location-make-default"
           >
             Make default
           </button>
@@ -86,6 +100,7 @@ function edit(location) {
             class="app-btn btn-sign-outline app-btn-sm"
             :disabled="busy"
             @click="edit(location)"
+            data-testid="location-edit"
           >
             Edit
           </button>
@@ -94,6 +109,7 @@ function edit(location) {
             class="btn app-btn btn-outline-danger app-btn-sm"
             :disabled="busy"
             @click="deletingId = location._id"
+            data-testid="location-delete"
           >
             Delete
           </button>
@@ -106,6 +122,7 @@ function edit(location) {
           class="btn app-btn btn-danger app-btn-sm me-2"
           :disabled="busy"
           @click="emit('delete', location._id)"
+          data-testid="location-delete-confirm"
         >
           Confirm delete
         </button>
