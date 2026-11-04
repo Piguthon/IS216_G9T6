@@ -96,7 +96,7 @@ function share(option) {
             data-testid="vote-option"
           >
             <div class="d-flex justify-content-between align-items-center gap-2">
-              <span class="fw-bold">
+              <span class="fw-bold" data-testid="vote-option-name">
                 {{ option.name }}
                 <span
                   v-if="option.count > 0 && option.count === topCount"
