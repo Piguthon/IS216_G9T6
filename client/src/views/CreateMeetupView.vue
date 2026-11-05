@@ -5,7 +5,7 @@ import axios from 'axios'
 import { BASE_URL } from '../config'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '../stores/auth'
-import { todayInSingapore, formatDate } from '../utils/meetup-date'
+import { todayInSingapore, isPastInSingapore, formatDate } from '../utils/meetup-date'
 
 const router = useRouter()
 const auth = useAuthStore()
@@ -60,6 +60,10 @@ async function createMeetup() {
   today.value = todayInSingapore()
   if (date.value < today.value) {
     errorMessage.value = 'Choose today or a future date.'
+    return
+  }
+  if (isPastInSingapore(date.value, time.value)) {
+    errorMessage.value = 'That time has already passed. Choose a later time.'
     return
   }
   isSaving.value = true

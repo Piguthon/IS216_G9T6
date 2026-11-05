@@ -64,6 +64,16 @@ describe('EditMeetupForm', () => {
     expect(wrapper.emitted('save')[0][0].date).toBe('2026-11-04')
   })
 
+  it('rejects a time today that has already passed', async () => {
+    const wrapper = mount(EditMeetupForm, { props: { meetup } })
+    await wrapper.find('[data-testid="edit-date"]').setValue('2026-11-04')
+    await wrapper.find('[data-testid="edit-time"]').setValue('11:30')
+    await wrapper.find('form').trigger('submit')
+
+    expect(wrapper.text()).toContain('That time has already passed. Choose a later time.')
+    expect(wrapper.emitted('save')).toBeFalsy()
+  })
+
   it('emits cancel when Cancel is pressed', async () => {
     const wrapper = mount(EditMeetupForm, { props: { meetup } })
     await wrapper.find('[data-testid="edit-cancel"]').trigger('click')

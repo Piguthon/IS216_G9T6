@@ -68,6 +68,19 @@ describe('CreateMeetupView integration', () => {
     expect(axios.post).not.toHaveBeenCalled()
   })
 
+  it('shows a message and sends nothing when the time today has already passed', async () => {
+    const wrapper = await mountCreate()
+    await wrapper.find('[data-testid="create-occasion"]').setValue('Project dinner')
+    await wrapper.find('[data-testid="create-date"]').setValue('2026-11-04')
+    await wrapper.find('[data-testid="create-time"]').setValue('11:30')
+    await wrapper.find('form').trigger('submit')
+
+    expect(wrapper.find('[data-testid="create-error"]').text()).toBe(
+      'That time has already passed. Choose a later time.',
+    )
+    expect(axios.post).not.toHaveBeenCalled()
+  })
+
   it('shows the new 6-character code after the meetup is created', async () => {
     axios.post.mockResolvedValueOnce({ data: created })
     const wrapper = await mountCreate()

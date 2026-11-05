@@ -1,7 +1,7 @@
 <!-- The host's form for changing a meetup's occasion, date and time. -->
 <script setup>
 import { ref } from 'vue'
-import { todayInSingapore } from '../utils/meetup-date'
+import { todayInSingapore, isPastInSingapore } from '../utils/meetup-date'
 
 const props = defineProps({
   meetup: {
@@ -27,6 +27,10 @@ const handleSave = () => {
   today.value = todayInSingapore()
   if (date.value < today.value) {
     errorMessage.value = 'Choose today or a future date.'
+    return
+  }
+  if (isPastInSingapore(date.value, time.value)) {
+    errorMessage.value = 'That time has already passed. Choose a later time.'
     return
   }
   errorMessage.value = ''

@@ -35,8 +35,15 @@ function isAllowedMeetupDate(date) {
   return date >= todayInSingapore();
 }
 
+// True if the time is a valid HH:MM and the Singapore date and time has not passed yet
+function isFutureMeetupTime(date, time) {
+  if (typeof time !== 'string' || !/^([01]\d|2[0-3]):[0-5]\d$/.test(time)) return false;
+  return singaporeToMs(date, time) > Date.now();
+}
+
 module.exports = {
   isAllowedMeetupDate,
+  isFutureMeetupTime,
   todayInSingapore,
   singaporeToMs,
   msToSingapore,

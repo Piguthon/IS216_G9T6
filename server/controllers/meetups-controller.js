@@ -6,7 +6,7 @@ const Location = require('../models/location-model');
 const Notice = require('../models/notice-model');
 const User = require('../models/user-model');
 const {getUniqueCode} = require('../utils/generate-code');
-const { isAllowedMeetupDate, todayInSingapore } = require('../utils/meetup-date');
+const { isAllowedMeetupDate, isFutureMeetupTime, todayInSingapore } = require('../utils/meetup-date');
 const { findCaller } = require('../middleware/member');
 
 const FREQUENT_PEOPLE_SHOWN = 10;
@@ -68,6 +68,9 @@ exports.createMeetup = async (req,res) => {
         }
         if (!isAllowedMeetupDate(date)) {
             return res.status(400).json({ error: 'Choose a valid date that is today or later (Singapore time).' });
+        }
+        if (!isFutureMeetupTime(date, time)) {
+            return res.status(400).json({ error: 'Choose a time that has not passed yet (Singapore time).' });
         }
         if (!Array.isArray(memberUserIds)) {
             return res.status(400).json({ error: "memberUserIds must be a list of user ids." });
@@ -343,6 +346,9 @@ exports.updateMeetup = async (req, res) => {
 
         if (!isAllowedMeetupDate(date)) {
             return res.status(400).json({ error: 'Choose a valid date that is today or later (Singapore time).' });
+        }
+        if (!isFutureMeetupTime(date, time)) {
+            return res.status(400).json({ error: 'Choose a time that has not passed yet (Singapore time).' });
         }
         const meetup = await Meetup.findByCode(code);
         if (!meetup) {

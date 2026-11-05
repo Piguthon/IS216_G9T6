@@ -3,6 +3,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import {
   isAllowedMeetupDate,
+  isFutureMeetupTime,
   tripTimeForMeetup,
   singaporeToMs,
   msToSingapore,
@@ -53,6 +54,44 @@ describe('isAllowedMeetupDate', () => {
 
     expect(isAllowedMeetupDate('2026-11-04')).toBe(false);
     expect(isAllowedMeetupDate('2026-11-05')).toBe(true);
+  });
+});
+
+describe('isFutureMeetupTime', () => {
+  beforeEach(() => {
+    vi.useFakeTimers({ toFake: ['Date'] });
+    vi.setSystemTime(new Date('2026-11-04T12:00:00+08:00'));
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it('accepts a later time today and any time on a future date', () => {
+    expect(isFutureMeetupTime('2026-11-04', '12:01')).toBe(true);
+    expect(isFutureMeetupTime('2026-11-04', '23:59')).toBe(true);
+    expect(isFutureMeetupTime('2026-11-05', '00:00')).toBe(true);
+  });
+
+  it('rejects a time today that has passed or is right now', () => {
+    expect(isFutureMeetupTime('2026-11-04', '11:59')).toBe(false);
+    expect(isFutureMeetupTime('2026-11-04', '12:00')).toBe(false);
+    expect(isFutureMeetupTime('2026-11-04', '00:00')).toBe(false);
+  });
+
+  it('rejects times in the wrong format', () => {
+    expect(isFutureMeetupTime('2026-11-05', '7:00')).toBe(false);
+    expect(isFutureMeetupTime('2026-11-05', '24:00')).toBe(false);
+    expect(isFutureMeetupTime('2026-11-05', '19:60')).toBe(false);
+    expect(isFutureMeetupTime('2026-11-05', '7pm')).toBe(false);
+    expect(isFutureMeetupTime('2026-11-05', undefined)).toBe(false);
+  });
+
+  it('uses Singapore time to decide what has passed', () => {
+    vi.setSystemTime(new Date('2026-11-04T16:30:00Z'));
+
+    expect(isFutureMeetupTime('2026-11-05', '00:15')).toBe(false);
+    expect(isFutureMeetupTime('2026-11-05', '00:45')).toBe(true);
   });
 });
 

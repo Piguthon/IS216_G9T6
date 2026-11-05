@@ -3,6 +3,11 @@ export function todayInSingapore() {
   return new Date(Date.now() + 8 * 60 * 60 * 1000).toISOString().slice(0, 10)
 }
 
+// True if a Singapore YYYY-MM-DD date and HH:MM time has already passed
+export function isPastInSingapore(date, time) {
+  return new Date(`${date}T${time}:00+08:00`).getTime() <= Date.now()
+}
+
 // Show a stored YYYY-MM-DD date as DD-MM-YYYY. The stored value stays YYYY-MM-DD.
 export function formatDate(date) {
   const parts = date.split('-')
