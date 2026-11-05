@@ -1,4 +1,4 @@
-// OWNER: JX. Week 11 setup store: shared login state for the navbar and account pages.
+// Shared login state for the navbar and account pages.
 import { ref, computed } from 'vue'
 import { defineStore } from 'pinia'
 import axios from 'axios'

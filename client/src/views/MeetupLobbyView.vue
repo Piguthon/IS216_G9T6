@@ -1,28 +1,4 @@
-<!--
-  FILE:     src/views/MeetupLobbyView.vue
-  OWNER:    reference flow, team-written (built first; the rest of the team copies this pattern).
-  PURPOSE:  Meetup home: details, share code, member list; each member sets their start point
-            and how they're getting there, then confirms their location. Only the host works out
-            the fair meeting points; members then get a link to vote on them. The host can
-            remove members. Once the host works them out, nobody can join and locations are locked:
-            members can only leave, and the host is told who left so they can recalculate
-  ROUTE:    /meetup/:code
-  TALKS TO: GET /api/meetups/:code, PUT /api/meetups/:code/me (my start point),
-            PUT /api/meetups/:code/me/mode,
-            PUT /api/meetups/:code/me/ready (Confirm location),
-            DELETE /api/meetups/:code/me (leave),
-            POST /api/ranking/:code (the host recalculates after someone leaves),
-            DELETE /api/meetups/:code/members/:memberId/remove (host, logged in)
-            uses AddressSearch, MemberList, TravelModePicker
-  POLLING:  the meetup refreshes every 5 seconds while this page is open (decided: no WebSockets)
-  DATA:     Meetup { code, hostName, occasion, date "YYYY-MM-DD", time "HH:MM",
-                     members: [ { _id, name, start: { label, postal, lat, lng } | null,
-                                  travelMode: 'transit' | 'car', ready } ],
-                     rankedAt (when the host last worked out the fair meeting points, or null),
-                     leftSinceRanking [ name ] (who left since) }
-            sends { start: { label, postal, lat, lng } }, { travelMode } or { ready }
-  REVISE:   Wk 4 route params · Wk 5 onMounted + Axios GET/PUT · Wk 6 props, emits, localStorage
--->
+<!-- Meetup lobby: details, share code and members. Each member sets a start point and travel mode, then confirms. -->
 <script setup>
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import axios from 'axios'
@@ -53,7 +29,7 @@ const myMemberId = ref(null)
 
 const isEditing = ref(false)
 const showDeleteConfirm = ref(false)
-const memberToRemove = ref(null) // the member the host pressed Remove on
+const memberToRemove = ref(null)
 
 // Use the server's { error: "..." } message if there is one, otherwise a fallback
 function getErrorText(error, fallback) {
@@ -63,11 +39,7 @@ function getErrorText(error, fallback) {
   return fallback
 }
 
-// What went wrong with one of my member actions (start point, travel mode, confirm, leave):
-//   - 401: my login has expired (e.g. I logged in somewhere else), so log in again
-//   - 403 "not a member": this browser has nothing the server accepts for my place (e.g. a
-//     guest who joined before guests were given a secret), so forget it and stop showing
-//     the member controls. Any other 403 (e.g. locked) is just shown.
+// Handles a failed member action: 401 asks to log in again, 403 "not a member" forgets this browser's place
 function handleMemberError(error, fallback) {
   const status = error.response ? error.response.status : 0
   if (status === 401) {
@@ -92,7 +64,6 @@ async function loadMeetup() {
   errorMessage.value = ''
 
   try {
-    // As a member, the start points come with their postal code and lat/lng too
     const response = await axios.get(
       `${BASE_URL}/meetups/${code}`,
       memberAuthConfig(code, auth.token),
@@ -109,8 +80,7 @@ async function loadMeetup() {
   isLoading.value = false
 }
 
-// The timer's quiet version of loadMeetup: no spinner, so the page never loses what you're typing.
-// A failed refresh keeps the last details; the next one tries again.
+// The timer's quiet version of loadMeetup: no spinner, and a failed refresh keeps the last details
 async function refreshMeetup() {
   try {
     const response = await axios.get(
@@ -121,8 +91,7 @@ async function refreshMeetup() {
     errorMessage.value = ''
   } catch (error) {
     if (error.response && error.response.status === 404) {
-      clearInterval(refreshTimer) // the host deleted it, or everyone else left
-      // The host is told why on their My Meetups page
+      clearInterval(refreshTimer)
       if (isHost.value && auth.isLoggedIn) {
         router.push('/meetups')
         return
@@ -132,7 +101,6 @@ async function refreshMeetup() {
   }
 }
 
-// "My" member id comes from localStorage (fairspot-member-<code>), saved when I created or joined
 onMounted(() => {
   myMemberId.value = localStorage.getItem(`fairspot-member-${code}`)
   loadMeetup()
@@ -163,8 +131,7 @@ const isMember = computed(() => {
 const hostId = computed(() => meetup.value?.members?.[0]?._id)
 const isHost = computed(() => isMember.value && myMemberId.value === hostId.value)
 
-// Only the host works out the fair meeting points: once every member (at least 2) has confirmed
-// their location, or, after a point is confirmed, with whoever has
+// Only the host works out the fair meeting points, once every member (at least 2) has confirmed
 const canCalculate = computed(() => {
   if (!meetup.value || !meetup.value.members) return false
   const { members } = meetup.value
@@ -194,7 +161,6 @@ const startWarning = computed(() => {
     if (!canCalculate.value) {
       return 'You can work out the fair meeting points once everyone has confirmed their location.'
     }
-    // After a point is confirmed, anyone who joins later is left out of the results
     const isWaiting = members.some((m) => !m.ready)
     return isWaiting ? "Results leave out anyone who hasn't confirmed their location." : ''
   }
@@ -277,7 +243,6 @@ async function handleConfirmLocation() {
     handleMemberError(err, 'Failed to confirm your location.')
   }
 }
-// The host works the fair meeting points out again without whoever left, then opens them
 const isRecalculating = ref(false)
 
 async function handleRecalculate() {
@@ -295,7 +260,7 @@ async function handleRecalculate() {
   }
   isRecalculating.value = false
 }
-//Host tools (edit)
+// Host: saves new meetup details
 async function handleEdit(details) {
   actionError.value = ''
   try {
@@ -317,7 +282,7 @@ async function handleEdit(details) {
   }
 }
 
-//Host tools (Delete)
+// Host: deletes the meetup
 async function handleDelete() {
   actionError.value = ''
   try {
@@ -332,7 +297,7 @@ async function handleDelete() {
   }
 }
 
-//Host tools (Remove a member)
+// Host: removes a member
 async function handleRemove() {
   actionError.value = ''
   try {
@@ -346,7 +311,7 @@ async function handleRemove() {
   }
 }
 
-//Leave (non-hosts)
+// A member who isn't the host leaves the meetup
 async function handleLeave() {
   actionError.value = ''
   try {
@@ -366,21 +331,17 @@ async function handleLeave() {
       <h1 class="app-heading mb-0">Meetup Lobby</h1>
     </header>
 
-    <!-- Loading state -->
     <div v-if="isLoading" class="text-center my-5" data-testid="lobby-loading">
       <div class="spinner-border text-sign" role="status">
         <span class="visually-hidden">Loading..</span>
       </div>
     </div>
 
-    <!-- Error alert -->
     <div v-else-if="errorMessage" class="alert alert-danger" data-testid="lobby-error">
       {{ errorMessage }}
     </div>
 
-    <!-- Meetup Content -->
     <div v-else-if="meetup">
-      <!-- Tells the host who left after the fair meeting points were worked out -->
       <div
         v-if="isHost && leftNames"
         class="alert alert-warning d-flex flex-wrap justify-content-between align-items-center gap-2"
@@ -414,9 +375,7 @@ async function handleLeave() {
         ></button>
       </div>
       <div class="row">
-        <!-- Left Column: Details & Tools -->
         <div class="col-lg-7 mb-3">
-          <!-- Details card -->
           <div class="card app-card mb-3">
             <div class="card-body">
               <div v-if="isEditing">
@@ -456,11 +415,9 @@ async function handleLeave() {
             </div>
           </div>
 
-          <!-- Set my start point -->
           <div v-if="isMember" class="card app-card" data-testid="lobby-set-start">
             <div class="card-body">
               <h3 class="mb-3">Your start point</h3>
-              <!-- Locked once the host has worked out the fair meeting points -->
               <template v-if="isLocked">
                 <p class="mb-0" data-testid="lobby-locked-start">
                   {{ myStart ? myStart.label : 'No start point' }}
@@ -495,7 +452,6 @@ async function handleLeave() {
           </div>
         </div>
 
-        <!-- Right Column: Members & Actions -->
         <div class="col-lg-5">
           <div class="card app-card mb-3">
             <div class="card-body">
@@ -536,7 +492,6 @@ async function handleLeave() {
             </div>
           </div>
 
-          <!-- Confirm location: tells the host this member's start and travel mode are final -->
           <div v-if="isMember" class="mb-3">
             <p v-if="myReady" class="alert alert-success mb-0" data-testid="lobby-confirmed">
               Location confirmed.
@@ -559,7 +514,6 @@ async function handleLeave() {
             </p>
           </div>
 
-          <!-- The host's "See fair meeting points" works them out; members then open them to vote -->
           <div v-if="startWarning" class="alert alert-warning" data-testid="lobby-start-warning">
             {{ startWarning }}
           </div>
@@ -582,8 +536,6 @@ async function handleLeave() {
             </router-link>
           </div>
 
-          <!-- Once the host confirms a meeting point: the summary and the live map, in two
-               equal columns from 576px up (stacked on phones) -->
           <div v-if="isMember && meetup.finalStation" class="row g-2 mb-3">
             <div class="col-sm-6">
               <router-link
@@ -605,7 +557,6 @@ async function handleLeave() {
             </div>
           </div>
 
-          <!-- A visitor who isn't a member can join, unless the meetup is closed -->
           <p v-if="!isMember && isLocked" class="alert alert-secondary" data-testid="lobby-closed">
             This meetup is closed to new members because the host has worked out the fair meeting
             points.
@@ -620,10 +571,7 @@ async function handleLeave() {
             </router-link>
           </div>
 
-          <!-- Host tools & Leave options -->
           <div v-if="isMember">
-            <!-- Host Tools: Edit and Delete in two equal columns from 576px up (stacked on
-                 phones). A button on its own, or the delete question, takes the full width. -->
             <div v-if="isHost" class="row g-2">
               <div v-if="!isEditing" :class="showDeleteConfirm ? 'col-12' : 'col-sm-6'">
                 <button
@@ -663,7 +611,6 @@ async function handleLeave() {
               </div>
             </div>
 
-            <!-- Non-Host Leave -->
             <div v-else>
               <button
                 @click="handleLeave"

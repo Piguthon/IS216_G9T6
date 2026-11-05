@@ -1,12 +1,4 @@
-/*
-  FILE:     scripts/seed-stations.js
-  OWNER:    P3 (team-written)
-  PURPOSE:  one-off script that loads the candidate meeting points in data/stations.json (MRT
-            stations and bus interchanges) into MongoDB. A station that's already there is
-            updated, so it's safe to run again after the file changes.
-  RUN:      node scripts/seed-stations.js from server/
-  TALKS TO: models/station-model.js, config/db.js
-*/
+// Script that loads data/stations.json into MongoDB.
 
 const path = require('node:path');
 
@@ -15,13 +7,12 @@ require('dotenv').config({
 });
 
 const mongoose = require('mongoose');
-const connectDB = require('../config/db');
 const Station = require('../models/station-model');
 const stations = require('../data/stations.json');
 
 async function seedStations() {
   try {
-    await connectDB();
+    await mongoose.connect(process.env.MONGODB_URI);
 
     for (const station of stations) {
       const existingStation = await Station.findOne({

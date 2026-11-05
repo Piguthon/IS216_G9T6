@@ -1,16 +1,5 @@
-/*
-  FILE:     scripts/demo-live-map.js
-  OWNER:    S (team-written)
-  PURPOSE:  Demo the live map without six phones. Sets up meetup DEMO01 with two real accounts,
-            one for each presenter's device, and four simulated members who travel to the meeting
-            point on real OneMap routes, sped up so they all arrive within 30 seconds. It only
-            writes to MongoDB, so the app itself has no demo mode or way around the login.
-  RUN:      from server/, with DEMO_PASSWORD set in .env:
-            node scripts/demo-live-map.js           set up, then press Enter to set everyone off
-            node scripts/demo-live-map.js --clean   delete the demo meetup and accounts
-  TALKS TO: models/meetup-model.js, models/location-model.js, models/vote-model.js,
-            models/user-model.js, services/onemap.js (getPtRoute), utils/polyline.js, config/db.js
-*/
+// Demo for the live map: sets up meetup DEMO01 and moves four simulated members along real routes.
+// Run from server/: node scripts/demo-live-map.js (add --clean to delete the demo data).
 
 const path = require('node:path');
 
@@ -22,7 +11,6 @@ const readline = require('node:readline');
 const { setTimeout: sleep } = require('node:timers/promises');
 const bcrypt = require('bcrypt');
 const mongoose = require('mongoose');
-const connectDB = require('../config/db');
 const Meetup = require('../models/meetup-model');
 const Location = require('../models/location-model');
 const Vote = require('../models/vote-model');
@@ -34,17 +22,14 @@ const { liveWindowStatus } = require('../utils/live-window');
 const { decodePolyline } = require('../utils/polyline');
 const stations = require('../data/stations.json');
 
-const DEMO_CODE = 'DEMO01'; // generated codes never contain the letter O, so this can't clash
+const DEMO_CODE = 'DEMO01';
 const MEETING_POINT = 'city-hall';
-const MINUTES_UNTIL_MEETUP = 45; // the live map stays open for 75 minutes from the start
-const TICK_MS = 2000; // how often the simulated people move
-// The longest trip takes this long, and shorter trips scale with it. Pages refresh every 5 seconds,
-// so on screen the whole run takes about 25 seconds.
+const MINUTES_UNTIL_MEETUP = 45;
+const TICK_MS = 2000;
 const LONGEST_TRIP_SECONDS = 20;
-const MINUTES_PER_KM = 3; // the trip time if OneMap is down
-const TRIP_PLAN_TIME = '10:00'; // overnight OneMap only finds walking trips, so plan a daytime one
+const MINUTES_PER_KM = 3;
+const TRIP_PLAN_TIME = '10:00';
 
-// Logging in replaces the account's session, so each device needs its own account
 const ACCOUNTS = [
   { name: 'Alex', email: 'demo.host@fairspot.test', from: 'bishan' },
   { name: 'Sam', email: 'demo.guest@fairspot.test', from: 'bugis' },
@@ -65,7 +50,7 @@ function startPoint(stationId) {
   return { label: `${name} MRT`, postal: '', lat, lng };
 }
 
-// Accounts. Creates each one, or resets its password if it already exists.
+// Creates each demo account, or resets its password if it already exists
 async function setUpAccounts() {
   const passwordHash = await bcrypt.hash(process.env.DEMO_PASSWORD, 12);
   const users = [];
@@ -80,7 +65,7 @@ async function setUpAccounts() {
   return users;
 }
 
-// The meetup. Starts fresh each run, in the live window, with the meeting point confirmed.
+// Creates the demo meetup in the live window, with the meeting point confirmed
 async function setUpMeetup(users) {
   await deleteMeetup();
 
@@ -94,7 +79,6 @@ async function setUpMeetup(users) {
     time: startsAt.time,
   });
 
-  // The host is members[0], so the accounts go in before the simulated people
   for (let i = 0; i < ACCOUNTS.length; i++) {
     await Meetup.addMember(DEMO_CODE, ACCOUNTS[i].name, String(users[i]._id));
   }
@@ -118,8 +102,7 @@ async function setUpMeetup(users) {
   return Meetup.findByCode(DEMO_CODE);
 }
 
-// One trip for each simulated member. If OneMap fails, they go in a straight line, so the demo
-// still works.
+// Plans each simulated member's trip, or a straight line if OneMap fails
 async function planTrip(member, station) {
   const now = msToSingapore(Date.now());
   let minutes = Math.round(distanceKm(member.start, station) * MINUTES_PER_KM);
@@ -139,7 +122,7 @@ async function planTrip(member, station) {
   return { memberId: String(member._id), minutes, path };
 }
 
-// pointAlong(path, fraction): where you are after that fraction of the path's distance
+// Where you are after that fraction of the path's distance
 function pointAlong(path, fraction) {
   const lengths = path.slice(1).map((point, index) => distanceKm(path[index], point));
   let left = lengths.reduce((total, length) => total + length, 0) * fraction;
@@ -157,8 +140,7 @@ function pointAlong(path, fraction) {
   return path[path.length - 1];
 }
 
-// Saves everyone's position. startedAt is null until Enter is pressed. Saving people who have
-// arrived too keeps their dots from going grey.
+// Saves everyone's position (startedAt is null until Enter is pressed)
 async function moveEveryone(trips, startedAt) {
   const leftAt = startedAt || Date.now();
   const seconds = (Date.now() - leftAt) / 1000;
@@ -178,8 +160,7 @@ async function moveEveryone(trips, startedAt) {
   }
 }
 
-// Keeps moving people until the live map closes, so a forgotten script stops by itself. Each
-// Enter sends them back to their starts and sets them off again.
+// Keeps moving people until the live map closes; each Enter restarts them
 async function runDemo(meetup, trips) {
   let startedAt = null;
   const input = readline.createInterface({ input: process.stdin });
@@ -214,7 +195,7 @@ async function cleanUp() {
 
 async function main() {
   try {
-    await connectDB();
+    await mongoose.connect(process.env.MONGODB_URI);
 
     if (process.argv.includes('--clean')) {
       await cleanUp();

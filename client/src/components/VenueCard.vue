@@ -1,14 +1,4 @@
-<!--
-  FILE:     src/components/VenueCard.vue
-  OWNER:    S (team-written)
-  PURPOSE:  One venue
-  PROPS:    venue (Object)
-  EMITS:    none
-  SLOT:     extra buttons under the venue (the venue vote button on the results page)
-  TALKS TO: none
-  DATA:     Venue { venueKey, name, address, lat, lng, category, distanceM }
-  REVISE:   Wk 6 props, slots · Wk 3 cards
--->
+<!-- One venue card, with a slot for extra buttons. -->
 <script setup>
 import { computed } from 'vue'
 import FavouriteVenueButton from './FavouriteVenueButton.vue'
@@ -17,7 +7,6 @@ const props = defineProps({
   venue: { type: Object, required: true },
 })
 
-// Words people recognise for the Geoapify categories FairSpot asks for
 const TYPE_LABELS = {
   'catering.restaurant': 'Restaurant',
   'catering.cafe': 'Café',

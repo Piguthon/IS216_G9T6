@@ -1,13 +1,5 @@
-/*
-  FILE:      utils/polyline.js
-  OWNER:     S (team-written)
-  PURPOSE:   Decodes an encoded polyline, the format OneMap uses for each part of a route, into a
-             list of [lat, lng] points.
-             Format: https://developers.google.com/maps/documentation/utilities/polylinealgorithm
-             Same as client/src/utils/polyline.js; keep the two in step.
-  FUNCTIONS: decodePolyline(encoded) → [ [lat, lng] ]
-  USED BY:   scripts/demo-live-map.js
-*/
+// Decodes an encoded OneMap polyline into [lat, lng] points (same as client/src/utils/polyline.js).
+// Format: https://developers.google.com/maps/documentation/utilities/polylinealgorithm
 
 function decodePolyline(encoded) {
   const points = [];
@@ -29,7 +21,7 @@ function decodePolyline(encoded) {
   }
 
   while (index < encoded.length) {
-    lat += nextNumber(); // each point is stored as the change from the previous one
+    lat += nextNumber();
     lng += nextNumber();
     points.push([lat / 100000, lng / 100000]);
   }

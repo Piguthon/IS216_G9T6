@@ -16,9 +16,7 @@ function msToSingapore(ms) {
   return { date: inSingapore.slice(0, 10), time: inSingapore.slice(11, 16) };
 }
 
-// When to time a meetup's trips for: 45 minutes before it, when people are on their way, except
-// overnight when trains and buses are stopped or about to.
-// From 23:30 it uses 05:30 the next day, and before 05:30 it uses 05:30 that same morning.
+// The time to plan a meetup's trips for: 45 minutes before, or 05:30 if that falls overnight
 function tripTimeForMeetup(date, time) {
   const trip = msToSingapore(singaporeToMs(date, time) - MINUTES_BEFORE_MEETUP * 60 * 1000);
   if (trip.time >= '23:30') {

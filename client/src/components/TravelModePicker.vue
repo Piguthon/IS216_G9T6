@@ -1,12 +1,4 @@
-<!--
-  FILE:     src/components/TravelModePicker.vue
-  OWNER:    I (team-written)
-  PURPOSE:  Lets a member choose how they're getting to the meetup; public transport by default
-  PROPS:    currentMode ('transit' or 'car')
-  EMITS:    select with the chosen mode
-  TALKS TO: none (the lobby makes the API call)
-  REVISE:   Wk 5 v-for + :key · Wk 6 props/emits
--->
+<!-- Lets a member choose how they're getting to the meetup; public transport by default. -->
 <script setup>
 defineProps({ currentMode: { type: String, default: 'transit' } })
 const emit = defineEmits(['select'])

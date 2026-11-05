@@ -1,13 +1,4 @@
-/*
-  FILE:      routes/votes-routes.js
-  OWNER:     P4 (team-written)
-  PURPOSE:   Express router for /api/votes (mounted in server.js)
-  ENDPOINTS: GET  /api/votes/:code?memberId=   tallies, my votes and the confirmed choices
-             PUT  /api/votes/:code             cast or move my vote (a member: session or
-                                               X-Member-Token, see middleware/member.js)
-             POST /api/votes/:code/confirm     host confirms the final choice (log in required)
-             Tallies are refreshed on the client by polling (decided: no WebSockets)
-*/
+// Express router for /api/votes.
 
 const express = require('express');
 const router = express.Router();

@@ -1,11 +1,4 @@
-/*
-  FILE:    controllers/votes-controller.js
-  OWNER:   P4 (team-written)
-  PURPOSE: vote endpoints; one vote per member per round; only the host can confirm
-  DATA:    Votes { station: { tallies: [ { optionId, name, lat, lng, address, count } ], myVote },
-                   venue:   { tallies: [...], myVote },
-                   final:   { station, venue } }   (tallies: most votes first)
-*/
+// Vote endpoints: one vote per member per round; only the host can confirm.
 
 const Meetup = require('../models/meetup-model');
 const Vote = require('../models/vote-model');
@@ -39,7 +32,7 @@ function buildVotes(meetup, votes, memberId) {
   return result;
 }
 
-// GET /api/votes/:code?memberId=... (memberId is optional; it fills in myVote)
+// GET /:code: the tallies, my vote and the confirmed choices
 exports.getVotes = async (req, res) => {
   try {
     const meetup = await Meetup.findByCode(req.params.code);
@@ -53,9 +46,7 @@ exports.getVotes = async (req, res) => {
   }
 };
 
-// PUT /api/votes/:code  body { kind, optionId, optionName, lat?, lng?, address? }
-// requireMember (middleware/member.js) has already found the meetup and which member is voting,
-// so a memberId in the body is ignored
+// PUT /:code: casts or moves my vote
 exports.castVote = async (req, res) => {
   try {
     const { kind, optionId, optionName, lat, lng, address } = req.body;
@@ -90,8 +81,7 @@ exports.castVote = async (req, res) => {
   }
 };
 
-// POST /api/votes/:code/confirm  (logged-in host only)
-// body { kind, optionId, name, lat, lng, address? }, or { kind, optionId: null } to reopen voting
+// POST /:code/confirm: the host confirms the final choice, or reopens voting
 exports.confirmChoice = async (req, res) => {
   try {
     const { kind, optionId, name, address, lat, lng } = req.body;
@@ -120,7 +110,7 @@ exports.confirmChoice = async (req, res) => {
     }
 
     const updated = await Meetup.setFinalChoice(meetup.code, kind, choice);
-    if (kind === 'station') await Vote.clearKind(meetup.code, 'venue'); // venues depend on the station
+    if (kind === 'station') await Vote.clearKind(meetup.code, 'venue');
 
     const votes = await Vote.findByCode(meetup.code);
     res.json(buildVotes(updated, votes, String(host._id)));

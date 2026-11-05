@@ -1,7 +1,4 @@
-/* polyline.spec.js
- Unit tests for utils/polyline.js (decoding OneMap's route lines into map points), with the same
- documented example as the client's test.
-*/
+// Unit tests for utils/polyline.js.
 
 import { describe, it, expect } from 'vitest';
 import { decodePolyline } from '../polyline.js';

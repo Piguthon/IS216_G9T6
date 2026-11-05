@@ -1,11 +1,4 @@
-/* route-privacy.spec.js
- Unit tests for utils/route-privacy.js (the ranking GETs without routes, for someone who isn't
- a member). Each trip's steps and firstBusStopCode start at the member's home, so:
-   1. withoutRoute drops them and keeps name, travelMode, minutes, waitMinutes, leaveAt, arriveAt
-   2. rankingWithoutRoutes strips every times[] trip and keeps the meeting point's details
-   3. tripsWithoutRoutes strips every leave-times trip
-   4. None of them change the saved or cached object they are given
-*/
+// Unit tests for utils/route-privacy.js.
 
 import { describe, it, expect } from 'vitest';
 import { withoutRoute, rankingWithoutRoutes, tripsWithoutRoutes } from '../route-privacy.js';
@@ -68,7 +61,6 @@ describe('rankingWithoutRoutes', () => {
     }
   });
 
-  // The saved ranking is what members get, so it must keep its routes.
   it('does not change the saved ranking', () => {
     const saved = savedRanking();
     const before = JSON.parse(JSON.stringify(saved));

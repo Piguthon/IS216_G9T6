@@ -1,6 +1,4 @@
-/* trip-tone.spec.js
- Unit tests for utils/trip-tone.js: the longest trip is red, the shortest green, the rest amber.
-*/
+// Unit tests for utils/trip-tone.js.
 
 import { describe, it, expect } from 'vitest'
 import { tripTone } from '../trip-tone'

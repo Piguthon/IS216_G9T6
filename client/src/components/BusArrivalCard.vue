@@ -1,14 +1,4 @@
-<!--
-  FILE:     src/components/BusArrivalCard.vue
-  OWNER:    P4 (team-written)
-  PURPOSE:  Live waiting times for the buses in the user's route, at the stops they board at
-  PROPS:    buses (Array of { stopCode, stopName, serviceNo })
-  EMITS:    none
-  TALKS TO: GET /api/bus-arrival/:stopCode
-  DATA:     Bus { stopCode, services: [ { serviceNo, nextArrivals: [ ISO time strings ] } ] }
-            arrival times are ISO strings with +08:00
-  REVISE:   Wk 5 onMounted + Axios GET, computed
--->
+<!-- Live waiting times for the buses in the user's route, at the stops they board at. -->
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import axios from 'axios'
@@ -20,7 +10,7 @@ const props = defineProps({
   },
 })
 
-const arrivalsByStop = ref({}) // stopCode → services from the API
+const arrivalsByStop = ref({})
 const message = ref('')
 const isLoading = ref(false)
 

@@ -1,8 +1,4 @@
-/* VenueList.spec.js
- Component tests for VenueList.vue (places near a meeting point). axios is mocked and VenueCard
- is stubbed, so only the list's own behaviour is tested: six places at first, then the rest after
- "Show more places", and no button when every place already fits.
-*/
+// Component tests for VenueList.vue.
 
 import { describe, it, expect, vi } from 'vitest'
 import { flushPromises, mount } from '@vue/test-utils'

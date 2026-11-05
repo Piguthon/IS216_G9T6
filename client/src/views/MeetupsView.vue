@@ -1,15 +1,4 @@
-<!--
-  FILE:     src/views/MeetupsView.vue
-  OWNER:    JS (team-written)
-  PURPOSE:  The logged-in user's meetups, in Current and Past tabs, and their notices (e.g. a
-            meetup deleted because everyone else left), which they can dismiss
-  ROUTE:    /meetups (log in required)
-  TALKS TO: GET /api/meetups/mine, DELETE /api/meetups/notices/:id
-  POLLING:  the list refreshes every 5 seconds while this page is open (decided: no WebSockets)
-  DATA:    { current: [ Item ], past: [ Item ], notices: [ { _id, message, createdAt } ] }
-            Item { code, occasion, date, time, hostName, memberCount, myMemberId, isHost,
-                   finalStation, finalVenue }
--->
+<!-- The logged-in user's current and past meetups, and their notices. -->
 <script setup>
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import axios from 'axios'
@@ -45,7 +34,6 @@ async function fetchMeetups() {
   current.value = response.data.current
   past.value = response.data.past
   notices.value = response.data.notices || []
-  // The lobby finds "me" in localStorage, so this also works on a new device
   for (const meetup of [...current.value, ...past.value]) {
     localStorage.setItem(`fairspot-member-${meetup.code}`, meetup.myMemberId)
   }
@@ -87,7 +75,7 @@ async function dismissNotice(notice) {
       headers: { Authorization: `Bearer ${auth.token}` },
     })
   } catch {
-    // it comes back on the next refresh, and can be dismissed again
+    // it comes back on the next refresh
   }
 }
 
@@ -121,7 +109,6 @@ onUnmounted(() => {
         <h1 class="app-heading mb-0">My Meetups</h1>
       </header>
 
-      <!-- Notices, e.g. a meetup that was deleted because everyone else left -->
       <div
         v-for="notice in notices"
         :key="notice._id"
@@ -241,7 +228,6 @@ onUnmounted(() => {
 </template>
 
 <style scoped>
-/* One meetup in the list */
 .meetup-item {
   padding: 16px;
   border: 2px solid #000000;

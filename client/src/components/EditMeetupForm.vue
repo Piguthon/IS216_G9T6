@@ -1,12 +1,4 @@
-<!--
-  FILE:     src/components/EditMeetupForm.vue
-  OWNER:    I (team-written)
-  PURPOSE:  The host's form for changing a meetup's occasion, date and time
-  PROPS:    meetup (Object)
-  EMITS:    save with { occasion, date, time } · cancel
-  TALKS TO: none (the lobby makes the API call)
-  REVISE:   Wk 4 v-model · Wk 6 props/emits
--->
+<!-- The host's form for changing a meetup's occasion, date and time. -->
 <script setup>
 import { ref } from 'vue'
 import { todayInSingapore } from '../utils/meetup-date'

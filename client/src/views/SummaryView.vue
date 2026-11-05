@@ -1,23 +1,4 @@
-<!--
-  FILE:     src/views/SummaryView.vue
-  OWNER:    I (team-written)
-  PURPOSE:  The meetup summary once the host has confirmed the meeting point
-            (meetup.finalStation): everyone's journey time and when to leave to arrive by the
-            meetup time, your own route step by step, live arrivals for the buses in your route,
-            and a map of the start points, the meeting point and your route
-  ROUTE:    /meetup/:code/summary
-  TALKS TO: GET /api/meetups/:code, GET /api/ranking/:code/leave-times
-            both send who I am (utils/member-auth.js), so members get start points' lat/lng
-            and their trip's route; uses BusArrivalCard and MapView
-  POLLING:  the meetup refreshes every 5 seconds while this page is open (decided: no
-            WebSockets). Leave times use OneMap, so they only reload when the meeting point, a
-            start point or a travel mode changes
-  DATA:     Meetup { code, occasion, date, time, finalStation { optionId, name, lat, lng } | null,
-                     members: [ { _id, name, start, travelMode } ] }
-            leave-times → { trips: [ { memberId, name, travelMode, minutes, waitMinutes, leaveAt,
-                                       arriveAt, steps (members only) } ] }
-  REVISE:   Wk 4 route params · Wk 5 onMounted + Axios GET, computed · Wk 6 props, components
--->
+<!-- The meetup summary: journey times, when to leave, your route, live bus arrivals and a map. -->
 <script setup>
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import axios from 'axios'
@@ -46,8 +27,6 @@ const errorMessage = ref('')
 let refreshTimer = null
 
 async function loadTrips() {
-  // As a member, each trip comes with its route and first bus stop (the server leaves them
-  // out for anyone who only knows the code, because they start at home)
   const leaveTimesResponse = await axios.get(
     `${BASE_URL}/ranking/${code}/leave-times`,
     memberAuthConfig(code, auth.token),
@@ -59,7 +38,6 @@ async function loadSummary() {
   isLoading.value = true
   errorMessage.value = ''
   try {
-    // As a member, the start points come with lat/lng, so the map can show them
     const meetupResponse = await axios.get(
       `${BASE_URL}/meetups/${code}`,
       memberAuthConfig(code, auth.token),
@@ -84,8 +62,7 @@ function tripInputs(data) {
   return JSON.stringify([data.finalStation, members])
 }
 
-// The timer's quiet version of loadSummary: no spinner, and a failed refresh keeps the last
-// summary; the next one tries again.
+// The timer's quiet version of loadSummary: no spinner, and a failed refresh keeps the last summary
 async function refreshSummary() {
   if (isLoading.value || !meetup.value) return
   try {
@@ -143,8 +120,7 @@ const journeys = computed(() => {
   return list
 })
 
-// The trip for whoever is viewing this page, or null if they have no route to this point.
-// Its steps only come to members (a browser whose member link has gone gets the trip without).
+// The trip for whoever is viewing this page, or null if they have no route to this point
 const myTrip = computed(() => {
   if (!point.value) return null
   const trip = point.value.times.find((t) => t.memberId === myMemberId.value)
@@ -204,7 +180,6 @@ const starts = computed(() => {
       </div>
     </header>
 
-    <!-- While loading, a train passes along the bottom of the page. It goes once the summary arrives. -->
     <div v-if="isLoading" class="flex-grow-1 d-flex flex-column" data-testid="summary-loading">
       <div class="text-center my-5">
         <div class="spinner-border text-sign" role="status">
@@ -325,8 +300,6 @@ const starts = computed(() => {
 </template>
 
 <style scoped>
-/* The loading train runs the full width of the screen and sits on the footer
-   (-44px cancels the bottom padding of .page-body) */
 .loading-platform {
   margin-inline: calc(50% - 50vw);
   margin-bottom: -44px;

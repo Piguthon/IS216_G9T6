@@ -1,23 +1,9 @@
-/*
-  FILE:     middleware/member.js
-  OWNER:    reference flow, team-written (meetups, with middleware/auth.js from JX)
-  PURPOSE:  works out which member of a meetup is making the request, on the server. Member ids
-            are public (GET /api/meetups/:code), so the client can't just say which member it is.
-              - logged in: "Authorization: Bearer <session>" → the member with that account
-              - guest: "X-Member-Token: <memberToken>" → the member with that secret (they got
-                it in the reply when they joined)
-  FUNCTIONS: findCaller(req, meetup) → the member, or null; throws 'Invalid session' when the
-                                       session is unknown and there is no X-Member-Token (an
-                                       unknown session with a token is ignored). getMeetup and
-                                       the ranking GETs use it without failing
-             requireMember (route middleware) → sets req.meetup and req.member, or replies
-                                       404 unknown code · 401 invalid session · 403 not a member
-  REVISE:   Week 11 server/products/server.js (requireAuth middleware)
-*/
+// Works out which member of a meetup is making the request, from their login or guest secret.
 const Meetup = require('../models/meetup-model');
 const User = require('../models/user-model');
 const { readSessionToken } = require('./auth');
 
+// The calling member, or null; throws 'Invalid session' for an unknown session without a guest secret
 async function findCaller(req, meetup) {
   const sessionToken = readSessionToken(req);
   const memberToken = req.get('X-Member-Token') || '';
@@ -27,13 +13,9 @@ async function findCaller(req, meetup) {
       req.user = user;
       const mine = meetup.members.find((member) => member.userId === String(user._id));
       if (mine) return mine;
-      // Not with this account: they may have joined as a guest before logging in, so the
-      // guest secret below still counts
     } else if (!memberToken) {
       throw new Error('Invalid session');
     }
-    // An unknown session with a guest secret: logging in elsewhere replaces the session, so
-    // this browser's old one is ignored and the secret decides
   }
 
   if (!memberToken) return null;
@@ -41,6 +23,7 @@ async function findCaller(req, meetup) {
 }
 exports.findCaller = findCaller;
 
+// Route middleware: sets req.meetup and req.member, or replies 404, 401 or 403
 exports.requireMember = async (req, res, next) => {
   try {
     const meetup = await Meetup.findByCode(req.params.code);

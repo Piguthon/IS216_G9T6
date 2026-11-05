@@ -1,4 +1,4 @@
-// OWNER: JX. Week 10 component tests: observable bus arrival states and refresh.
+// Component tests for BusArrivalCard.vue.
 import { describe, it, expect, vi, afterEach } from 'vitest'
 import { mount, flushPromises } from '@vue/test-utils'
 import axios from 'axios'

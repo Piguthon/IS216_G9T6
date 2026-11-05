@@ -1,4 +1,3 @@
-// src/router/index.js
 // Vue Router (https://router.vuejs.org, MIT): maps each URL to a view in src/views/.
 
 import { createRouter, createWebHistory } from 'vue-router'
@@ -83,7 +82,6 @@ const router = createRouter({
       component: ProfileView,
       meta: { requiresAuth: true },
     },
-    // Unknown URLs go home
     {
       path: '/:pathMatch(.*)*',
       redirect: '/',
@@ -91,7 +89,7 @@ const router = createRouter({
   ],
 })
 
-// Week 11 navigation guard: also runs when using the browser Back button.
+// Sends logged-out visitors to /login for pages that need an account
 router.beforeEach((to) => {
   if (!to.meta.requiresAuth) return true
   const auth = useAuthStore()

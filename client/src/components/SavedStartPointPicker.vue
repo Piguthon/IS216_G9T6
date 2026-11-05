@@ -1,11 +1,10 @@
-<!-- OWNER: JX. Load account locations and emit the existing meetup start-point shape. -->
+<!-- Lets a logged-in member pick one of their saved locations as their start point. -->
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import axios from 'axios'
 import { BASE_URL } from '../config'
 import { useAuthStore } from '../stores/auth'
 
-// currentStart: this member's start point in the meetup, or null
 const props = defineProps({ currentStart: { type: Object, default: null } })
 const emit = defineEmits(['select'])
 const auth = useAuthStore()
@@ -84,7 +83,6 @@ onMounted(loadLocations)
       search below.
     </p>
 
-    <!-- The parent puts the address search here. It goes away once a saved location is chosen. -->
     <slot v-if="showSearch"></slot>
     <button
       v-else-if="selectedId"

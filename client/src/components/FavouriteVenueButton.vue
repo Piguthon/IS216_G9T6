@@ -1,4 +1,4 @@
-<!-- OWNER: JX. Account action embedded in S's venue card. -->
+<!-- Saves a venue to the account's favourites, or removes it. -->
 <script setup>
 import { ref, computed } from 'vue'
 import { useAuthStore } from '../stores/auth'
@@ -10,7 +10,6 @@ const favourites = useFavouritesStore()
 const SAVED_PAUSE_MS = 1500
 const isBusy = ref(false)
 const errorMessage = ref('')
-// The mouse is still on the button after saving: this keeps it blue and ignores a double-click
 const justSaved = ref(false)
 
 const isSaved = computed(() => favourites.isSaved(props.venue.venueKey))
@@ -39,7 +38,7 @@ async function removeFavourite() {
     await favourites.remove(props.venue.venueKey)
   } catch (error) {
     errorMessage.value = errorText(error, 'Unable to remove this venue. Please try again.')
-    await favourites.load() // it may already be gone, removed from another device
+    await favourites.load()
   }
 }
 
@@ -86,7 +85,6 @@ async function toggleFavourite() {
 </template>
 
 <style scoped>
-/* Wide enough for both words, so the button doesn't change size on hover */
 .favourite-saved {
   min-width: 84px;
 }
@@ -109,7 +107,6 @@ async function toggleFavourite() {
   display: inline;
 }
 
-/* Only where a mouse can hover: on a phone a tap would leave the button stuck red */
 @media (hover: hover) {
   .favourite-removable:hover {
     border-color: #dc3545;

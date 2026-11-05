@@ -1,4 +1,4 @@
-<!-- OWNER: JX. Account forms use refs/computed, Axios PUT and props/emits. -->
+<!-- Forms to change the account's name and password. -->
 <script setup>
 import { ref, computed } from 'vue'
 import axios from 'axios'
@@ -137,7 +137,6 @@ async function savePassword() {
             {{ savingName ? 'Saving...' : 'Save name' }}
           </button>
         </form>
-        <!-- The parent puts the delete-account section here -->
         <slot></slot>
       </div>
       <div class="col-md-7">

@@ -1,22 +1,4 @@
-/* CreateMeetupIntegration.spec.js
- Integration tests for CreateMeetupView.vue with the router, the Pinia auth store and a
- mocked axios (vi.mock), so no server is needed.
-
-   the host fills in the occasion, date and time and submits
-       ↓
-   CreateMeetupView sends POST /meetups
-       ↓
-   the page swaps the form for the new meetup's code and a "Go to meetup" button
-
- The tests verify:
-   1. An empty form shows a message and sends nothing
-   2. A successful POST shows the 6-character code and remembers the host's member id and
-      memberToken
-   3. "Go to meetup" opens the lobby for that code
-   4. The server's error message is shown when the POST fails
-
- The clock is fixed (only Date is faked) so "today" is always 4 Nov 2026.
-*/
+// Integration tests for CreateMeetupView.vue with the router, the auth store and a mocked axios.
 
 import { mount, flushPromises } from '@vue/test-utils'
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
@@ -41,7 +23,7 @@ const created = {
 let router
 
 async function mountCreate() {
-  axios.get.mockResolvedValue({ data: [] }) // nobody to suggest under "people you often meet"
+  axios.get.mockResolvedValue({ data: [] })
   router = createRouter({
     history: createMemoryHistory(),
     routes: [
@@ -67,7 +49,7 @@ beforeEach(() => {
   vi.useFakeTimers({ toFake: ['Date'] })
   vi.setSystemTime(new Date('2026-11-04T12:00:00+08:00'))
   localStorage.clear()
-  localStorage.setItem('fairspot-token', 'test-token') // /create is for logged-in hosts
+  localStorage.setItem('fairspot-token', 'test-token')
 })
 
 afterEach(() => {
@@ -76,7 +58,6 @@ afterEach(() => {
 })
 
 describe('CreateMeetupView integration', () => {
-  // Verify that an empty form is stopped before anything is sent.
   it('shows a message and sends nothing when the form is empty', async () => {
     const wrapper = await mountCreate()
     await wrapper.find('form').trigger('submit')
@@ -87,7 +68,6 @@ describe('CreateMeetupView integration', () => {
     expect(axios.post).not.toHaveBeenCalled()
   })
 
-  // Verify that a successful POST shows the new code and remembers the host.
   it('shows the new 6-character code after the meetup is created', async () => {
     axios.post.mockResolvedValueOnce({ data: created })
     const wrapper = await mountCreate()
@@ -108,7 +88,6 @@ describe('CreateMeetupView integration', () => {
     expect(localStorage.getItem('fairspot-member-token-QWE789')).toBe('host-secret')
   })
 
-  // Verify that "Go to meetup" opens the new meetup's lobby.
   it('opens the lobby when Go to meetup is pressed', async () => {
     axios.post.mockResolvedValueOnce({ data: created })
     const wrapper = await mountCreate()
@@ -122,7 +101,6 @@ describe('CreateMeetupView integration', () => {
     expect(router.currentRoute.value.path).toBe('/meetup/QWE789')
   })
 
-  // Edge case: the server refuses the meetup, so its message is shown and the form stays.
   it('shows the server error message when the meetup cannot be created', async () => {
     axios.post.mockRejectedValueOnce({
       response: { status: 400, data: { error: 'Choose today or a future date.' } },

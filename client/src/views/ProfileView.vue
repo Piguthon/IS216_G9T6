@@ -1,12 +1,4 @@
-<!--
-  FILE:     src/views/ProfileView.vue
-  OWNER:    JX (team-written)
-  PURPOSE:  Account details and saved start locations, in one card with three tabs
-  ROUTE:    /profile
-  TALKS TO: GET /api/users/me; GET/POST/PUT/DELETE /api/users/me/locations
-  DATA:     { user: { _id, name, email } }
-  REVISE:   Wk 5 Axios with Authorization header · Wk 6 components
--->
+<!-- Account details and saved start locations, in one card with tabs. -->
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import axios from 'axios'
@@ -270,7 +262,6 @@ onMounted(loadProfile)
       </div>
 
       <div v-else-if="user && auth.isLoggedIn" class="card app-card">
-        <!-- Bootstrap navs (https://getbootstrap.com/docs/5.3/components/navs-tabs/) -->
         <ul class="nav nav-fill app-tabs" role="tablist">
           <li v-for="tab in tabs" :key="tab.id" class="nav-item" role="presentation">
             <button
@@ -287,7 +278,6 @@ onMounted(loadProfile)
           </li>
         </ul>
 
-        <!-- v-show keeps half-typed forms when you switch tabs -->
         <div v-show="activeTab === 'locations'" class="card-body p-3 p-md-4" role="tabpanel">
           <p
             v-if="locationMessage && locationMessageTarget === 'list'"

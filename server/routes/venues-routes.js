@@ -1,10 +1,4 @@
-/*
-  FILE:      routes/venues-routes.js
-  OWNER:     S (team-written)
-  PURPOSE:   Express router for /api/venues (mounted in server.js)
-  ENDPOINTS: GET /api/venues?lat=&lng=&category=
-  TALKS TO:  controllers/venues-controller.js
-*/
+// Express router for /api/venues.
 
 const express = require('express');
 const router = express.Router();

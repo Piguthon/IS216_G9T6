@@ -1,7 +1,4 @@
-/* route-steps.spec.js
- Unit tests for utils/route-steps.js (labels for each step of a member's route) and
- utils/polyline.js (decoding OneMap's route lines into map points).
-*/
+// Unit tests for utils/route-steps.js and utils/polyline.js.
 
 import { describe, it, expect } from 'vitest'
 import { describeStep } from '../route-steps'

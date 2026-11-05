@@ -1,12 +1,4 @@
-/*
-  FILE:      routes/ranking-routes.js
-  OWNER:     P3 (team-written)
-  PURPOSE:   Express router for /api/ranking (mounted in server.js)
-  ENDPOINTS: GET /api/ranking/:code (the host's saved ranking, for everyone),
-             POST /api/ranking/:code (the host works it out; logged in),
-             GET /api/ranking/:code/leave-times
-  TALKS TO:  controllers/ranking-controller.js
-*/
+// Express router for /api/ranking.
 
 const express = require('express');
 const router = express.Router();

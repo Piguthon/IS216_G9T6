@@ -1,14 +1,4 @@
-<!--
-  FILE:     src/components/AddressSearch.vue
-  OWNER:    P1 (team-written)
-  PURPOSE:  Address / postal code input with OneMap autocomplete suggestions
-  PROPS:    placeholder (String)
-  EMITS:    select with { label, postal, lat, lng }
-  TALKS TO: OneMap Search https://www.onemap.gov.sg/api/common/elastic/search directly from the
-            browser (no key needed)
-  DATA:     OneMap returns LATITUDE/LONGITUDE as strings
-  REVISE:   Wk 5 input/keyup events, Axios GET with params, v-for
--->
+<!-- Address or postal code input with OneMap autocomplete suggestions. -->
 <script setup>
 import { ref } from 'vue'
 import axios from 'axios'
@@ -55,7 +45,6 @@ async function search() {
       timeout: 10000,
     })
 
-    // Only the latest search may update suggestions when responses arrive out of order.
     if (currentRequest !== requestNumber) return
     results.value = response.data.results.map((r) => ({
       label: r.SEARCHVAL,

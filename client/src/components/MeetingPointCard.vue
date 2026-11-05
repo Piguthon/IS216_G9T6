@@ -1,13 +1,4 @@
-<!--
-  FILE:     src/components/MeetingPointCard.vue
-  OWNER:    JS (team-written)
-  PURPOSE:  One ranked meeting point (MRT station or bus interchange) with every member's
-            trip time to it by their own travel mode, so the group can see how fair it is
-  PROPS:    point (Ranking item from GET /api/ranking/:code), rank, selected,
-            confirmed (the host chose this one), scaleMinutes (bar length of a full bar, so
-            bars compare across cards)
-  EMITS:    select (stationId)
--->
+<!-- One ranked meeting point with every member's trip time to it. -->
 <script setup>
 import { computed } from 'vue'
 import { tripTone } from '../utils/trip-tone'
@@ -37,7 +28,6 @@ function barWidth(minutes) {
 </script>
 
 <template>
-  <!-- An LED board: only the selected card opens up to show everyone's trip -->
   <button
     type="button"
     class="app-ticket point w-100 text-start"
@@ -46,7 +36,6 @@ function barWidth(minutes) {
     @click="emit('select', props.point.stationId)"
     data-testid="meeting-point-card"
   >
-    <!-- Top row: rank, name and type, longest trip -->
     <span class="d-flex align-items-center gap-3">
       <span class="point-number app-doto" aria-hidden="true">{{ rank }}</span>
       <span class="d-block flex-grow-1">
@@ -65,7 +54,6 @@ function barWidth(minutes) {
         <span class="d-block small">min longest</span>
       </span>
     </span>
-    <!-- One row per member: white name and travel mode pill with the minutes, then a coloured bar -->
     <span v-if="selected" class="trips point-trips mt-3 pt-3">
       <span
         v-for="t in sortedTimes"
@@ -74,7 +62,6 @@ function barWidth(minutes) {
         :class="tripTone(t.minutes, point.longestMinutes, shortestMinutes)"
         data-testid="meeting-point-time"
       >
-        <!-- A long name is cut short with "…" so the pill always stays on the same line -->
         <span class="trip-who d-flex align-items-center gap-2"
           ><strong class="text-truncate">{{ t.name }}</strong
           ><span
@@ -108,7 +95,6 @@ function barWidth(minutes) {
   outline-offset: 2px;
 }
 
-/* The selected board gets a yellow edge */
 .point-selected {
   border-color: #f2c230;
 }
@@ -129,8 +115,6 @@ function barWidth(minutes) {
   border-top: 2px dashed #3a3d41;
 }
 
-/* Two lines per member, so the pill fits beside the name even on phones:
-   name and pill on the left, minutes on the right, then the bar across the full width */
 .point-trips .trip {
   grid-template-columns: minmax(0, 1fr) auto;
   grid-template-areas:
@@ -152,7 +136,6 @@ function barWidth(minutes) {
   font-weight: 600;
 }
 
-/* Travel mode pill: the same size as the lobby's member list (Bootstrap's badge is 12px) */
 .point-trips .trip-who .mode-pill {
   display: inline-block;
   font-size: 12px;

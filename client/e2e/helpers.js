@@ -1,7 +1,4 @@
-// e2e/helpers.js
-// Shared steps for the end-to-end tests: sign up, create a meetup, join as a guest and set a
-// start point. Every helper creates fresh data, so the tests never depend on what is already in
-// the database or on the order the files run in.
+// Shared steps for the end-to-end tests. Every helper creates fresh data.
 
 import { readFileSync } from 'node:fs'
 import { expect } from '@playwright/test'
@@ -20,15 +17,11 @@ export function futureDate(days = 7) {
   return new Date(singaporeNow + days * 24 * 60 * 60 * 1000).toISOString().slice(0, 10)
 }
 
-// Sample OneMap search responses, saved from the real API (server/sample-data/onemap-search.json)
 const searchSamples = JSON.parse(
   readFileSync(new URL('../../server/sample-data/onemap-search.json', import.meta.url), 'utf8'),
 )
 
-// The address search calls OneMap straight from the browser. Answering that one request with
-// saved sample data keeps the tests repeatable: the same suggestions every run, with no network
-// delays or rate limits. Every call to our own API is still real.
-// Search for one of the sample keys: '178902' (SMU), 'Tampines MRT', 'Bishan MRT', ...
+// Answers the browser's OneMap search with saved sample data, e.g. '178902' (SMU) or 'Tampines MRT'
 export async function stubAddressSearch(page) {
   await page.route('**/api/common/elastic/search**', async (route) => {
     const searchVal = new URL(route.request().url()).searchParams.get('searchVal')
@@ -86,8 +79,7 @@ export async function hostMeetup(page, occasion = 'E2E dinner') {
   return { host, code }
 }
 
-// Join a meetup as a guest (no account) in a second browser context, like a friend on
-// another phone. Returns the guest's page; close guest.context() at the end of the test.
+// Joins a meetup as a guest in a second browser context and returns the guest's page
 export async function joinAsGuest(browser, code, name = 'E2E Guest') {
   const context = await browser.newContext()
   const page = await context.newPage()

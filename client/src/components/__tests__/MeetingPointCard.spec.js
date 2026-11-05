@@ -1,11 +1,4 @@
-/* MeetingPointCard.spec.js
- Component tests for MeetingPointCard.vue (one ranked meeting point on the results page).
- The component receives a ranked meeting point via props &:
-   1. Shows its rank, name, type and the longest trip in minutes
-   2. Emits "select" with the station id when it is clicked
-   3. Shows every member's trip only when it is the selected card, slowest trip first
-   4. Shows a "Confirmed" badge once the host confirms it
-*/
+// Component tests for MeetingPointCard.vue.
 
 import { mount } from '@vue/test-utils'
 import { describe, it, expect } from 'vitest'
@@ -24,7 +17,6 @@ const bishan = {
 }
 
 describe('MeetingPointCard', () => {
-  // Verify that the card shows the rank, the name and the longest trip.
   it('shows the rank, name and longest trip in minutes', () => {
     const wrapper = mount(MeetingPointCard, { props: { point: bishan, rank: 1 } })
 
@@ -34,7 +26,6 @@ describe('MeetingPointCard', () => {
     expect(wrapper.text()).toContain('min longest')
   })
 
-  // Verify that the type label follows the point's type.
   it('labels an MRT station and a bus interchange', () => {
     const station = mount(MeetingPointCard, { props: { point: bishan, rank: 1 } })
     const interchange = mount(MeetingPointCard, {
@@ -45,7 +36,6 @@ describe('MeetingPointCard', () => {
     expect(interchange.text()).toContain('Bus interchange')
   })
 
-  // Verify that clicking the card tells the parent which point was chosen.
   it('emits select with the station id when clicked', async () => {
     const wrapper = mount(MeetingPointCard, { props: { point: bishan, rank: 1 } })
     await wrapper.find('[data-testid="meeting-point-card"]').trigger('click')
@@ -54,14 +44,12 @@ describe('MeetingPointCard', () => {
     expect(wrapper.emitted('select')[0]).toEqual(['NS17'])
   })
 
-  // Verify that a card that is not selected keeps the trips hidden.
   it('hides the members trips when not selected', () => {
     const wrapper = mount(MeetingPointCard, { props: { point: bishan, rank: 1 } })
 
     expect(wrapper.findAll('[data-testid="meeting-point-time"]')).toHaveLength(0)
   })
 
-  // Verify that the selected card lists every trip, slowest first.
   it('lists every members trip, slowest first, when selected', () => {
     const wrapper = mount(MeetingPointCard, {
       props: { point: bishan, rank: 1, selected: true },
@@ -77,7 +65,6 @@ describe('MeetingPointCard', () => {
     expect(trips[1].text()).toContain('public transport')
   })
 
-  // Verify that the host's confirmed choice is marked.
   it('shows Confirmed only once the host confirms the point', () => {
     const plain = mount(MeetingPointCard, { props: { point: bishan, rank: 1 } })
     const confirmed = mount(MeetingPointCard, {

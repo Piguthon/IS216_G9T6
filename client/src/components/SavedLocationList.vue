@@ -1,4 +1,4 @@
-<!-- OWNER: JX. Week 6 props/emits: show locations and request changes from the parent. -->
+<!-- The account's saved locations, with rename, default and delete buttons. -->
 <script setup>
 import { ref } from 'vue'
 import AddressSearch from './AddressSearch.vue'

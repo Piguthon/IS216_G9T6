@@ -1,8 +1,7 @@
-// OWNER: JX. Authenticate account routes using the team's Bearer session token.
+// Checks the Bearer session token on account routes.
 const User = require('../models/user-model');
 
-// readSessionToken(req): the token from "Authorization: Bearer <token>", or '' if there isn't one.
-// middleware/member.js uses it too.
+// The token from "Authorization: Bearer <token>", or '' if there isn't one
 function readSessionToken(req) {
   const authorization = req.get('Authorization') || '';
   return authorization.startsWith('Bearer ') ? authorization.slice(7).trim() : '';
@@ -24,4 +23,10 @@ exports.requireAuth = async (req, res, next) => {
     console.error('Authentication failed:', error.message);
     res.status(500).json({ error: 'Unable to check your session. Please try again.' });
   }
+};
+
+// Logs the user in if a token was sent, otherwise lets a guest through
+exports.optionalAuth = (req, res, next) => {
+  if (req.get('Authorization')) return exports.requireAuth(req, res, next);
+  next();
 };

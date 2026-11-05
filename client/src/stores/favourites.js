@@ -1,5 +1,4 @@
-// OWNER: JX. Week 11 setup store: which venues this account has saved, shared by every venue
-// card so a page of cards makes one request instead of one each.
+// Which venues this account has saved, shared by every venue card.
 import { ref } from 'vue'
 import { defineStore } from 'pinia'
 import axios from 'axios'
@@ -27,7 +26,7 @@ export const useFavouritesStore = defineStore('favourites', () => {
       const response = await axios.get(`${BASE_URL}/users/me/favourites`, authConfig())
       venueKeys.value = response.data.map((venue) => venue.venueKey)
     } catch {
-      // the cards just offer to save; saving a venue twice does nothing
+      // the cards still offer to save
     }
   }
 

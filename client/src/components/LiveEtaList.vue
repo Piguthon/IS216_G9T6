@@ -1,15 +1,4 @@
-<!--
-  FILE:     src/components/LiveEtaList.vue
-  OWNER:    S (team-written)
-  PURPOSE:  Everyone's live trip time to the meeting point, soonest first (live map page)
-  PROPS:    people (Array of { memberId, name, travelMode, etaMinutes, arriveAt, updatedAt,
-                               isStale })
-            myMemberId (String): marks your own row
-            now (Number, milliseconds): keeps "updated 20s ago" current
-  EMITS:    none
-  DATA:     etaMinutes is null when OneMap found no route; arriveAt is "HH:MM"
-  REVISE:   Wk 5 computed · Wk 6 props
--->
+<!-- Everyone's live trip time to the meeting point, soonest first. -->
 <script setup>
 import { computed } from 'vue'
 import { formatTime } from '../utils/meetup-date'
@@ -22,16 +11,14 @@ const props = defineProps({
   now: { type: Number, required: true },
 })
 
-// The longest and shortest known trip, for the traffic-light colours and bar widths (the same
-// board as the summary page)
+// The longest and shortest known trip, for the bar colours and widths
 const knownMinutes = computed(() =>
   props.people.filter((person) => person.etaMinutes !== null).map((person) => person.etaMinutes),
 )
 const longest = computed(() => Math.max(...knownMinutes.value))
 const shortest = computed(() => Math.min(...knownMinutes.value))
 
-// A sorted copy of people, each with isMe and its colour. [...props.people] copies the array, so
-// sort() doesn't change the prop.
+// People sorted by trip time, each with isMe and its colour
 const rows = computed(() =>
   [...props.people].sort(byTripTime).map((person) => ({
     ...person,
@@ -80,17 +67,14 @@ const rows = computed(() =>
 </template>
 
 <style scoped>
-/* A very long name wraps instead of running into the bar */
 .trip-who strong {
   overflow-wrap: anywhere;
 }
 
-/* main.css makes every span in .trip-who a full-width block; this one is a small label */
 .trip-who .badge {
   display: inline-block;
 }
 
-/* A phone that stopped updating: dimmed, so nobody trusts an old position */
 .is-stale {
   opacity: 0.55;
 }

@@ -1,15 +1,4 @@
-/* EditMeetupForm.spec.js
- Component tests for EditMeetupForm.vue (the host's form for changing a meetup's details).
- The component receives the meetup via props &:
-   1. Starts with the meetup's current occasion, date and time
-   2. Shows an error and emits nothing when a field is empty
-   3. Rejects a date before today, but accepts today
-   4. Emits "save" with the new values when every field is valid
-   5. Emits "cancel" when the host presses Cancel
-
- The clock is fixed (vi.useFakeTimers with only Date faked), so "today" is always
- 4 Nov 2026 in Singapore and the tests never depend on the real date.
-*/
+// Component tests for EditMeetupForm.vue.
 
 import { mount } from '@vue/test-utils'
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
@@ -27,7 +16,6 @@ afterEach(() => {
 })
 
 describe('EditMeetupForm', () => {
-  // Verify that the form starts with the meetup's current details.
   it('fills the fields with the current details', () => {
     const wrapper = mount(EditMeetupForm, { props: { meetup } })
 
@@ -36,7 +24,6 @@ describe('EditMeetupForm', () => {
     expect(wrapper.find('[data-testid="edit-time"]').element.value).toBe('19:00')
   })
 
-  // Verify that an empty field shows an error and nothing is saved.
   it('shows an error and does not save when a field is empty', async () => {
     const wrapper = mount(EditMeetupForm, { props: { meetup } })
     await wrapper.find('[data-testid="edit-occasion"]').setValue('')
@@ -46,7 +33,6 @@ describe('EditMeetupForm', () => {
     expect(wrapper.emitted('save')).toBeFalsy()
   })
 
-  // Verify that valid details are sent to the parent.
   it('emits save with the new occasion, date and time', async () => {
     const wrapper = mount(EditMeetupForm, { props: { meetup } })
     await wrapper.find('[data-testid="edit-occasion"]').setValue('Lunch')
@@ -61,7 +47,6 @@ describe('EditMeetupForm', () => {
     expect(wrapper.find('[role="alert"]').exists()).toBe(false)
   })
 
-  // Edge case: yesterday is in the past, so it is rejected.
   it('rejects a date before today', async () => {
     const wrapper = mount(EditMeetupForm, { props: { meetup } })
     await wrapper.find('[data-testid="edit-date"]').setValue('2026-11-03')
@@ -71,7 +56,6 @@ describe('EditMeetupForm', () => {
     expect(wrapper.emitted('save')).toBeFalsy()
   })
 
-  // Edge case: today itself is on the boundary and is allowed.
   it('accepts today as the date', async () => {
     const wrapper = mount(EditMeetupForm, { props: { meetup } })
     await wrapper.find('[data-testid="edit-date"]').setValue('2026-11-04')
@@ -80,7 +64,6 @@ describe('EditMeetupForm', () => {
     expect(wrapper.emitted('save')[0][0].date).toBe('2026-11-04')
   })
 
-  // Verify that Cancel tells the parent to close the form.
   it('emits cancel when Cancel is pressed', async () => {
     const wrapper = mount(EditMeetupForm, { props: { meetup } })
     await wrapper.find('[data-testid="edit-cancel"]').trigger('click')

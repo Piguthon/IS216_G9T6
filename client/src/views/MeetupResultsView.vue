@@ -1,19 +1,4 @@
-<!--
-  FILE:     src/views/MeetupResultsView.vue
-  OWNER:    JS (team-written)
-  PURPOSE:  The fairest meeting points for a meetup, and group voting: members vote on the
-            shortlisted meeting points, then on venues near the confirmed one; the host confirms
-            each final choice. Everyone sees the saved results (GET); only the host works them out
-            (POST), the first time they open this page or when they press Recalculate
-  ROUTE:    /meetup/:code/results
-  TALKS TO: GET /api/meetups/:code, POST /api/ranking/:code (host, logged in),
-            GET /api/ranking/:code,
-            GET/PUT /api/votes/:code, POST /api/votes/:code/confirm (host, logged in),
-            DELETE /api/meetups/:code/me (a member leaves)
-            PUT /api/votes/:code, DELETE .../me and GET /api/meetups/:code send who I am
-            (utils/member-auth.js); the server works out which member that is
-  POLLING:  vote tallies refresh every 5 seconds while this page is open (decided: no WebSockets)
--->
+<!-- The fairest meeting points for a meetup, and group voting on the meeting point and venue. -->
 <script setup>
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import axios from 'axios'
@@ -43,7 +28,7 @@ const selectedId = ref('')
 const myMemberId = ref(null)
 const isLoading = ref(true)
 const errorMessage = ref('')
-const isOutdated = ref(false) // the group changed (e.g. someone left) since these were worked out
+const isOutdated = ref(false)
 const isRecalculating = ref(false)
 
 const votes = ref(null)
@@ -58,11 +43,7 @@ function errorText(error, fallback) {
   return fallback
 }
 
-// What went wrong with a vote or leaving:
-//   - 401: my login has expired (e.g. I logged in somewhere else), so log in again
-//   - 403 "not a member": this browser has nothing the server accepts for my place (e.g. a
-//     guest who joined before guests were given a secret), so forget it and stop showing
-//     the member controls. Any other 403 is just shown.
+// Handles a failed vote or leave: 401 asks to log in again, 403 "not a member" forgets this browser's place
 function handleMemberError(error, fallback) {
   const status = error.response ? error.response.status : 0
   if (status === 401) {
@@ -87,12 +68,9 @@ async function calculateRanking() {
   return (await axios.post(`${BASE_URL}/ranking/${code}`, {}, { headers })).data
 }
 
-// Everyone reads what the host last worked out. If nothing is saved yet, the host's visit
-// works them out for the first time.
+// Reads the host's saved ranking; the host's first visit works it out
 async function fetchRanking() {
   try {
-    // As a member, each trip comes with its route and first bus stop (they start at home,
-    // so the server leaves them out for anyone who only knows the code)
     return (await axios.get(`${BASE_URL}/ranking/${code}`, memberAuthConfig(code, auth.token))).data
   } catch (error) {
     if (isHost.value && error.response && error.response.status === 404) {
@@ -115,7 +93,6 @@ async function loadResults() {
   isLoading.value = true
   errorMessage.value = ''
   try {
-    // As a member, the start points come with lat/lng, so the map can show them
     const meetupResponse = await axios.get(
       `${BASE_URL}/meetups/${code}`,
       memberAuthConfig(code, auth.token),
@@ -156,7 +133,7 @@ async function loadVotes() {
     })
     applyVotes(response.data)
   } catch {
-    // keep showing the last tallies; the next refresh tries again
+    // keep showing the last tallies
   }
 }
 
@@ -341,7 +318,6 @@ const venuePoint = computed(() => finalStation.value || selected.value)
       >
     </header>
 
-    <!-- While loading, a train passes along the bottom of the page. It goes once the results arrive. -->
     <div v-if="isLoading" class="flex-grow-1 d-flex flex-column" data-testid="results-loading">
       <div class="text-center my-5">
         <div class="spinner-border text-sign" role="status"></div>
@@ -369,7 +345,6 @@ const venuePoint = computed(() => finalStation.value || selected.value)
           {{ formatDate(departure.date) }}.
         </p>
       </div>
-      <!-- The group changed (e.g. someone left): the host can recalculate -->
       <div v-if="isOutdated" class="col-12">
         <div class="alert alert-warning mb-0" role="status" data-testid="results-outdated-note">
           <template v-if="isHost">
@@ -392,7 +367,6 @@ const venuePoint = computed(() => finalStation.value || selected.value)
           Car times include 10 minutes to park, but not traffic.
         </p>
       </div>
-      <!-- Once the venue is confirmed the map and places go, so this column moves to the centre -->
       <div :class="finalVenue ? 'col-lg-6 mx-auto' : 'col-lg-5'">
         <div class="d-grid gap-3 mb-4" data-testid="results-list">
           <MeetingPointCard
@@ -517,8 +491,6 @@ const venuePoint = computed(() => finalStation.value || selected.value)
 </template>
 
 <style scoped>
-/* The loading train runs the full width of the screen and sits on the footer
-   (-44px cancels the bottom padding of .page-body) */
 .loading-platform {
   margin-inline: calc(50% - 50vw);
   margin-bottom: -44px;

@@ -1,19 +1,8 @@
-<!--
-  FILE:     src/views/HomeView.vue
-  OWNER:    P4 (team-written)
-  PURPOSE:  Landing page: one slice through Singapore, top to bottom. The billboard stands behind
-            the city, then the street, the escalator into the station and the MRT platform.
-  ROUTE:    /
-  TALKS TO: links to /create, /join
-  DATA:     none
-  REVISE:   Wk 2 flexbox, position · Wk 3 grid, cards, buttons · Wk 4 RouterLink, v-for
--->
+<!-- Landing page: a slice through Singapore, from the billboard down to the MRT platform. -->
 <script setup>
 import { tripTone } from '../utils/trip-tone'
 import PlatformScene from '../components/PlatformScene.vue'
 
-// Example group for the hero: travel times to Bishan MRT from four corners of Singapore.
-// Illustrative numbers only; the real ranking comes from the results page.
 const exampleTrips = [
   { name: 'Aisha', from: 'Tampines', minutes: 34 },
   { name: 'Wei Jie', from: 'Jurong East', minutes: 32 },
@@ -22,7 +11,7 @@ const exampleTrips = [
 ]
 const longest = Math.max(...exampleTrips.map((t) => t.minutes))
 const shortest = Math.min(...exampleTrips.map((t) => t.minutes))
-const scaleMinutes = 45 // bar width is minutes / scaleMinutes
+const scaleMinutes = 45
 
 const steps = [
   {
@@ -39,7 +28,6 @@ const steps = [
 
 <template>
   <section data-testid="home-page">
-    <!-- 1. Above ground: sky, far towers, the billboard, then the blocks and street in front of it -->
     <div class="hero">
       <div class="sun" aria-hidden="true"></div>
       <svg class="flat-cloud" viewBox="0 0 120 44" aria-hidden="true">
@@ -151,7 +139,6 @@ const steps = [
     </div>
 
     <div class="tiled-wall">
-      <!-- 2. Into the station: how it works on the way down the escalator -->
       <section class="descent" aria-labelledby="home-steps-title">
         <div class="container">
           <h2 id="home-steps-title" class="descent-title mb-0">How it works</h2>
@@ -170,7 +157,6 @@ const steps = [
         <img class="esc" src="../assets/scene/escalator.svg" alt="" />
       </section>
 
-      <!-- 3. The platform: travel modes, then the train you came for -->
       <section class="station" aria-labelledby="home-modes-title">
         <div class="container">
           <div class="station-board">
@@ -251,7 +237,6 @@ const steps = [
             </div>
           </div>
         </div>
-        <!-- The arrivals screen: an LED board on the wall, like the one on the hero -->
         <div class="container pb-4">
           <div
             class="app-ticket arrival-screen d-flex flex-wrap justify-content-between align-items-center gap-3 text-start"
@@ -277,13 +262,10 @@ const steps = [
 </template>
 
 <style scoped>
-/* 1. The hero fits between the navbar and the bottom of the screen. Everything inside is sized
-      in em, so changing .hero's font-size scales the whole scene. --chrome is the navbar height.
-      All scene art is drawn for this project, in src/assets/scene/. */
 .hero {
   --chrome: 68px;
   --scene-h: 30em;
-  --sink: 6.6em; /* how far the billboard sits behind the rooftops */
+  --sink: 6.6em;
   position: relative;
   z-index: 0;
   overflow: hidden;
@@ -351,7 +333,7 @@ const steps = [
 }
 
 .giant-panel {
-  padding: 2.4em 3em calc(var(--sink) + 0.6em); /* the lower padding keeps words above the roofs */
+  padding: 2.4em 3em calc(var(--sink) + 0.6em);
   border-radius: 4px;
   background-color: #0a0b0c;
   background-image: radial-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1.4px);
@@ -503,7 +485,6 @@ const steps = [
   background-color: #565c70;
 }
 
-/* The street scene: inside .scene, 1em = 1% of the scene's height */
 .scene {
   position: relative;
   z-index: 2;
@@ -584,7 +565,6 @@ const steps = [
   animation: drive-left 7s linear infinite;
 }
 
-/* The escalator and the platform share one tiled wall, so the tile lines stay unbroken */
 .tiled-wall {
   background-color: #efe9dc;
   background-image:
@@ -593,7 +573,6 @@ const steps = [
   background-size: 64px 64px;
 }
 
-/* 2. Down the escalator: the signs hang lower as you descend */
 .descent {
   position: relative;
   overflow: hidden;
@@ -682,7 +661,6 @@ const steps = [
   margin-top: calc(-6vw - 64px);
 }
 
-/* 3. Platform */
 .station-board {
   margin: 18px 0;
   color: #000000;
@@ -715,7 +693,6 @@ const steps = [
   line-height: 1.45;
 }
 
-/* The board's casing has a hard shadow below it, and the words glow like lit LEDs */
 .arrival-screen {
   padding: 20px 28px;
   box-shadow: 0 6px 0 #1e2028;
@@ -773,7 +750,6 @@ const steps = [
   }
 }
 
-/* Below lg (Bootstrap's 992px) the board stacks under the headline */
 @media (max-width: 991px) {
   .hero {
     --scene-h: 16em;
@@ -874,7 +850,6 @@ const steps = [
   }
 }
 
-/* Above md (Bootstrap's 768px) the three signs step down with the escalator */
 @media (min-width: 768px) {
   .way-signs li:nth-child(2) .way-sign {
     margin-top: 50px;

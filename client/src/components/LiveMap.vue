@@ -1,19 +1,4 @@
-<!--
-  FILE:     src/components/LiveMap.vue
-  OWNER:    S (team-written)
-  PURPOSE:  The live map: the meeting point, everyone who is sharing, you, and your route.
-            Dots move to new positions on each refresh, and your zoom and pan are kept.
-  PROPS:    destination ({ name, lat, lng })
-            people (Array of { memberId, name, lat, lng, etaMinutes, arriveAt, isStale })
-            me ({ lat, lng } or null): your position, straight from your phone
-            myMemberId (String): your server copy is skipped, because you're drawn from me
-            routeSteps (Array of route steps): your trip from where you are
-            showRoute (Boolean): draw routeSteps
-  EMITS:    none
-  TALKS TO: Leaflet (leafletjs.com, BSD-2-Clause) with OneMap base map tiles, as in MapView.vue
-  REVISE:   Wk 5 onMounted / onUnmounted · Wk 6 props
-            onUpdated isn't in the syllabus: see the comment above onUpdated(redraw)
--->
+<!-- The live map: the meeting point, everyone who is sharing, you, and your route. -->
 <script setup>
 // Map: Leaflet (https://leafletjs.com, BSD-2-Clause)
 // Base map tiles: OneMap (https://www.onemap.gov.sg), © contributors | Singapore Land Authority
@@ -33,31 +18,28 @@ const props = defineProps({
   showRoute: { type: Boolean, default: false },
 })
 
-// Tiles, credit and route colours are the same as MapView.vue
 const ONEMAP_TILES = 'https://www.onemap.gov.sg/maps/tiles/Default/{z}/{x}/{y}.png'
 const ONEMAP_CREDIT =
   '<img src="https://www.onemap.gov.sg/web-assets/images/logo/om_logo.png" style="height:20px;width:20px;"/>&nbsp;<a href="https://www.onemap.gov.sg/" target="_blank" rel="noopener noreferrer">OneMap</a>&nbsp;&copy;&nbsp;contributors&nbsp;&#124;&nbsp;<a href="https://www.sla.gov.sg/" target="_blank" rel="noopener noreferrer">Singapore Land Authority</a>'
-const PERSON_COLOUR = '#0f766e' // teal: other members
-const ME_COLOUR = '#1d4f91' // sign blue: you
-const STALE_COLOUR = '#94a3b8' // light grey: no update for 2 minutes
-const WALK_COLOUR = '#64748b' // grey dashes: walking
-const BUS_COLOUR = '#0e8560' // green: bus
-const TRAIN_COLOUR = '#1d4f91' // blue: train
-const CAR_COLOUR = '#7c3aed' // purple: car
+const PERSON_COLOUR = '#0f766e'
+const ME_COLOUR = '#1d4f91'
+const STALE_COLOUR = '#94a3b8'
+const WALK_COLOUR = '#64748b'
+const BUS_COLOUR = '#0e8560'
+const TRAIN_COLOUR = '#1d4f91'
+const CAR_COLOUR = '#7c3aed'
 
-const mapElement = ref(null) // the <div> in the template; Leaflet draws inside it
-// Leaflet objects are plain variables, because Vue doesn't need to track them
+const mapElement = ref(null)
 let map = null
 let destinationMarker = null
 let meMarker = null
-let routeLayer = null // a group holding the route lines, so they can be cleared together
-const markers = {} // memberId → that person's dot
+let routeLayer = null
+const markers = {}
 let hasFitted = false
-let hadMe = false // were you on the map at the last redraw?
-let hadRoute = false // was your route showing at the last redraw?
+let hadMe = false
+let hadRoute = false
 
-// Tooltip content as an element, not an HTML string. Names are typed by users, and Leaflet
-// would treat a string as HTML, so textContent keeps a name like "<img onerror=…>" as text.
+// Tooltip content as an element, so names typed by users are shown as text, not HTML
 function tooltipElement(title, lines) {
   const box = document.createElement('div')
   const heading = document.createElement('strong')
@@ -76,13 +58,12 @@ function tripText(person) {
   return `${person.etaMinutes} min, arrives ${formatTime(person.arriveAt)}`
 }
 
-// Creates the map, the layer for the route, and the meeting point marker. bindTooltip opens on
-// hover, and on tap on a phone (Leaflet opens tooltips on click too).
+// Creates the map, the route layer and the meeting point marker
 onMounted(() => {
   const { lat, lng } = props.destination
   map = L.map(mapElement.value).setView([lat, lng], 14)
   L.tileLayer(ONEMAP_TILES, { minZoom: 11, maxZoom: 19, attribution: ONEMAP_CREDIT }).addTo(map)
-  routeLayer = L.featureGroup().addTo(map) // a featureGroup can tell us its bounds
+  routeLayer = L.featureGroup().addTo(map)
 
   const star = L.divIcon({ className: 'live-destination', html: '★', iconSize: [36, 36] })
   destinationMarker = L.marker([lat, lng], { icon: star, zIndexOffset: 1000 })
@@ -92,13 +73,11 @@ onMounted(() => {
   redraw()
 })
 
-// A dot for everyone sharing, except you. An existing dot moves to its new position, a new
-// person gets a new dot, and someone who stopped sharing loses theirs. A stale dot is grey with
-// a dashed edge.
+// Draws a dot for everyone sharing except you, moving existing dots and removing old ones
 function drawPeople() {
   const stillSharing = {}
   for (const person of props.people) {
-    if (person.memberId === props.myMemberId) continue // you're drawn from your phone instead
+    if (person.memberId === props.myMemberId) continue
     stillSharing[person.memberId] = true
 
     const style = {
@@ -176,10 +155,7 @@ function drawDestinationTooltip() {
   destinationMarker.setTooltipContent(tooltipElement(props.destination.name, lines))
 }
 
-// Zooming. fitAll() shows the meeting point and every dot. It runs by itself only when
-// something new happens: the first time there's someone to show, and when you start sharing.
-// Turning on your route zooms to the route. Otherwise only the "Show everyone" button runs it,
-// so a refresh never undoes your own zooming.
+// The meeting point and every dot, for fitting the map view
 function allPoints() {
   const points = [[props.destination.lat, props.destination.lng]]
   for (const person of props.people) points.push([person.lat, person.lng])
@@ -214,9 +190,6 @@ function redraw() {
   hadMe = props.me !== null
 }
 
-// The parent passes new props after every refresh, which re-renders this component, so redraw
-// then. (The team doesn't use watch; onUpdated is the lifecycle hook that runs after each
-// re-render.)
 onUpdated(redraw)
 
 onUnmounted(() => {
@@ -243,8 +216,6 @@ onUnmounted(() => {
   position: relative;
 }
 
-/* Tall enough to read on a phone, short enough to scroll past to the trip times.
-   dvh follows the phone's browser bars; vh is the fallback for older browsers. */
 .live-map {
   width: 100%;
   height: 60vh;
@@ -258,7 +229,6 @@ onUnmounted(() => {
   }
 }
 
-/* Above Leaflet's panes (400) and controls (1000); top right, clear of the zoom buttons */
 .live-fit {
   position: absolute;
   top: 14px;
@@ -266,9 +236,6 @@ onUnmounted(() => {
   z-index: 1001;
 }
 
-/* Leaflet adds tooltips and the star outside Vue's template, so :deep reaches them.
-   Tooltips wrap instead of running off the side of a phone screen. A tooltip takes its width
-   from its text, so without max-content, overflow-wrap would shrink it to one letter wide. */
 .live-map :deep(.leaflet-tooltip) {
   width: max-content;
   max-width: 260px;

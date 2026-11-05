@@ -1,36 +1,4 @@
-/*
-  FILE:      controllers/ranking-controller.js
-  OWNER:     JS (team-written)
-  PURPOSE:   POST /api/ranking/:code → the host works out the fairest meeting points, which are
-             saved on the meetup (logged in, host only). From then on nobody can join and
-             locations are locked; members can only leave, and the host can recalculate
-             GET /api/ranking/:code → the saved fairest meeting points, for anyone with the code
-             GET /api/ranking/:code/leave-times → when each member should leave for the
-             meeting point the host confirmed
-             Both GETs send each trip's steps and firstBusStopCode to members only (by session
-             or X-Member-Token, middleware/member.js): the routes start at members' homes
-  METHOD:    1. every member needs to have pressed Confirm location (at least 2 members); once the
-                host has confirmed a meeting point, anyone who hasn't is just left out
-             2. midpoint of their starts → the 30 closest MRT stations, and bus interchanges
-                within 3km
-             3. each member's time to each candidate by their own travel mode: public transport,
-                leaving 45 minutes before the meetup, or at 05:30 overnight, or car
-                (OneMap, one call at a time)
-             4. rank with the fairness rule (utils/fairness.js) and keep the fairest 5
-  DATA:      { ranking: [ { stationId, name, type, lat, lng,
-                            times: [ { memberId, name, travelMode, minutes, waitMinutes,
-                                       firstBusStopCode, steps } ],
-                            longestMinutes, totalMinutes } ],   (fairest first)
-               departure: { date, time },   (the departure these travel times are for)
-               rankedAt,                    (when the host worked them out)
-               isOutdated }                 (someone changed their start point, travel mode or
-                                             confirmation, or the host the date or time, since)
-             leave-times: { trips: [ { memberId, name, travelMode, minutes, waitMinutes,
-                                       firstBusStopCode, steps, leaveAt, arriveAt } ] }
-  SAVED:     the ranking is saved on the meetup, so members still see it after a restart. The host
-             pressing again within 30 minutes with nothing changed reuses it (OneMap calls are
-             slow). Leave times are kept in memory for 30 minutes.
-*/
+// Works out, saves and returns the fairest meeting points for a meetup, and each member's leave time.
 const Meetup = require('../models/meetup-model');
 const Station = require('../models/station-model');
 const { getPtRoute, getArriveByRoute, getDriveRoute } = require('../services/onemap');
@@ -39,20 +7,14 @@ const { tripTimeForMeetup } = require('../utils/meetup-date');
 const { rankingWithoutRoutes, tripsWithoutRoutes } = require('../utils/route-privacy');
 const { findCaller } = require('../middleware/member');
 
-// With every MRT station in the list, the few nearest the midpoint are often small stations,
-// so it tests the 30 nearest: the fairest is usually a well-connected one a little further out.
-// Bus interchanges only count when they are close, or they crowd out better MRT options.
 const CANDIDATES_PER_TYPE = { mrt: 30, interchange: 2 };
 const MAX_KM_BY_TYPE = { interchange: 3 };
-const RESULTS_SHOWN = 5; // the fairest few are shown and voted on
+const RESULTS_SHOWN = 5;
 const CACHE_MS = 30 * 60 * 1000;
-const FIRST_TRIPS = '05:30'; // no bus or train gets anyone there before this
-const leaveTimesCache = new Map(); // code → { key, result, savedAt }
+const FIRST_TRIPS = '05:30';
+const leaveTimesCache = new Map();
 
-// OneMap sometimes answers 502/503 for a moment: wait and try once more.
-// isArrival: time is when to arrive, not when to leave.
-// Returns the member's route by their own travel mode, or null when there is no route or OneMap
-// keeps failing.
+// A member's route by their travel mode, retrying once if OneMap briefly fails; null if there is none
 async function routeWithRetry(member, station, date, time, isArrival = false) {
   for (let attempt = 1; attempt <= 2; attempt++) {
     try {
@@ -76,8 +38,7 @@ function readyMembers(meetup) {
   return meetup.members.filter((member) => member.ready && member.start);
 }
 
-// Whether the request comes from a member (by session or X-Member-Token). A bad credential
-// isn't an error on the GETs: the caller just counts as someone who only knows the code.
+// Whether the request comes from a member (by session or X-Member-Token)
 async function isCallerMember(req, meetup) {
   try {
     return Boolean(await findCaller(req, meetup));
@@ -87,8 +48,7 @@ async function isCallerMember(req, meetup) {
   }
 }
 
-// The saved ranking as the API sends it. Without routes, only the travel times are sent
-// (utils/route-privacy.js): the routes start at members' homes.
+// The saved ranking as the API sends it, without routes for non-members
 function toResponse(meetup, isOutdated, withRoutes = true) {
   const ranking = meetup.ranking.ranking;
   return {
@@ -169,7 +129,7 @@ exports.calculateRanking = async (req, res) => {
       const times = [];
       for (const member of ready) {
         const route = await routeWithRetry(member, station, departure.date, departure.time);
-        if (!route) break; // no route for this member: drop the candidate
+        if (!route) break;
         times.push({
           memberId: String(member._id),
           name: member.name,
@@ -217,7 +177,6 @@ exports.getLeaveTimes = async (req, res) => {
       return res.status(400).json({ error: "The host hasn't confirmed a meeting point yet" });
     }
 
-    // Routes go to members only; the cache keeps the full trips
     const isMember = await isCallerMember(req, meetup);
 
     const ready = meetup.members.filter((member) => member.start);
@@ -236,7 +195,7 @@ exports.getLeaveTimes = async (req, res) => {
       } else {
         route = await routeWithRetry(member, station, meetup.date, meetup.time, true);
       }
-      if (!route) continue; // no route for this member: they just have no leave time
+      if (!route) continue;
       trips.push({
         memberId: String(member._id),
         name: member.name,

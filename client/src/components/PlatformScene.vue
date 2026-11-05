@@ -1,6 +1,5 @@
 <template>
-  <!-- The MRT platform: a train passes behind the screen doors, above the yellow line.
-       Used on the home page and while the results page is loading. -->
+  <!-- The MRT platform scene, used on the home page and while results load. -->
   <div aria-hidden="true">
     <div class="platform">
       <img class="pf-train" src="../assets/scene/mrt-train.svg" alt="" />

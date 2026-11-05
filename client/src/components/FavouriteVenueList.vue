@@ -1,4 +1,4 @@
-<!-- OWNER: JX. Favourite meeting destinations, separate from saved starting locations. -->
+<!-- The account's favourite meeting destinations. -->
 <script setup>
 import { ref, onMounted } from 'vue'
 import axios from 'axios'

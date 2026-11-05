@@ -1,43 +1,15 @@
-// FILE:      services/onemap.js
-// OWNER:     I (team-written)
-// PURPOSE:   OneMap client for FairSpot: token management + public-transport and driving routes.
-// EXPORTS:   getPtRoute(start, end, date, time) → { minutes, waitMinutes, firstBusStopCode, steps,
-//                leaveAt, arriveAt } or null. steps: [ { mode, route, routeName, from, fromCode,
-//                to, toCode, stops, minutes, points } ], where points is the leg's encoded map
-//                line · start/end { lat, lng } · date "YYYY-MM-DD" · time "HH:MM"
-//            getArriveByRoute(start, end, date, time) → the same, but time is when to arrive
-//            getDriveRoute(start, end, date, time, isArrival) → the same shape for a car trip,
-//                with PARKING_MINUTES added. OneMap's driving time ignores traffic and the time of
-//                day, so date and time only work out leaveAt and arriveAt
-//            tokenStatus() → { ok, expiresAt } (used by routes/health-routes.js)
-//            (getToken() → a valid OneMap access token, used inside this file only)
-// USED BY:   ranking (JS) via getPtRoute, getArriveByRoute and getDriveRoute · live map (S) via
-//            getPtRoute and getDriveRoute · health route via tokenStatus
-// REVISE:    Wk 5 Axios GET/POST, headers config, async/await, try/catch
-//
-// What this handles:
-//   1. Gets a token using the team's OneMap account (credentials in env vars, never committed)
-//   2. Stores the token in MongoDB (models/token-model.js) so a restart reuses it
-//      instead of calling getToken again (tokens last 72 h)
-//   3. Keeps using the token until it is about to expire. Asking for a new one any earlier
-//      doesn't help: OneMap just sends back the same token until it expires.
-//   4. If OneMap rejects the token (401), gets a new one and retries once
-//
-// Call getPtRoute one route at a time (for...of + await), not all at once.
-// Required env vars: ONEMAP_EMAIL, ONEMAP_PASSWORD
-// Requires an open mongoose connection before the first call.
+// OneMap client: token management plus public-transport and driving routes.
 
 const axios = require('axios');
 const Token = require('../models/token-model');
 const { singaporeToMs, msToSingapore } = require('../utils/meetup-date');
 
 const BASE_URL = 'https://www.onemap.gov.sg';
-const FIVE_MINUTES = 5 * 60 * 1000;         // in milliseconds
-const ONE_MINUTE = 60 * 1000;               // in milliseconds
-// Transit times include walking and waiting, so car trips allow for parking and the walk from it
+const FIVE_MINUTES = 5 * 60 * 1000;
+const ONE_MINUTE = 60 * 1000;
 const PARKING_MINUTES = 10;
 
-let cachedToken = null;   // { accessToken, expiresAt } kept in memory between calls
+let cachedToken = null;
 
 // A route call takes a few seconds at most, so a minute to spare is enough
 function hasTimeLeft(token) {
@@ -52,17 +24,16 @@ async function requestNewToken() {
       password: process.env.ONEMAP_PASSWORD
     });
     const accessToken = response.data.access_token;
-    const expiresAt = new Date(Number(response.data.expiry_timestamp) * 1000);  // OneMap gives seconds
+    const expiresAt = new Date(Number(response.data.expiry_timestamp) * 1000);
     cachedToken = await Token.saveToken('onemap', accessToken, expiresAt);
     return cachedToken.accessToken;
   } catch (error) {
     console.error('OneMap getToken failed:', error.message);
-    throw error;   // let the caller decide what to tell the user
+    throw error;
   }
 }
 
 async function getToken() {
-  // 1. memory  2. MongoDB  3. ask OneMap
   if (hasTimeLeft(cachedToken)) return cachedToken.accessToken;
 
   const stored = await Token.findToken('onemap');
@@ -73,12 +44,12 @@ async function getToken() {
   return await requestNewToken();
 }
 
-function toOneMapDate(date) {        // "2026-11-06" → "11-06-2026"
+function toOneMapDate(date) {
   const parts = date.split('-');
   return `${parts[1]}-${parts[2]}-${parts[0]}`;
 }
 
-function toOneMapTime(time) {        // "18:00" → "18:00:00"
+function toOneMapTime(time) {
   return time.length === 5 ? `${time}:00` : time;
 }
 
@@ -94,7 +65,7 @@ async function callRouting(start, end, date, time, token) {
       maxWalkDistance: 1000,
       numItineraries: 3
     },
-    headers: { Authorization: token }   // the raw token works (checked 3 Oct)
+    headers: { Authorization: token }
   });
   return response.data;
 }
@@ -102,9 +73,9 @@ async function callRouting(start, end, date, time, token) {
 // One part of a trip, e.g. "bus 99 from A to B". Each is at least 1 minute.
 function toStep(leg) {
   return {
-    mode: leg.mode,                             // WALK, BUS, SUBWAY
-    route: leg.route || '',                     // "99", "EW"
-    routeName: leg.routeLongName || '',         // "EAST WEST LINE"
+    mode: leg.mode,
+    route: leg.route || '',
+    routeName: leg.routeLongName || '',
     from: leg.from.name,
     fromCode: leg.from.stopCode || null,
     to: leg.to.name,
@@ -122,7 +93,6 @@ async function getItineraries(start, end, date, time) {
     data = await callRouting(start, end, date, time, await getToken());
   } catch (error) {
     if (error.response && error.response.status === 401) {
-      // token rejected: get a fresh one and try once more
       data = await callRouting(start, end, date, time, await requestNewToken());
     } else {
       throw error;
@@ -142,7 +112,6 @@ function fastestOf(itineraries) {
 }
 
 function toRoute(itinerary) {
-  // the first bus leg gives the stop for live bus arrivals (null if the trip is MRT only)
   let firstBusStopCode = null;
   for (const leg of itinerary.legs) {
     if (leg.mode === 'BUS') {
@@ -152,7 +121,7 @@ function toRoute(itinerary) {
   }
 
   return {
-    minutes: Math.round(itinerary.duration / 60),   // duration is in seconds
+    minutes: Math.round(itinerary.duration / 60),
     waitMinutes: Math.round((itinerary.waitingTime || 0) / 60),
     firstBusStopCode: firstBusStopCode,
     steps: itinerary.legs.map(toStep),
@@ -161,18 +130,14 @@ function toRoute(itinerary) {
   };
 }
 
-// start/end: { lat, lng } · date "YYYY-MM-DD" · time "HH:MM"
-// returns the fastest trip from date and time, or null if OneMap finds no route
+// The fastest trip from date and time, or null if OneMap finds no route
 async function getPtRoute(start, end, date, time) {
   const itineraries = await getItineraries(start, end, date, time);
   if (itineraries.length === 0) return null;
   return toRoute(fastestOf(itineraries));
 }
 
-// Same inputs and result as getPtRoute, but time is when to arrive. OneMap ignores arriveBy, so
-// this works backwards: it searches from the arrival time minus the trip length and 5 minutes,
-// and keeps the trip that leaves latest but still arrives on time. If they are all late, it
-// searches earlier once more, then settles for the trip that arrives first.
+// Like getPtRoute, but time is when to arrive (OneMap ignores arriveBy, so this searches backwards)
 async function getArriveByRoute(start, end, date, time) {
   const arriveBy = singaporeToMs(date, time);
   const firstSearch = await getItineraries(start, end, date, time);
@@ -214,7 +179,7 @@ async function callDriving(start, end, token) {
 // One part of a car trip, in the same shape as toStep
 function carStep(mode, minutes, points) {
   return {
-    mode,                                       // CAR, PARK
+    mode,
     route: '',
     routeName: '',
     from: 'Origin',
@@ -227,8 +192,7 @@ function carStep(mode, minutes, points) {
   };
 }
 
-// isArrival: time is when to arrive, not when to leave.
-// Returns null if OneMap finds no road route (it answers 404).
+// A car trip in the same shape as getPtRoute, or null if OneMap finds no road route
 async function getDriveRoute(start, end, date, time, isArrival = false) {
   let data;
   try {
@@ -237,12 +201,11 @@ async function getDriveRoute(start, end, date, time, isArrival = false) {
     const status = error.response ? error.response.status : 0;
     if (status === 404) return null;
     if (status !== 401) throw error;
-    // token rejected: get a fresh one and try once more
     data = await callDriving(start, end, await requestNewToken());
   }
   if (!data.route_summary) return null;
 
-  const driveMinutes = Math.max(1, Math.round(data.route_summary.total_time / 60));  // in seconds
+  const driveMinutes = Math.max(1, Math.round(data.route_summary.total_time / 60));
   const minutes = driveMinutes + PARKING_MINUTES;
   const chosenTime = singaporeToMs(date, time);
   const leavesAt = isArrival ? chosenTime - minutes * ONE_MINUTE : chosenTime;

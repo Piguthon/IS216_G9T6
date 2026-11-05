@@ -1,22 +1,4 @@
-/* JoinMeetupIntegration.spec.js
- Integration tests for JoinMeetupView.vue with the router, the Pinia auth store and a
- mocked axios (vi.mock), so no server is needed.
-
-   the guest types a code and name and submits
-       ↓
-   JoinMeetupView sends POST /meetups/:code/members
-       ↓
-   404 / 409 → an error message · 201 → "my" member id and memberToken are saved and the
-   lobby opens
-
- The tests verify:
-   1. Empty fields show a message and send nothing
-   2. An unknown code shows "No meetup with that code was found."
-   3. A successful join saves my member id and memberToken and opens the lobby (code in
-      upper case)
-   4. A guest name someone else already uses shows the server's 409 message
-   5. A guest rejoining sends their saved memberToken, and keeps it
-*/
+// Integration tests for JoinMeetupView.vue with the router, the auth store and a mocked axios.
 
 import { mount, flushPromises } from '@vue/test-utils'
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
@@ -45,7 +27,7 @@ async function mountJoin() {
 }
 
 beforeEach(() => {
-  localStorage.clear() // a guest: not logged in
+  localStorage.clear()
 })
 
 afterEach(() => {
@@ -53,7 +35,6 @@ afterEach(() => {
 })
 
 describe('JoinMeetupView integration', () => {
-  // Verify that the form asks for both fields before sending anything.
   it('asks for the code and name when they are empty', async () => {
     const wrapper = await mountJoin()
     await wrapper.find('form').trigger('submit')
@@ -64,7 +45,6 @@ describe('JoinMeetupView integration', () => {
     expect(axios.post).not.toHaveBeenCalled()
   })
 
-  // Verify that the server's 404 becomes a friendly message.
   it('shows a message when no meetup has that code', async () => {
     axios.post.mockRejectedValueOnce({ response: { status: 404 } })
     const wrapper = await mountJoin()
@@ -79,7 +59,6 @@ describe('JoinMeetupView integration', () => {
     expect(router.currentRoute.value.path).toBe('/join')
   })
 
-  // Verify that a successful join remembers me and opens the lobby.
   it('saves my member id and opens the lobby after joining', async () => {
     axios.post.mockResolvedValueOnce({
       data: { _id: 'm2', name: 'Bob', start: null, memberToken: 'bob-secret' },
@@ -101,7 +80,6 @@ describe('JoinMeetupView integration', () => {
     expect(wrapper.find('[data-testid="join-error"]').exists()).toBe(false)
   })
 
-  // Verify that someone typing a guest's name without that guest's secret is told to pick another.
   it('shows the server message when the name is already taken', async () => {
     const taken = 'Someone in this meetup already uses that name. Choose another name.'
     axios.post.mockRejectedValueOnce({ response: { status: 409, data: { error: taken } } })
@@ -115,8 +93,6 @@ describe('JoinMeetupView integration', () => {
     expect(router.currentRoute.value.path).toBe('/join')
   })
 
-  // Verify that a guest coming back sends their saved secret, and it isn't lost (the server
-  // doesn't send it again).
   it('sends my saved memberToken when I rejoin', async () => {
     localStorage.setItem('fairspot-member-token-ABC123', 'bob-secret')
     axios.post.mockResolvedValueOnce({ data: { _id: 'm2', name: 'Bob', start: null } })

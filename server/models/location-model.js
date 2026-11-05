@@ -1,19 +1,7 @@
-/*
-  FILE:    models/location-model.js
-  OWNER:   S (team-written)
-  PURPOSE: members' live locations for the live map, one per member per meetup
-  FIELDS:  meetup code, memberId, lat, lng, accuracyM (how sure the phone is, in metres),
-           the latest trip to the meeting point (etaMinutes, arriveAt "HH:MM", steps),
-           where and when that trip was worked out (etaFromLat, etaFromLng, etaUpdatedAt),
-           timestamps (updatedAt is when the location last came in)
-  PRIVACY: MongoDB deletes a location by itself 2 hours after its last update (TTL index), so
-           nothing is kept after the meetup, even if nobody presses Stop
-  REVISE:  Wk 5 blog-model.js (schema + exported CRUD functions) · vote-model.js (upsert)
-*/
+// Members' live locations for the live map, one per member per meetup.
 
 const mongoose = require('mongoose');
 
-// steps is the trip from here to the meeting point
 const locationSchema = new mongoose.Schema(
   {
     code: { type: String, required: true },
@@ -31,17 +19,13 @@ const locationSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-// Two indexes:
-//   - one location per member per meetup (unique, like vote-model.js)
-//   - a TTL index on updatedAt, so MongoDB deletes a location 2 hours after it stops updating
-//     (https://www.mongodb.com/docs/manual/core/index-ttl/)
 const TWO_HOURS_IN_SECONDS = 2 * 60 * 60;
 locationSchema.index({ code: 1, memberId: 1 }, { unique: true });
 locationSchema.index({ updatedAt: 1 }, { expireAfterSeconds: TWO_HOURS_IN_SECONDS });
 
 const Location = mongoose.model('Location', locationSchema, 'locations');
 
-// saveLocation creates the member's location, or updates it
+// Creates the member's location, or updates it
 exports.saveLocation = async function (code, memberId, fields) {
   return await Location.findOneAndUpdate(
     { code, memberId },

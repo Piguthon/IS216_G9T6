@@ -1,16 +1,4 @@
-<!--
-  FILE:     src/components/VenueList.vue
-  OWNER:    S (team-written)
-  PURPOSE:  Venues near the selected meeting point with type and distance filters
-  PROPS:    lat, lng (Number)
-  EMITS:    none
-  SLOTS:    venue-actions ({ venue }): extra buttons inside each card
-  TALKS TO: GET /api/venues?lat=&lng=&category=
-            uses VenueCard
-  DATA:     array of Venue:
-            Venue { venueKey, name, address, lat, lng, category, distanceM }
-  REVISE:   Wk 5 Axios GET + params, computed (filters), v-for
--->
+<!-- Venues near the selected meeting point, with type and distance filters. -->
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import axios from 'axios'
@@ -26,10 +14,10 @@ const props = defineProps({
 const venues = ref([])
 const isLoading = ref(true)
 const errorMessage = ref('')
-const selectedType = ref('all') // 'all', or one category such as 'catering.cafe'
-const maxDistance = ref(1000) // metres
+const selectedType = ref('all')
+const maxDistance = ref(1000)
 const showAll = ref(false)
-const firstShown = 6 // the page stays short: the rest wait behind "Show more places"
+const firstShown = 6
 const favourites = useFavouritesStore()
 
 // Loads every type of place around the point once; the filters below work on this list
@@ -49,10 +37,9 @@ async function loadVenues() {
   isLoading.value = false
 }
 
-// Load as soon as the component is on the page
 onMounted(() => {
   loadVenues()
-  favourites.load() // once here, so each card can show whether it's saved
+  favourites.load()
 })
 
 // The venues that match both filters (recalculates whenever a filter or the list changes)
@@ -114,7 +101,6 @@ const shownVenues = computed(() =>
     <div v-else class="row g-3">
       <div v-for="venue in shownVenues" :key="venue.venueKey" class="col-12 col-md-6">
         <VenueCard :venue="venue">
-          <!-- lets the page add buttons to each card, e.g. voting on the results page -->
           <slot name="venue-actions" :venue="venue"></slot>
         </VenueCard>
       </div>

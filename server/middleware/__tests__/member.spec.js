@@ -1,16 +1,4 @@
-/* member.spec.js
- Unit tests for middleware/member.js (which meetup member is making the request).
- Meetup.findByCode and User.findOne are replaced by stubs, so no database is needed:
-   1. No credential, or a wrong guest secret → 403 not a member
-   2. A guest's X-Member-Token → that guest
-   3. A valid login session → the member with that account
-   4. A stale session (replaced by logging in elsewhere) with a valid guest secret → the guest
-   5. A stale session and no guest secret → 401
-   6. findCaller on its own: a stale session alone throws 'Invalid session'
-
- member.js is CommonJS, so it and the models are loaded with require (createRequire). That
- way the stubs replace the functions on the same model objects member.js uses.
-*/
+// Unit tests for middleware/member.js, with the models stubbed.
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { createRequire } from 'node:module';
@@ -20,7 +8,6 @@ const Meetup = require('../../models/meetup-model');
 const User = require('../../models/user-model');
 const { findCaller, requireMember } = require('../member');
 
-// One logged-in host and one guest. Only the guest has the secret 'guest-secret'.
 const host = { _id: 'm1', name: 'Alice', userId: 'user-1', memberToken: 'host-secret' };
 const guest = { _id: 'm2', name: 'Ben', userId: null, memberToken: 'guest-secret' };
 const meetup = { code: 'ABC123', members: [host, guest] };
@@ -58,7 +45,6 @@ const realFindOne = User.findOne;
 
 beforeEach(() => {
   Meetup.findByCode = async (code) => (code === 'ABC123' ? meetup : null);
-  // Only 'good-session' belongs to an account (Alice's); any other session is stale
   User.findOne = async (query) => (query.sessionToken === 'good-session' ? { _id: 'user-1' } : null);
 });
 
@@ -68,7 +54,6 @@ afterEach(() => {
 });
 
 describe('requireMember', () => {
-  // Someone who only knows the code can't act as a member.
   it('answers 403 when there is no credential', async () => {
     const { res, next } = await check({});
 
@@ -108,8 +93,6 @@ describe('requireMember', () => {
     expect(req.user).toEqual({ _id: 'user-1' });
   });
 
-  // Logging in on another browser replaces the session, so this browser's one is stale.
-  // Its guest secret still proves who it is.
   it('ignores a stale session when there is a valid guest secret', async () => {
     const { req, res, next } = await check({
       Authorization: 'Bearer old-session',
@@ -130,7 +113,6 @@ describe('requireMember', () => {
     expect(next).not.toHaveBeenCalled();
   });
 
-  // A stale session with a wrong secret: the session is ignored and the secret fails.
   it('answers 403 for a stale session with a wrong guest secret', async () => {
     const { res } = await check({
       Authorization: 'Bearer old-session',
@@ -152,8 +134,6 @@ describe('findCaller', () => {
     ).rejects.toThrow('Invalid session');
   });
 
-  // An account that isn't in this meetup can still use the guest secret from before it
-  // logged in.
   it('falls back to the guest secret when the account is not a member', async () => {
     User.findOne = async () => ({ _id: 'user-9' });
     const req = fakeRequest({ Authorization: 'Bearer good-session', 'X-Member-Token': 'guest-secret' });

@@ -1,12 +1,4 @@
-<!--
-  FILE:     src/views/SignupView.vue
-  OWNER:    JX
-  PURPOSE:  Create an account
-  ROUTE:    /signup
-  TALKS TO: POST /api/users/signup
-  DATA:     sends { name, email, password } → receives { token, user }
-  REVISE:   Wk 3 forms · Wk 5 Axios POST
--->
+<!-- Create an account. -->
 <script setup>
 import { ref, computed } from 'vue'
 import axios from 'axios'

@@ -1,5 +1,4 @@
-// Turns one part of a route from the ranking into the words shown on the summary page.
-// OneMap calls the two ends of a trip "Origin" and "Destination".
+// A place name as shown on the summary page (OneMap calls the ends "Origin" and "Destination")
 function place(name, code, destination) {
   if (name === 'Origin') return 'your start point'
   if (name === 'Destination') return destination

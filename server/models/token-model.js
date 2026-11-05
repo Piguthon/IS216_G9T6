@@ -1,12 +1,8 @@
-/*
-  FILE:    models/token-model.js
-  OWNER:   I (team-written)
-  PURPOSE: stores API tokens (OneMap) so a server restart reuses the token
-*/
+// Stores API tokens (OneMap) so a server restart reuses the token.
 const mongoose = require('mongoose');
 
 const tokenSchema = new mongoose.Schema({
-  name: { type: String, required: true, unique: true },   // e.g. 'onemap'
+  name: { type: String, required: true, unique: true },
   accessToken: { type: String, required: true },
   expiresAt: { type: Date, required: true }
 });
@@ -21,6 +17,6 @@ exports.saveToken = async function (name, accessToken, expiresAt) {
   return await Token.findOneAndUpdate(
     { name: name },
     { accessToken: accessToken, expiresAt: expiresAt },
-    { new: true, upsert: true }   // upsert = create it if it doesn't exist yet
+    { new: true, upsert: true }
   );
 };

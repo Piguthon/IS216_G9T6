@@ -1,11 +1,4 @@
-/*
-  FILE:    models/user-model.js
-  OWNER:   JX (team-written)
-  PURPOSE: user accounts
-  FIELDS:  name, email (unique), passwordHash, sessionToken,
-           savedLocations [ { label, postal, lat, lng } ], favourites.
-           Never store plain passwords
-*/
+// User accounts (passwords are stored only as hashes).
 
 const mongoose = require('mongoose');
 

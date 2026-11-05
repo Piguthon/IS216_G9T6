@@ -1,11 +1,4 @@
-/*
-  FILE:    models/vote-model.js
-  OWNER:   P4 (team-written)
-  PURPOSE: votes
-  FIELDS:  meetup code, memberId, kind ('station' or 'venue'), option (id, name, and where it is
-           so the host can confirm it), timestamps
-           One vote per member per kind: voting again moves the vote
-*/
+// Votes: one per member per kind; voting again moves the vote.
 
 const mongoose = require('mongoose');
 
@@ -27,8 +20,7 @@ voteSchema.index({ code: 1, memberId: 1, kind: 1 }, { unique: true });
 
 const Vote = mongoose.model('Vote', voteSchema, 'votes');
 
-// castVote: creates the member's vote for this kind, or moves it to a new option
-// option: { optionId, optionName, lat, lng, address }
+// Creates the member's vote for this kind, or moves it to a new option
 exports.castVote = async function (code, memberId, kind, option) {
   return await Vote.findOneAndUpdate(
     { code, memberId, kind },
@@ -41,7 +33,7 @@ exports.findByCode = async function (code) {
   return await Vote.find({ code }).lean();
 };
 
-// clearKind: removes every vote of one kind (venue votes reset when the meeting point changes)
+// Removes every vote of one kind
 exports.clearKind = async function (code, kind) {
   return await Vote.deleteMany({ code, kind });
 };

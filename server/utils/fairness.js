@@ -1,20 +1,6 @@
-/*
-  FILE:      utils/fairness.js
-  OWNER:     P3 (team-written)
-  PURPOSE:   ranks candidates by the project's fairness rule (from the proposal): the shortest
-             longest journey comes first; ties go to the lower total travel time
-  FUNCTIONS: rankCandidates(candidates) → the same items, sorted, with longestMinutes and
-             totalMinutes filled in.
-             findMidpoint(points) → { lat, lng }, the average of the group's start points
-             pickCandidates(stations, midpoint, perType, maxKmByType) → the stations of each
-             type (mrt, interchange) closest to the midpoint, nearest first, leaving out any
-             further than maxKmByType allows for that type
-             Kept pure (no database or API calls) so it's easy to check with sample data
-  DATA:      Ranking [ { stationId, name, type, lat, lng, times: [ { memberId, name, minutes } ],
-                         longestMinutes, totalMinutes } ]   (fairest first)
-*/
+// The fairness rule: the shortest longest journey comes first; ties go to the lower total travel time.
 
-// Straight-line distance in km (haversine formula); good enough to find "near the middle"
+// Straight-line distance in km to find "near the middle"
 function distanceKm(a, b) {
   const toRad = (deg) => (deg * Math.PI) / 180;
   const dLat = toRad(b.lat - a.lat);
@@ -25,6 +11,7 @@ function distanceKm(a, b) {
   return 6371 * 2 * Math.asin(Math.sqrt(h));
 }
 
+// The average of the group's start points
 function findMidpoint(points) {
   let lat = 0;
   let lng = 0;
@@ -35,8 +22,7 @@ function findMidpoint(points) {
   return { lat: lat / points.length, lng: lng / points.length };
 }
 
-// perType: how many of each type to keep, e.g. { mrt: 30, interchange: 2 }
-// maxKmByType: optional distance limit per type, e.g. { interchange: 3 }
+// The nearest stations of each type to the midpoint, e.g. perType { mrt: 30 }, maxKmByType { interchange: 3 }
 function pickCandidates(stations, midpoint, perType, maxKmByType = {}) {
   const picked = [];
   for (const type of Object.keys(perType)) {
@@ -53,6 +39,7 @@ function pickCandidates(stations, midpoint, perType, maxKmByType = {}) {
   return picked.map((item) => item.station);
 }
 
+// The candidates sorted by the fairness rule, with longestMinutes and totalMinutes filled in
 function rankCandidates(candidates) {
   const ranked = candidates.map((candidate) => {
     let longestMinutes = 0;

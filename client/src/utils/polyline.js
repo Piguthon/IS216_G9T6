@@ -20,7 +20,7 @@ export function decodePolyline(encoded) {
   }
 
   while (index < encoded.length) {
-    lat += nextNumber() // each point is stored as the change from the previous one
+    lat += nextNumber()
     lng += nextNumber()
     points.push([lat / 100000, lng / 100000])
   }

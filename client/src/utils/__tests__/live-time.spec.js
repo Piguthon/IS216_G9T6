@@ -1,7 +1,4 @@
-/* live-time.spec.js
- Unit tests for utils/live-time.js ("time ago" labels and stale live locations on the live map).
- Every test passes a fixed NOW, so the results never depend on the real clock.
-*/
+// Unit tests for utils/live-time.js.
 
 import { describe, it, expect } from 'vitest'
 import { STALE_AFTER_MS, timeAgo, isStale, byTripTime } from '../live-time'

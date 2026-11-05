@@ -1,27 +1,4 @@
-/* MeetupLobbyIntegration.spec.js
- Integration tests for MeetupLobbyView.vue with its real children
- (MemberList, TravelModePicker, AddressSearch).
-
- Unlike the component tests, the children are not stubbed: the real view and its real
- components are mounted together. Only axios is mocked (vi.mock), so no server is needed,
- and the tests check what the user sees after each API response:
-
-   GET /meetups/:code
-       ↓
-   MeetupLobbyView passes the members to MemberList and my mode to TravelModePicker
-       ↓
-   the user presses a travel mode → TravelModePicker emits select
-       ↓
-   MeetupLobbyView sends PUT .../me/mode with my X-Member-Token, reloads the meetup, and the
-   page updates
-
- The tests verify:
-   1. The lobby shows the meetup, the member list and the travel mode buttons from the GET
-   2. Choosing Car sends the PUT and the page then shows the member travelling by car
-   3. Confirming a location sends the PUT and shows "Location confirmed"
-   4. The host only sees "See fair meeting points" once every member has confirmed
-   5. An unknown code shows the not-found message
-*/
+// Integration tests for MeetupLobbyView.vue with its real child components and a mocked axios.
 
 import { mount, flushPromises } from '@vue/test-utils'
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
@@ -55,8 +32,7 @@ function member(id, name, extra) {
 
 let wrapper
 
-// Mount the real lobby at /meetup/ABC123 as the guest member with id myId (their secret is
-// secret-<myId>)
+// Mounts the real lobby at /meetup/ABC123 as the guest member with id myId
 async function mountLobby(myId) {
   localStorage.setItem('fairspot-member-ABC123', myId)
   localStorage.setItem('fairspot-member-token-ABC123', `secret-${myId}`)
@@ -81,12 +57,11 @@ beforeEach(() => {
 })
 
 afterEach(() => {
-  wrapper.unmount() // also stops the lobby's 5-second refresh
+  wrapper.unmount()
   vi.clearAllMocks()
 })
 
 describe('MeetupLobbyView integration', () => {
-  // Verify that the GET response reaches the page and its child components.
   it('shows the meetup, its members and the travel mode buttons', async () => {
     axios.get.mockResolvedValue({
       data: makeMeetup([member('m1', 'Alice'), member('m2', 'Bob')]),
@@ -106,11 +81,9 @@ describe('MeetupLobbyView integration', () => {
 
     expect(wrapper.find('[data-testid="travel-mode-transit"]').exists()).toBe(true)
     expect(wrapper.find('[data-testid="travel-mode-car"]').exists()).toBe(true)
-    // No start point yet, so the member cannot confirm their location
     expect(wrapper.find('[data-testid="lobby-confirm-location"]').element.disabled).toBe(true)
   })
 
-  // Verify the full loop: click a child button → PUT → reload → the page updates.
   it('sends the new travel mode and shows it once saved', async () => {
     axios.get.mockResolvedValueOnce({
       data: makeMeetup([member('m1', 'Alice'), member('m2', 'Bob')]),
@@ -135,7 +108,6 @@ describe('MeetupLobbyView integration', () => {
     expect(wrapper.text()).toContain('Your trip times include 10 minutes to park')
   })
 
-  // Verify that confirming a location sends the PUT and shows the confirmation.
   it('confirms my location and shows Location confirmed', async () => {
     axios.get.mockResolvedValueOnce({
       data: makeMeetup([member('m1', 'Alice'), member('m2', 'Bob', { start: smu })]),
@@ -158,7 +130,6 @@ describe('MeetupLobbyView integration', () => {
     expect(wrapper.find('[data-testid="lobby-confirm-location"]').exists()).toBe(false)
   })
 
-  // Verify that the host waits for everyone before working out the fair meeting points.
   it('shows the host the results link only once every member has confirmed', async () => {
     axios.get.mockResolvedValueOnce({
       data: makeMeetup([
@@ -187,7 +158,6 @@ describe('MeetupLobbyView integration', () => {
     )
   })
 
-  // Edge case: a code that does not exist shows a clear message instead of the lobby.
   it('shows the not-found message for an unknown code', async () => {
     axios.get.mockRejectedValueOnce({ response: { status: 404 } })
     await mountLobby('m1')

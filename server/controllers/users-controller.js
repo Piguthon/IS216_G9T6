@@ -1,11 +1,4 @@
-/*
-  FILE:      controllers/users-controller.js
-  OWNER:     JX (team-written)
-  PURPOSE:   sign-up, login and account endpoints (decision D5: bcrypt password hashes, a session
-             token stored in MongoDB and sent by the client in the Authorization header)
-  FUNCTIONS: signup, login, profile and saved-location CRUD
-  REVISE:    Wk 5 request headers (req.header('Authorization'))
-*/
+// Sign-up, login and account endpoints (bcrypt password hashes and a session token).
 
 const bcrypt = require('bcrypt');
 const crypto = require('node:crypto');
@@ -210,7 +203,6 @@ async function logout(req, res) {
   const token = authorization.startsWith('Bearer ') ? authorization.slice(7).trim() : '';
   if (!token) return res.status(400).json({ error: 'A session token is required.' });
   try {
-    // Match the submitted token so an old logout cannot revoke a newer login.
     await User.updateOne({ sessionToken: token }, {
       sessionToken: '',
     });

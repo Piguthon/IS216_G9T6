@@ -9,7 +9,6 @@ const isInnerPage = computed(() => route.name && route.name !== 'home')
 </script>
 
 <template>
-  <!-- Full-height column, so the footer stays at the bottom on short pages -->
   <div class="d-flex flex-column min-vh-100">
     <AppNavbar />
     <main
@@ -17,12 +16,10 @@ const isInnerPage = computed(() => route.name && route.name !== 'home')
       :class="{ 'page-body d-flex flex-column': isInnerPage }"
       data-testid="app-main"
     >
-      <!-- On inner pages this fills the height, so a page can centre its content -->
       <div :class="{ 'container flex-grow-1 d-flex flex-column': isInnerPage }">
         <RouterView />
       </div>
     </main>
-    <!-- Footer: same colours as the navbar (black background, light text) -->
     <footer class="app-bar py-4 small" data-bs-theme="dark">
       <div class="container d-flex flex-wrap justify-content-between align-items-center gap-2">
         <span class="app-logo">FairSpot</span>

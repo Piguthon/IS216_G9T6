@@ -1,27 +1,14 @@
-<!--
-  FILE:     src/components/AppNavbar.vue
-  OWNER:    P4 (team-written)
-  PURPOSE:  Responsive top navigation
-  PROPS:    none
-  EMITS:    none
-  TALKS TO: RouterLinks
-  DATA:     none
-  REVISE:   Wk 3 navbar, collapse · Wk 4 RouterLink
--->
+<!-- Responsive top navigation. -->
 <script setup>
 import { ref } from 'vue'
 import { useAuthStore } from '../stores/auth'
 
 const auth = useAuthStore()
 
-// Small screens: the hamburger opens and closes the menu. Clicking a link, or anywhere
-// outside the navbar (the backdrop below), closes it again.
 const isMenuOpen = ref(false)
 </script>
 
-<!-- Responsive Bootstrap 5 navbar (https://getbootstrap.com/docs/5.3/components/navbar/) -->
 <template>
-  <!-- Transparent layer behind the navbar that catches a tap outside the open menu -->
   <div v-if="isMenuOpen" class="nav-backdrop" aria-hidden="true" @click="isMenuOpen = false"></div>
 
   <nav
@@ -154,14 +141,12 @@ const isMenuOpen = ref(false)
 </template>
 
 <style scoped>
-/* Covers the page while the menu is open, just under the navbar (1020) */
 .nav-backdrop {
   position: fixed;
   inset: 0;
   z-index: 1019;
 }
 
-/* Tablets: the navbar isn't sticky here, so lift it above the backdrop */
 @media (min-width: 768px) and (max-width: 991.98px) {
   .app-navbar {
     position: relative;
@@ -169,7 +154,6 @@ const isMenuOpen = ref(false)
   }
 }
 
-/* lg and up: the menu is always shown, so the backdrop is never needed */
 @media (min-width: 992px) {
   .nav-backdrop {
     display: none;

@@ -1,16 +1,4 @@
-<!--
-  FILE:     src/components/VotePanel.vue
-  OWNER:    JS (team-written)
-  PURPOSE:  One round of group voting (meeting point or venue): every option's vote count,
-            my vote, and the host's confirm button. The parent loads the shared tallies from
-            /api/votes/:code (polling) and sends the votes, so everyone sees the same counts.
-  PROPS:    title, finalTitle (heading once the host confirms),
-            options [ { optionId, name, count, ... } ], myVote (optionId or null),
-            voterCount (members who can vote), canVote, isHost, final (confirmed option or null),
-            busy, emptyText (shown when there is nothing to vote on yet),
-            canLeave (once confirmed, a member who doesn't like the choice can leave the meetup)
-  EMITS:    vote (option), confirm (option), reopen (), leave ()
--->
+<!-- One round of group voting: each option's vote count, my vote and the host's confirm button. -->
 <script setup>
 import { computed } from 'vue'
 
@@ -54,7 +42,6 @@ function share(option) {
         </span>
       </div>
 
-      <!-- Confirmed: show the choice instead of the ballot -->
       <div v-if="final" data-testid="vote-final">
         <div class="app-ticket text-start">
           <p class="h2 app-doto app-text-bright mb-0">{{ final.name }}</p>
@@ -70,7 +57,6 @@ function share(option) {
           Change choice
         </button>
 
-        <!-- Members who don't like the choice can leave, like the lobby's Leave Meetup button -->
         <button
           v-if="canLeave"
           type="button"
@@ -143,12 +129,10 @@ function share(option) {
 </template>
 
 <style scoped>
-/* Thin vote bar */
 .vote-track {
   height: 6px;
 }
 
-/* The option I voted for: pale blue */
 .vote-mine {
   background-color: #e7eef8;
 }

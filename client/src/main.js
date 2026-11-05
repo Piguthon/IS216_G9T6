@@ -1,4 +1,3 @@
-// src/main.js
 // Libraries used (all free / open source):
 //   Vue 3 (https://vuejs.org, MIT)
 //   Vue Router (https://router.vuejs.org, MIT)
@@ -6,8 +5,8 @@
 //   Bootstrap 5 (https://getbootstrap.com, MIT)
 
 import 'bootstrap/dist/css/bootstrap.min.css'
-import 'bootstrap/dist/js/bootstrap.bundle.min.js' // includes Popper; powers the navbar toggler
-import './assets/main.css' // after Bootstrap, so the team's styles override it
+import 'bootstrap/dist/js/bootstrap.bundle.min.js'
+import './assets/main.css'
 
 import { createApp } from 'vue'
 import { createPinia } from 'pinia'

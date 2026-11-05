@@ -1,16 +1,4 @@
-<!--
-  FILE:     src/views/CreateMeetupView.vue
-  OWNER:    reference flow, team-written (built first; the rest of the team copies this pattern).
-  PURPOSE:  Host creates a meetup and gets a shareable code. They can also tick people they often
-            meet, who are added to the meetup straight away (anyone else joins with the code).
-  ROUTE:    /create
-  TALKS TO: GET /api/meetups/frequent, POST /api/meetups
-  DATA:     GET /frequent → [ { userId, name, count } ] (count = meetups shared with me)
-            sends { occasion, date, time, memberUserIds: [ userId ] } → receives Meetup
-            Meetup { code, hostName, occasion, date "YYYY-MM-DD", time "HH:MM",
-                     members: [ { _id, name, start: { label, postal, lat, lng } | null } ] }
-  REVISE:   Wk 4 v-model, useRouter().push · Wk 5 Axios POST, async/await, try/catch, v-model modifiers
--->
+<!-- The host creates a meetup and gets a shareable code, optionally adding people they often meet. -->
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import axios from 'axios'
@@ -22,8 +10,6 @@ import { todayInSingapore, formatDate } from '../utils/meetup-date'
 const router = useRouter()
 const auth = useAuthStore()
 const today = ref(todayInSingapore())
-// The form's inputs, its error message, the created meetup (null until it exists) and whether
-// it's being saved
 const occasion = ref('')
 const date = ref('')
 const time = ref('')
@@ -31,8 +17,8 @@ const errorMessage = ref('')
 const meetup = ref(null)
 const isSaving = ref(false)
 const copyLabel = ref('Copy code')
-const frequentPeople = ref([]) // [ { userId, name, count } ], most shared meetups first
-const pickedIds = ref([]) // the userIds ticked under "Add people you often meet"
+const frequentPeople = ref([])
+const pickedIds = ref([])
 const previewOccasion = computed(() => occasion.value || '[Occasion]')
 
 // The people added straight away: everyone after the host
@@ -44,8 +30,7 @@ const addedNames = computed(() => {
     .join(', ')
 })
 
-// The accounts I've shared the most meetups with. If this fails the section just stays hidden,
-// and creating a meetup still works.
+// The accounts I've shared the most meetups with (the section stays hidden if this fails)
 async function loadFrequentPeople() {
   try {
     const response = await axios.get(`${BASE_URL}/meetups/frequent`, {
@@ -63,8 +48,7 @@ function sharedLabel(count) {
 
 onMounted(loadFrequentPeople)
 
-// Checks the form, creates the meetup and remembers the host's member _id in localStorage
-// (fairspot-member-<code>), so the lobby knows the host is "you"
+// Checks the form, creates the meetup and remembers the host's member id
 async function createMeetup() {
   if (isSaving.value) return
   errorMessage.value = ''
@@ -95,7 +79,6 @@ async function createMeetup() {
     const code = response.data.code
     const hostId = response.data.members[0]._id
     localStorage.setItem(`fairspot-member-${code}`, hostId)
-    // The host's secret for this meetup; the server only sends it this once
     localStorage.setItem(`fairspot-member-token-${code}`, response.data.memberToken)
     isSaving.value = false
   } catch (error) {
@@ -118,7 +101,7 @@ function goToMeetup() {
   }
 }
 
-// Clipboard API (browser built-in, https://developer.mozilla.org/docs/Web/API/Clipboard/writeText)
+// Copies the code with the Clipboard API (https://developer.mozilla.org/docs/Web/API/Clipboard/writeText)
 async function copyCode() {
   try {
     await navigator.clipboard.writeText(meetup.value.code)
@@ -175,7 +158,6 @@ async function copyCode() {
                 </div>
               </div>
 
-              <!-- People I've shared meetups with: anyone ticked is added straight away -->
               <fieldset
                 v-if="frequentPeople.length > 0"
                 class="mb-3"
@@ -243,7 +225,6 @@ async function copyCode() {
         </aside>
       </div>
     </div>
-    <!-- Once the meetup exists: its code to share and a button to the lobby -->
     <div v-else class="row justify-content-center">
       <div class="col-md-8 col-lg-6">
         <div class="card app-card" data-testid="create-result">

@@ -1,11 +1,4 @@
-/*
-  FILE:      controllers/bus-controller.js
-  OWNER:     P4 (team-written)
-  PURPOSE:   returns live next-bus times for a bus stop, in our own simple shape
-  FUNCTIONS: getBusArrival (:stopCode → Bus)
-  DATA:      Bus { stopCode, services: [ { serviceNo, nextArrivals: [ ISO time strings ] } ] }
-  TALKS TO:  services/lta.js
-*/
+// Returns live next-bus times for a bus stop, in our own simple shape.
 
 const lta = require('../services/lta');
 async function getBusArrival(req, res) {

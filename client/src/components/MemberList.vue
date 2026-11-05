@@ -1,18 +1,4 @@
-<!--
-  FILE:     src/components/MemberList.vue
-  OWNER:    P1 (team-written)
-  PURPOSE:  Lists meetup members, their start point, whether each has confirmed their location,
-            and how each is travelling
-  PROPS:    members (Array), currentMemberId (String), hostId (String),
-            canRemove (Boolean): the viewer is the host, so show Remove on everyone else
-  EMITS:    remove with the member
-  TALKS TO: none
-  DATA:     Meetup members:
-            Meetup { code, hostName, occasion, date "YYYY-MM-DD", time "HH:MM",
-                     members: [ { _id, name, start: { label, postal, lat, lng } | null,
-                                  travelMode: 'transit' | 'car', ready } ] }
-  REVISE:   Wk 5 v-for + :key · Wk 6 props/emits
--->
+<!-- Lists meetup members, their start point, travel mode and whether they have confirmed. -->
 <script setup>
 defineProps({
   members: {
@@ -40,14 +26,12 @@ const emit = defineEmits(['remove'])
 <template>
   <div data-testid="member-list">
     <ul class="list-group">
-      <!-- One item per member using v-for -->
       <li
         v-for="member in members"
         :key="member._id"
         class="list-group-item d-flex justify-content-between align-items-center"
         data-testid="member-item"
       >
-        <!-- Member Name and Labels -->
         <div>
           <span class="fw-bold">{{ member.name }}</span>
           <span v-if="member._id === currentMemberId" class="text-muted ms-2 fst-italic">
@@ -70,7 +54,6 @@ const emit = defineEmits(['remove'])
           </span>
         </div>
 
-        <!-- Start Label or Waiting Badge, and the host's Remove button -->
         <div class="d-flex align-items-center gap-2 text-end">
           <div data-testid="member-start">
             <span v-if="member.start">
